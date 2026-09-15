@@ -194,6 +194,7 @@ local function setup(conf)
       { "rm", "-Rf", common.data_folder() .. args.fargs[1] },
       { text = true },
       vim.schedule_wrap(function()
+        require("apidocs.metadata").forget(args.fargs[1])
         vim.notify("Apidocs: removed source " .. args.fargs[1])
       end)
     )
