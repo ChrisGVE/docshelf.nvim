@@ -5,6 +5,58 @@ local metadata = require("apidocs.metadata")
 -- docs.json entries by slug, filled by fetch_slugs_and_mtimes_and_then
 local catalogue = {}
 
+-- Installing is long: a large source means thousands of pages to prepare and
+-- convert. The work runs in a coroutine that hands control back to the editor
+-- between batches, so Neovim stays responsive, and reports its stage in one
+-- notification that each update replaces (`id` is honoured by snacks.nvim).
+local function progress(choice, text)
+  vim.notify("apidocs " .. choice .. ": " .. text, vim.log.levels.INFO, { id = "apidocs_install_" .. choice, title = "apidocs" })
+end
+
+local function resume(co, ...)
+  local ok, err = coroutine.resume(co, ...)
+  if not ok then
+    vim.notify("apidocs install failed: " .. debug.traceback(co, err), vim.log.levels.ERROR)
+  end
+end
+
+local function run(fn)
+  resume(coroutine.create(fn))
+end
+
+-- Let the editor redraw and handle input, then continue. A timer, not
+-- vim.schedule: callbacks that keep re-scheduling themselves are drained in one
+-- pass of the event queue, so input, redraws and other timers would starve.
+local function yield_to_editor()
+  local co = coroutine.running()
+  vim.defer_fn(function() resume(co) end, 0)
+  coroutine.yield()
+end
+
+local function count_files(dir, suffix)
+  local count = 0
+  local fs = vim.uv.fs_scandir(dir)
+  while fs do
+    local name = vim.uv.fs_scandir_next(fs)
+    if not name then
+      break
+    end
+    if vim.endswith(name, suffix) then
+      count = count + 1
+    end
+  end
+  return count
+end
+
+-- vim.system without blocking the editor; returns the completed result.
+local function system_async(cmd, opts)
+  local co = coroutine.running()
+  vim.system(cmd, opts, function(res)
+    vim.schedule(function() resume(co, res) end)
+  end)
+  return coroutine.yield()
+end
+
 local function fetch_slugs_and_mtimes_and_then(cont)
   vim.system({"curl", "-L", "https://devdocs.io/docs.json"}, {text=true}, vim.schedule_wrap(function(res)
     local data = vim.fn.json_decode(res.stdout)
@@ -279,7 +331,7 @@ local function apply_source_specific_workarounds(source, contents)
 end
 
 local function apidoc_install(choice, slugs_to_mtimes, cont)
-  vim.notify("Fetching documentation for " .. choice)
+  progress(choice, "fetching index")
   local data_folder = common.data_folder()
   vim.fn.mkdir(data_folder, "p")
   local elinks_conf_path = data_folder .. "elinks.conf"
@@ -312,7 +364,8 @@ local function apidoc_install(choice, slugs_to_mtimes, cont)
       end
     end
 
-    vim.system({"curl", "-L", "https://documents.devdocs.io/" .. choice .. "/db.json?" .. mtime}, {text=true}, vim.schedule_wrap(function(res)
+    progress(choice, "fetching pages")
+    vim.system({"curl", "-L", "https://documents.devdocs.io/" .. choice .. "/db.json?" .. mtime}, {text=true}, vim.schedule_wrap(function(res) run(function()
       local data = vim.fn.json_decode(res.stdout)
       local target_path = data_folder .. choice
       vim.system({"sh", "-c", "rm -Rf " .. target_path}):wait()
@@ -338,7 +391,13 @@ local function apidoc_install(choice, slugs_to_mtimes, cont)
     all_reading_ids = 0
 
     -- save all the files
+    local page_count, pages_done = vim.tbl_count(data), 0
     for _, key in ipairs(vim.tbl_keys(data)) do
+      pages_done = pages_done + 1
+      if pages_done % 25 == 0 then
+        progress(choice, "preparing pages " .. pages_done .. "/" .. page_count)
+        yield_to_editor()
+      end
       local sanitized_key = sanitize_fname((path_to_name[key] or key) .. "#" .. key)
       out_path_to_orig_path[sanitized_key .. ".html"] = key
       local fname = target_path .. "/" .. sanitized_key  .. ".html"
@@ -452,7 +511,13 @@ local function apidoc_install(choice, slugs_to_mtimes, cont)
 
     -- now extract all the entries to non-html files
     local start_writing = vim.loop.hrtime()
+    local entry_count, entries_done = vim.tbl_count(path_to_name), 0
     for path, name in pairs(path_to_name) do
+      entries_done = entries_done + 1
+      if entries_done % 200 == 0 then
+        progress(choice, "splitting entries " .. entries_done .. "/" .. entry_count)
+        yield_to_editor()
+      end
       local file_id = vim.split(path, "#")
       local sanitized_fname = sanitize_fname(name)
       if #file_id == 2 then
@@ -494,6 +559,13 @@ local function apidoc_install(choice, slugs_to_mtimes, cont)
     end
     local elapsed_writing = (vim.loop.hrtime() - start_writing) / 1e9
 
+    -- elinks deletes each .html once converted, so the remaining count is the progress
+    local html_total = count_files(target_path, ".html")
+    local converting = vim.uv.new_timer()
+    converting:start(0, 1000, vim.schedule_wrap(function()
+      local left = count_files(target_path, ".html")
+      progress(choice, "converting pages " .. (html_total - left) .. "/" .. html_total)
+    end))
     local start_elinks = vim.loop.hrtime()
     -- convert the html to text, on 8 processes concurrently (-P8)
     local sysname = vim.loop.os_uname().sysname
@@ -504,18 +576,26 @@ local function apidoc_install(choice, slugs_to_mtimes, cont)
       -- the GNU xpath in their path
       xargs_cmd = "/usr/bin/xargs -S1024"
     end
-    vim.system({
+    system_async({
       "sh", "-c",
       [[find . -maxdepth 1 -name '*.html' -print0 | ]] .. xargs_cmd .. [[ -0 -P 8 -I param sh -c "elinks -config-dir ]] .. data_folder .. [[ -dump 'param' > 'param'.md && rm 'param'"]]
       -- [[find . -maxdepth 1 -name '*.html' -print0 | xargs -0 -P 8 -I param sh -c "elinks -config-dir ]] .. data_folder .. [[ -dump 'param' > 'param'.md"]]
-    }, {cwd=target_path}):wait()
+    }, {cwd=target_path})
+    converting:stop()
+    converting:close()
     local elapsed_elinks = (vim.loop.hrtime() - start_elinks) / 1e9
 
     local start_pp = vim.loop.hrtime()
 
     -- unfortunately i must post-process the markdown to fix conceal table alignment and fix links..
-    vim.system({"rg", "-l", "│"}, {cwd=target_path}, vim.schedule_wrap(function(res)
-      for _, fname in ipairs(vim.fn.split(res.stdout, "\n")) do
+    progress(choice, "post-processing")
+    local res = system_async({"rg", "-l", "│"}, {cwd=target_path})
+    do
+      local table_files = vim.fn.split(res.stdout, "\n")
+      for i, fname in ipairs(table_files) do
+        -- each file can hold large tables and takes a full treesitter pass: yield every time
+        progress(choice, "aligning tables " .. i .. "/" .. #table_files)
+        yield_to_editor()
         local filepath = target_path .. "/" .. fname
         local lines = {}
         for line in io.lines(filepath) do
@@ -527,11 +607,17 @@ local function apidoc_install(choice, slugs_to_mtimes, cont)
         file:close()
       end
 
+      local post_done = 0
       local fs = vim.uv.fs_scandir(target_path)
       while true do
         local name, type = vim.uv.fs_scandir_next(fs)
         if not name then break end
         if type ~= 'directory' then
+          post_done = post_done + 1
+          if post_done % 200 == 0 then
+            progress(choice, "fixing links " .. post_done .. "/" .. html_total)
+            yield_to_editor()
+          end
           local filepath = target_path .. "/" .. name
           local lines = {}
           for line in io.lines(filepath) do
@@ -557,14 +643,14 @@ local function apidoc_install(choice, slugs_to_mtimes, cont)
 
       metadata.mark_installed(choice, catalogue[choice] or { mtime = mtime })
 
-      vim.notify("Finished fetching documentation for " .. choice .. " in " .. elapsed .. "s. All parsing: " .. all_parsing
+      progress(choice, "finished in " .. elapsed .. "s. All parsing: " .. all_parsing
       .. "s. All reading IDs: " .. all_reading_ids .. "s. All writing: " .. elapsed_writing .. "s. All elinks: " .. elapsed_elinks .. "s. All post-process: " .. elapsed_pp .. "s.")
 
       if cont ~= nil then
         cont()
       end
-    end)):wait()
-  end))
+    end
+  end) end))
 end))
 end
 
