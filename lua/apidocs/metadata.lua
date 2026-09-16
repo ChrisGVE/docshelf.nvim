@@ -34,6 +34,7 @@ function M.record(entry, now)
     release = present(entry.release),
     mtime = present(entry.mtime),
     installed_at = now,
+    origin = M.origin(entry),
   }
 end
 
@@ -83,6 +84,12 @@ function M.origin(entry)
     return nil
   end
   return entry.origin or "devdocs"
+end
+
+--- Where an installed source came from. Records written before origins were
+--- kept have none, and devdocs was then the only source.
+function M.installed_origin(record)
+  return (record and record.origin) or "devdocs"
 end
 
 function M.label(entry, record)
@@ -145,6 +152,17 @@ function M.refresh(catalogue)
   local manifest = M.backfill(M.read(manifest_path()), slugs, catalogue, mtimes)
   M.write(manifest_path(), manifest)
   return manifest
+end
+
+--- The origin of every installed source, by slug; for pickers over installed
+--- sources, which show it next to each name.
+function M.installed_origins(installed)
+  local manifest = M.read(manifest_path())
+  local origins = {}
+  for _, slug in ipairs(installed) do
+    origins[slug] = M.installed_origin(manifest[slug])
+  end
+  return origins
 end
 
 function M.mark_installed(slug, entry)
