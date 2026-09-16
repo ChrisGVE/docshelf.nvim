@@ -1,7 +1,12 @@
 local common = require("apidocs.common")
 local sections = require("apidocs.sections")
 local install_queue = require("apidocs.install_queue")
-local sources = { devdocs = require("apidocs.sources.devdocs") }
+local folders = require("apidocs.folders")
+-- Source adapters by origin (see sources/devdocs.lua for the contract).
+local sources = {}
+for _, adapter in ipairs({ require("apidocs.sources.devdocs") }) do
+  sources[adapter.origin] = adapter
+end
 local metadata = require("apidocs.metadata")
 
 -- docs.json entries by slug, filled by fetch_slugs_and_mtimes_and_then
@@ -16,7 +21,7 @@ local queue -- set below, once apidoc_install exists
 local function progress(choice, text)
   local position = queue and queue:position(choice)
   local prefix = position and ("apidocs " .. position .. " ") or "apidocs "
-  vim.notify(prefix .. choice .. ": " .. text, vim.log.levels.INFO, { id = "apidocs_install_" .. choice, title = "apidocs" })
+  vim.notify(prefix .. folders.display(choice) .. ": " .. text, vim.log.levels.INFO, { id = "apidocs_install_" .. choice, title = "apidocs" })
 end
 
 -- What to call when a coroutine's install fails, so a queue can move on.
@@ -344,8 +349,11 @@ local function apply_source_specific_workarounds(source, contents)
   return contents
 end
 
--- `cont` runs after a successful install, `on_fail` after a failed one.
+-- `choice` is the source's folder name (see folders.lua): the docset name, plus
+-- "~~origin" for anything but devdocs. `cont` runs after a successful install,
+-- `on_fail` after a failed one.
 local function apidoc_install(choice, slugs_to_mtimes, cont, on_fail)
+  local slug, origin = folders.split(choice)
   progress(choice, "fetching index")
   local data_folder = common.data_folder()
   vim.fn.mkdir(data_folder, "p")
@@ -360,12 +368,15 @@ local function apidoc_install(choice, slugs_to_mtimes, cont, on_fail)
   -- A source missing from the catalogue has no mtime; its download then fails
   -- inside the coroutine below and is reported like any other failure.
   local mtime = slugs_to_mtimes[choice] or ""
-  local adapter = sources.devdocs
+  local adapter = sources[origin]
   local function system(cmd)
     return system_async(cmd, { text = true })
   end
   run(function()
-    local data = adapter.index(choice, mtime, system)
+    if not adapter then
+      error("no adapter for origin " .. origin)
+    end
+    local data = adapter.index(slug, mtime, system)
     local path_to_name = {}
     local path_to_type = {}
     local known_keys_per_path = {}
@@ -387,7 +398,7 @@ local function apidoc_install(choice, slugs_to_mtimes, cont, on_fail)
 
     progress(choice, "fetching pages")
     do
-      local data = adapter.db(choice, mtime, system)
+      local data = adapter.db(slug, mtime, system)
       local target_path = data_folder .. choice
       vim.system({"sh", "-c", "rm -Rf " .. target_path}):wait()
       vim.fn.mkdir(target_path, "p")
@@ -458,11 +469,11 @@ local function apidoc_install(choice, slugs_to_mtimes, cont, on_fail)
         end
       end)
       :gsub("<table", "<table border=\"1\"")
-      file:write(html_extra_css(choice))
+      file:write(html_extra_css(slug))
       if path_to_type[key] ~= nil then
-        file:write("<p>&gt; " .. choice .. "/" .. path_to_type[key] .. "\n</p>\n")
+        file:write("<p>&gt; " .. slug .. "/" .. path_to_type[key] .. "\n</p>\n")
       end
-      file:write(apply_source_specific_workarounds(choice, contents))
+      file:write(apply_source_specific_workarounds(slug, contents))
       file:close()
 
       local start_parse = vim.loop.hrtime()
@@ -498,7 +509,7 @@ local function apidoc_install(choice, slugs_to_mtimes, cont, on_fail)
             -- happens with lua, but seems generic enough not to gate it
             name_and_id_to_string_nearby[sanitized_key][id_val] =
               vim.treesitter.get_node_text(node:parent():parent():next_named_sibling():named_children()[2], contents)
-          elseif choice == "rust" and node:parent() ~= nil and node:parent():parent() ~= nil and node:parent():parent():parent() ~= nil then
+          elseif slug == "rust" and node:parent() ~= nil and node:parent():parent() ~= nil and node:parent():parent():parent() ~= nil then
             -- for rust, the node text is a little harder to find
             local elt = node:parent():parent():parent()
             if elt:type() == "element" and elt:named_child_count() >= 3 then
@@ -567,11 +578,11 @@ local function apidoc_install(choice, slugs_to_mtimes, cont, on_fail)
           out_path_to_orig_path[out_path] = path
           out_path_to_orig_containing_path[out_path] = sanitized_containing_file_name
           local file = io.open(target_path .. "/" .. out_path, "w")
-          file:write(html_extra_css(choice))
+          file:write(html_extra_css(slug))
           if path_to_type[file_id[1]] ~= nil then
-            file:write("<p>&gt; " .. choice .. "/" .. path_to_type[file_id[1]] .. "/" .. path_to_name[file_id[1]] .. "\n</p>\n")
+            file:write("<p>&gt; " .. slug .. "/" .. path_to_type[file_id[1]] .. "/" .. path_to_name[file_id[1]] .. "\n</p>\n")
           else
-            file:write("<p>&gt; " .. choice .. "\n</p>\n")
+            file:write("<p>&gt; " .. slug .. "\n</p>\n")
           end
           file:write(to_write_contents)
           file:close()
@@ -812,6 +823,11 @@ return {
     return queue.current ~= nil
   end,
   apidoc_install = apidoc_install,
+  -- Add a source adapter (see sources/devdocs.lua); its folders are
+  -- "<docset>~~<adapter.origin>".
+  register_source = function(adapter)
+    sources[adapter.origin] = adapter
+  end,
   queue_install = queue_install,
   apidocs_install = apidocs_install,
 }

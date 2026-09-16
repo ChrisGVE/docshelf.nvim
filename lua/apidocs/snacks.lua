@@ -51,7 +51,8 @@ local function format_entries(item, picker)
   -- take the last part and set it as the text
   local folder = parts[#parts - 1]
   local filename = parts[#parts]
-  local filetype = vim.split(folder, "~")[1]
+  local docset, origin = require("apidocs.folders").split(folder)
+  local filetype = vim.split(docset, "~")[1]
   local icon, hl = Snacks.util.icon(filetype, "filetype", {
     fallback = picker.opts.icons.files,
   })
@@ -64,7 +65,7 @@ local function format_entries(item, picker)
       virtual = true,
     },
     {
-      folder .. " | ",
+      docset .. " | ",
       "SnacksPickerSpecial",
       field = "file",
     },
@@ -73,6 +74,13 @@ local function format_entries(item, picker)
     common.filename_to_display(filename),
     "SnacksPickerFile",
     field = "file",
+  }
+  -- Where the source came from, dimmed at the right edge.
+  new_item[#new_item + 1] = {
+    col = 0,
+    virt_text = { { origin, "SnacksPickerComment" } },
+    virt_text_pos = "right_align",
+    hl_mode = "combine",
   }
   return new_item
 end

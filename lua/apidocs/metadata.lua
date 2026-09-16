@@ -210,8 +210,9 @@ end
 function M.installed_origins(installed)
   local manifest = M.read(manifest_path())
   local origins = {}
-  for _, slug in ipairs(installed) do
-    origins[slug] = M.installed_origin(manifest[slug])
+  for _, folder in ipairs(installed) do
+    local _, origin = require("apidocs.folders").split(folder)
+    origins[folder] = origin ~= M.devdocs_origin and origin or M.installed_origin(manifest[folder])
   end
   return origins
 end

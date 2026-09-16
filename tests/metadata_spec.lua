@@ -168,6 +168,10 @@ test("installed_origins reads each installed source's origin from the manifest",
   eq(result, { ["text~2.1"] = "hackage.haskell.org", ["lua~5.4"] = "devdocs.io", rust = "devdocs.io" })
 end)
 
+test("installed_origins takes the origin from the folder name first", function()
+  eq(metadata.installed_origins({ "text~2.1~~hackage.haskell.org" }), { ["text~2.1~~hackage.haskell.org"] = "hackage.haskell.org" })
+end)
+
 -- label --------------------------------------------------------------------
 
 test("label for a source that is not installed shows its release", function()

@@ -37,6 +37,23 @@ test("a versioned slug is looked up by its family", function()
   eq(languages.of("python~3.14", table_), "Python")
 end)
 
+test("a folder from another origin is looked up by its docset family", function()
+  eq(languages.of("numpy~2.5~~docs.scipy.org", table_), "Python")
+end)
+
+test("an unversioned folder from another origin is looked up by its name", function()
+  eq(languages.of("git~~git-scm.com", table_), "Git")
+end)
+
+test("a language pulls in its packages from any origin", function()
+  local folders = { "python~3.14", "numpy~2.5~~docs.scipy.org", "git" }
+  local by_folder = {}
+  for _, folder in ipairs(folders) do
+    by_folder[folder] = languages.link(folder, languages.of(folder, table_))
+  end
+  eq(languages.pulled_in({ "python~3.14" }, folders, by_folder), { "numpy~2.5~~docs.scipy.org" })
+end)
+
 test("an unversioned slug is its own family", function()
   eq(languages.of("numpy", table_), "Python")
 end)
