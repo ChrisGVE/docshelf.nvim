@@ -28,7 +28,7 @@ local catalogue_entry = { slug = "haskell~9", version = "9", release = "9.14.1",
 test("record keeps version, release, mtime and the install time", function()
   eq(
     metadata.record(catalogue_entry, 500),
-    { version = "9", release = "9.14.1", mtime = 200, installed_at = 500, origin = "devdocs" }
+    { version = "9", release = "9.14.1", mtime = 200, installed_at = 500, origin = "devdocs.io" }
   )
 end)
 
@@ -69,7 +69,7 @@ test("backfill trusts a folder newer than the catalogue mtime", function()
   local manifest = metadata.backfill({}, { "haskell~9" }, { ["haskell~9"] = catalogue_entry }, { ["haskell~9"] = 250 })
   eq(
     manifest["haskell~9"],
-    { version = "9", release = "9.14.1", mtime = 200, installed_at = 250, origin = "devdocs" }
+    { version = "9", release = "9.14.1", mtime = 200, installed_at = 250, origin = "devdocs.io" }
   )
 end)
 
@@ -103,11 +103,11 @@ end)
 -- origin -------------------------------------------------------------------
 
 test("a devdocs catalogue entry comes from devdocs", function()
-  eq(metadata.origin(catalogue_entry), "devdocs")
+  eq(metadata.origin(catalogue_entry), "devdocs.io")
 end)
 
 test("an entry names its own origin when it has one", function()
-  eq(metadata.origin({ slug = "text~2.1", origin = "hackage" }), "hackage")
+  eq(metadata.origin({ slug = "text~2.1", origin = "hackage.haskell.org" }), "hackage.haskell.org")
 end)
 
 test("a source missing from every catalogue has no origin", function()
@@ -115,12 +115,12 @@ test("a source missing from every catalogue has no origin", function()
 end)
 
 test("an install record keeps its origin", function()
-  eq(metadata.installed_origin({ origin = "hackage" }), "hackage")
+  eq(metadata.installed_origin({ origin = "hackage.haskell.org" }), "hackage.haskell.org")
 end)
 
 test("a record from before origins were kept came from devdocs", function()
-  eq(metadata.installed_origin({ installed_at = 1 }), "devdocs")
-  eq(metadata.installed_origin(nil), "devdocs")
+  eq(metadata.installed_origin({ installed_at = 1 }), "devdocs.io")
+  eq(metadata.installed_origin(nil), "devdocs.io")
 end)
 
 test("installed_origins reads each installed source's origin from the manifest", function()
@@ -131,12 +131,12 @@ test("installed_origins reads each installed source's origin from the manifest",
   common.data_folder = function()
     return dir
   end
-  metadata.write(dir .. metadata.manifest_name, { ["text~2.1"] = { origin = "hackage" }, ["lua~5.4"] = {} })
+  metadata.write(dir .. metadata.manifest_name, { ["text~2.1"] = { origin = "hackage.haskell.org" }, ["lua~5.4"] = {} })
   local ok, result = pcall(metadata.installed_origins, { "text~2.1", "lua~5.4", "rust" })
   common.data_folder = data_folder
   vim.fn.delete(dir, "rf")
   assert(ok, result)
-  eq(result, { ["text~2.1"] = "hackage", ["lua~5.4"] = "devdocs", rust = "devdocs" })
+  eq(result, { ["text~2.1"] = "hackage.haskell.org", ["lua~5.4"] = "devdocs.io", rust = "devdocs.io" })
 end)
 
 -- label --------------------------------------------------------------------

@@ -77,19 +77,24 @@ function M.backfill(manifest, installed, catalogue, dir_mtimes)
 end
 
 -- One line of the install picker: slug, catalogue release, install state.
---- Where a source comes from: "devdocs" for devdocs catalogue entries, the
---- entry's own `origin` for any other catalogue, nil for an unknown source.
+-- The origin shown for devdocs sources: the site's short address, so a reader
+-- knows where the pages were fetched from.
+M.devdocs_origin = "devdocs.io"
+
+--- Where a source comes from: devdocs.io for devdocs catalogue entries, the
+--- entry's own `origin` (a short address) for any other catalogue, nil for an
+--- unknown source.
 function M.origin(entry)
   if entry == nil then
     return nil
   end
-  return entry.origin or "devdocs"
+  return entry.origin or M.devdocs_origin
 end
 
 --- Where an installed source came from. Records written before origins were
 --- kept have none, and devdocs was then the only source.
 function M.installed_origin(record)
-  return (record and record.origin) or "devdocs"
+  return (record and record.origin) or M.devdocs_origin
 end
 
 function M.label(entry, record)
