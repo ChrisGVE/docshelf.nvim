@@ -76,6 +76,15 @@ function M.backfill(manifest, installed, catalogue, dir_mtimes)
 end
 
 -- One line of the install picker: slug, catalogue release, install state.
+--- Where a source comes from: "devdocs" for devdocs catalogue entries, the
+--- entry's own `origin` for any other catalogue, nil for an unknown source.
+function M.origin(entry)
+  if entry == nil then
+    return nil
+  end
+  return entry.origin or "devdocs"
+end
+
 function M.label(entry, record)
   local release = present(entry.release)
   local text = entry.slug

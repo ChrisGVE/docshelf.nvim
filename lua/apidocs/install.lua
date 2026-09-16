@@ -687,7 +687,9 @@ end
 -- Queue the picked sources. With snacks the picker takes several at once
 -- (<Tab> marks one, and marks survive a change of search); other pickers take
 -- one per call. Picking again while sources install adds to the same run.
-local function pick_and_queue(keys, format_item, slugs_to_mtimes)
+-- `format_item(slug)` is the name, release and install state; `origin_of(slug)`
+-- is where the source comes from, shown dimmed at the right edge.
+local function pick_and_queue(keys, format_item, origin_of, slugs_to_mtimes)
   local function enqueue(choices)
     local added = queue_install(choices, slugs_to_mtimes)
     if #added < #choices then
@@ -701,9 +703,20 @@ local function pick_and_queue(keys, format_item, slugs_to_mtimes)
       title = "Install documentation (<Tab> marks several)",
       layout = { preset = "select" },
       items = vim.tbl_map(function(slug)
-        return { text = format_item(slug), slug = slug }
+        return { text = format_item(slug), slug = slug, origin = origin_of(slug) }
       end, keys),
-      format = "text",
+      format = function(item)
+        local line = { { item.text } }
+        if item.origin then
+          line[#line + 1] = {
+            col = 0,
+            virt_text = { { item.origin, "SnacksPickerComment" } },
+            virt_text_pos = "right_align",
+            hl_mode = "combine",
+          }
+        end
+        return line
+      end,
       confirm = function(picker)
         local choices = vim.tbl_map(function(item)
           return item.slug
@@ -716,7 +729,11 @@ local function pick_and_queue(keys, format_item, slugs_to_mtimes)
     })
     return
   end
-  vim.ui.select(keys, { prompt = "Pick a documentation to install", format_item = format_item }, function(choice)
+  local function format_with_origin(slug)
+    local origin = origin_of(slug)
+    return origin and (format_item(slug) .. "  · " .. origin) or format_item(slug)
+  end
+  vim.ui.select(keys, { prompt = "Pick a documentation to install", format_item = format_with_origin }, function(choice)
     if choice ~= nil then
       enqueue({ choice })
     end
@@ -733,6 +750,8 @@ local function apidocs_install()
       local manifest = metadata.refresh(catalogue)
       pick_and_queue(keys, function(slug)
         return metadata.label(catalogue[slug], manifest[slug])
+      end, function(slug)
+        return metadata.origin(catalogue[slug])
       end, slugs_to_mtimes)
     end)
   end

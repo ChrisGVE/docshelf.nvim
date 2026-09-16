@@ -94,6 +94,20 @@ test("backfill drops records whose folder is gone", function()
   eq(metadata.backfill(existing, {}, {}, {}), {})
 end)
 
+-- origin -------------------------------------------------------------------
+
+test("a devdocs catalogue entry comes from devdocs", function()
+  eq(metadata.origin(catalogue_entry), "devdocs")
+end)
+
+test("an entry names its own origin when it has one", function()
+  eq(metadata.origin({ slug = "text~2.1", origin = "hackage" }), "hackage")
+end)
+
+test("a source missing from every catalogue has no origin", function()
+  eq(metadata.origin(nil), nil)
+end)
+
 -- label --------------------------------------------------------------------
 
 test("label for a source that is not installed shows its release", function()
