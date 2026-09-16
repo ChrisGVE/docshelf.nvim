@@ -1,5 +1,6 @@
 local common = require("apidocs.common")
 local sections = require("apidocs.sections")
+local install_queue = require("apidocs.install_queue")
 local metadata = require("apidocs.metadata")
 
 -- docs.json entries by slug, filled by fetch_slugs_and_mtimes_and_then
@@ -9,19 +10,31 @@ local catalogue = {}
 -- convert. The work runs in a coroutine that hands control back to the editor
 -- between batches, so Neovim stays responsive, and reports its stage in one
 -- notification that each update replaces (`id` is honoured by snacks.nvim).
+local queue -- set below, once apidoc_install exists
+
 local function progress(choice, text)
-  vim.notify("apidocs " .. choice .. ": " .. text, vim.log.levels.INFO, { id = "apidocs_install_" .. choice, title = "apidocs" })
+  local position = queue and queue:position(choice)
+  local prefix = position and ("apidocs " .. position .. " ") or "apidocs "
+  vim.notify(prefix .. choice .. ": " .. text, vim.log.levels.INFO, { id = "apidocs_install_" .. choice, title = "apidocs" })
 end
+
+-- What to call when a coroutine's install fails, so a queue can move on.
+local on_failure = setmetatable({}, { __mode = "k" })
 
 local function resume(co, ...)
   local ok, err = coroutine.resume(co, ...)
   if not ok then
     vim.notify("apidocs install failed: " .. debug.traceback(co, err), vim.log.levels.ERROR)
+    if on_failure[co] then
+      on_failure[co]()
+    end
   end
 end
 
-local function run(fn)
-  resume(coroutine.create(fn))
+local function run(fn, on_fail)
+  local co = coroutine.create(fn)
+  on_failure[co] = on_fail
+  resume(co)
 end
 
 -- Let the editor redraw and handle input, then continue. A timer, not
@@ -330,7 +343,8 @@ local function apply_source_specific_workarounds(source, contents)
   return contents
 end
 
-local function apidoc_install(choice, slugs_to_mtimes, cont)
+-- `cont` runs after a successful install, `on_fail` after a failed one.
+local function apidoc_install(choice, slugs_to_mtimes, cont, on_fail)
   progress(choice, "fetching index")
   local data_folder = common.data_folder()
   vim.fn.mkdir(data_folder, "p")
@@ -342,8 +356,10 @@ local function apidoc_install(choice, slugs_to_mtimes, cont)
     file:close()
   end
   local start_install = vim.loop.hrtime()
-  local mtime = slugs_to_mtimes[choice]
-  vim.system({"curl", "-L", "https://documents.devdocs.io/" .. choice .. "/index.json?" .. mtime}, {text=true}, vim.schedule_wrap(function(res)
+  -- A source missing from the catalogue has no mtime; its download then fails
+  -- inside the coroutine below and is reported like any other failure.
+  local mtime = slugs_to_mtimes[choice] or ""
+  vim.system({"curl", "-L", "https://documents.devdocs.io/" .. choice .. "/index.json?" .. mtime}, {text=true}, vim.schedule_wrap(function(res) run(function()
     local data = vim.fn.json_decode(res.stdout)
     local path_to_name = {}
     local path_to_type = {}
@@ -650,8 +666,61 @@ local function apidoc_install(choice, slugs_to_mtimes, cont)
         cont()
       end
     end
-  end) end))
-end))
+  end, on_fail) end))
+end, on_fail) end))
+end
+
+local slugs_to_mtimes_for_queue = {}
+queue = install_queue.new(function(slug, done)
+  apidoc_install(slug, slugs_to_mtimes_for_queue, function() done(true) end, function() done(false) end)
+end)
+
+-- The only way in: queue sources for install, one at a time; `cont` runs once
+-- all of them have finished, whether or not each succeeded.
+local function queue_install(slugs, slugs_to_mtimes, cont)
+  for slug, mtime in pairs(slugs_to_mtimes) do
+    slugs_to_mtimes_for_queue[slug] = mtime
+  end
+  return queue:add(slugs, cont)
+end
+
+-- Queue the picked sources. With snacks the picker takes several at once
+-- (<Tab> marks one, and marks survive a change of search); other pickers take
+-- one per call. Picking again while sources install adds to the same run.
+local function pick_and_queue(keys, format_item, slugs_to_mtimes)
+  local function enqueue(choices)
+    local added = queue_install(choices, slugs_to_mtimes)
+    if #added < #choices then
+      vim.notify("apidocs: already queued: " .. table.concat(vim.tbl_filter(function(c)
+        return not vim.tbl_contains(added, c)
+      end, choices), ", "), vim.log.levels.INFO, { title = "apidocs" })
+    end
+  end
+  if Config and Config.picker == "snacks" then
+    require("snacks").picker.pick({
+      title = "Install documentation (<Tab> marks several)",
+      layout = { preset = "select" },
+      items = vim.tbl_map(function(slug)
+        return { text = format_item(slug), slug = slug }
+      end, keys),
+      format = "text",
+      confirm = function(picker)
+        local choices = vim.tbl_map(function(item)
+          return item.slug
+        end, picker:selected({ fallback = true }))
+        picker:close()
+        if #choices > 0 then
+          enqueue(choices)
+        end
+      end,
+    })
+    return
+  end
+  vim.ui.select(keys, { prompt = "Pick a documentation to install", format_item = format_item }, function(choice)
+    if choice ~= nil then
+      enqueue({ choice })
+    end
+  end)
 end
 
 local function apidocs_install()
@@ -662,15 +731,9 @@ local function apidocs_install()
       local keys = vim.tbl_keys(slugs_to_mtimes)
       table.sort(keys)
       local manifest = metadata.refresh(catalogue)
-      vim.ui.select(keys, {
-        prompt="Pick a documentation to install",
-        format_item = function(slug) return metadata.label(catalogue[slug], manifest[slug]) end,
-      }, function(choice)
-        if choice == nil then
-          return
-        end
-        apidoc_install(choice, slugs_to_mtimes)
-      end)
+      pick_and_queue(keys, function(slug)
+        return metadata.label(catalogue[slug], manifest[slug])
+      end, slugs_to_mtimes)
     end)
   end
 end
@@ -679,5 +742,6 @@ end
 return {
   fetch_slugs_and_mtimes_and_then = fetch_slugs_and_mtimes_and_then,
   apidoc_install = apidoc_install,
+  queue_install = queue_install,
   apidocs_install = apidocs_install,
 }

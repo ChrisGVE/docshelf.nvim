@@ -68,28 +68,27 @@ local function get_installed_docs(opts)
   return installed_docs
 end
 
+-- Missing sources go through the install queue, so they never install in
+-- parallel with each other or with sources picked in :ApidocsInstall.
 local function ensure_install_and_then(languages, slugs_to_mtimes, cont)
   local installed_docs = get_installed_docs()
-
-  for _, source in ipairs(languages) do
-    if not vim.tbl_contains(installed_docs, source) then
-      if slugs_to_mtimes == nil then
-        install.fetch_slugs_and_mtimes_and_then(function(slugs_to_mtimes)
-          install.apidoc_install(source, slugs_to_mtimes, function()
-            ensure_install_and_then(languages, slugs_to_mtimes, cont)
-          end)
-        end)
-        return
-      else
-        install.apidoc_install(source, slugs_to_mtimes, function()
-          ensure_install_and_then(languages, slugs_to_mtimes, cont)
-        end)
-        return
-      end
-    end
+  local missing = vim.tbl_filter(function(source)
+    return not vim.tbl_contains(installed_docs, source)
+  end, languages)
+  if #missing == 0 then
+    cont(slugs_to_mtimes)
+    return
   end
-  -- everything is installed, move on
-  cont(slugs_to_mtimes)
+  local function queue(slugs_to_mtimes)
+    install.queue_install(missing, slugs_to_mtimes, function()
+      cont(slugs_to_mtimes)
+    end)
+  end
+  if slugs_to_mtimes == nil then
+    install.fetch_slugs_and_mtimes_and_then(queue)
+  else
+    queue(slugs_to_mtimes)
+  end
 end
 
 local function ensure_install(languages)
