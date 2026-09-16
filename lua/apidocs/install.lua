@@ -1,6 +1,7 @@
 local common = require("apidocs.common")
 local sections = require("apidocs.sections")
 local install_queue = require("apidocs.install_queue")
+local sources = { devdocs = require("apidocs.sources.devdocs") }
 local metadata = require("apidocs.metadata")
 
 -- docs.json entries by slug, filled by fetch_slugs_and_mtimes_and_then
@@ -359,8 +360,12 @@ local function apidoc_install(choice, slugs_to_mtimes, cont, on_fail)
   -- A source missing from the catalogue has no mtime; its download then fails
   -- inside the coroutine below and is reported like any other failure.
   local mtime = slugs_to_mtimes[choice] or ""
-  vim.system({"curl", "-L", "https://documents.devdocs.io/" .. choice .. "/index.json?" .. mtime}, {text=true}, vim.schedule_wrap(function(res) run(function()
-    local data = vim.fn.json_decode(res.stdout)
+  local adapter = sources.devdocs
+  local function system(cmd)
+    return system_async(cmd, { text = true })
+  end
+  run(function()
+    local data = adapter.index(choice, mtime, system)
     local path_to_name = {}
     local path_to_type = {}
     local known_keys_per_path = {}
@@ -381,8 +386,8 @@ local function apidoc_install(choice, slugs_to_mtimes, cont, on_fail)
     end
 
     progress(choice, "fetching pages")
-    vim.system({"curl", "-L", "https://documents.devdocs.io/" .. choice .. "/db.json?" .. mtime}, {text=true}, vim.schedule_wrap(function(res) run(function()
-      local data = vim.fn.json_decode(res.stdout)
+    do
+      local data = adapter.db(choice, mtime, system)
       local target_path = data_folder .. choice
       vim.system({"sh", "-c", "rm -Rf " .. target_path}):wait()
       vim.fn.mkdir(target_path, "p")
@@ -666,8 +671,8 @@ local function apidoc_install(choice, slugs_to_mtimes, cont, on_fail)
         cont()
       end
     end
-  end, on_fail) end))
-end, on_fail) end))
+    end
+  end, on_fail)
 end
 
 local slugs_to_mtimes_for_queue = {}
