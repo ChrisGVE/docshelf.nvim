@@ -784,8 +784,10 @@ local function apidocs_install()
   if vim.fn.executable("elinks") ~= 1 or vim.fn.executable("rg") ~= 1 or vim.fn.executable("find") ~= 1 then
     print("The 'elinks', 'rg' and 'find' programs must be installed to proceed, refusing to run.")
   else
+    -- A switched-off source is only left out of the picker; today devdocs is
+    -- the only one listed there, so with it off there is nothing to show.
     if not sources.is_enabled(metadata.devdocs_origin) then
-      vim.notify("apidocs: " .. metadata.devdocs_origin .. " is switched off in setup(), nothing to install from",
+      vim.notify("apidocs: " .. metadata.devdocs_origin .. " is switched off in setup(), so the install picker has nothing to list",
         vim.log.levels.WARN, { title = "apidocs" })
       return
     end

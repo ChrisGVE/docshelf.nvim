@@ -74,9 +74,9 @@ return {
     -- require('apidocs').setup({languages = {add = {"Fortran", "Prolog"}}, tools = {add = {{"Kubernetes", aliases = {"k8s"}}}}})
     -- In the ApidocsFilter picker, the key that sets the language of the source under the cursor (false unbinds it):
     -- require('apidocs').setup({assign_key = "<c-e>"})
-    -- An install converts pages on 8 processes at once; 'workers' changes that (installs still run one at a time):
-    -- require('apidocs').setup({workers = 4})
-    -- Every documentation source is on. Switch one off by its origin; docs already installed from it stay readable:
+    -- Async work (page conversion during an install, registry searches) runs 4 jobs at once; 'workers' changes that (installs still run one at a time):
+    -- require('apidocs').setup({workers = 8})
+    -- Every documentation source is on. Switching one off by its origin only removes it from the install picker; docs already installed from it stay readable and keep updating:
     -- require('apidocs').setup({sources = {["devdocs.io"] = false}})
   end,
   keys = {

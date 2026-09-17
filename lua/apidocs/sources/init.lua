@@ -7,12 +7,14 @@
 --
 --   require("apidocs").setup({ sources = { ["devdocs.io"] = false } })
 --
--- A switched-off source cannot be installed from; docsets already installed
--- from it stay readable and searchable.
+-- Switching a source off only narrows what the install picker searches and
+-- lists. Docsets already installed from it are unaffected: they stay readable
+-- and searchable, and can still be installed again or updated.
 --
--- `workers` is how many processes convert pages at once during an install
--- (default 8). Installs themselves never overlap: the install queue runs one
--- at a time whatever this is set to.
+-- `workers` caps how much async work runs at once: page conversion during an
+-- install, and registry searches (default 4, since registries are
+-- community-run). Installs themselves never overlap: the install queue runs
+-- one at a time whatever this is set to.
 local M = {}
 
 local adapters = {}
@@ -20,7 +22,7 @@ for _, adapter in ipairs({ require("apidocs.sources.devdocs") }) do
   adapters[adapter.origin] = adapter
 end
 
-local default_workers = 8
+local default_workers = 4
 local settings = { disabled = {}, workers = default_workers }
 
 local function is_positive_integer(n)
@@ -55,20 +57,19 @@ function M.is_enabled(origin)
   return not settings.disabled[origin]
 end
 
---- The adapter for an origin, or nil and the reason there is none.
+--- The adapter for an origin, or nil and the reason there is none. The on/off
+--- switch does not apply here: an installed docset must stay installable and
+--- updatable whatever setup() says.
 ---@param origin string
 ---@return table? adapter, string? why
 function M.get(origin)
   if not adapters[origin] then
     return nil, "no source for " .. origin
   end
-  if not M.is_enabled(origin) then
-    return nil, origin .. " is switched off in setup()"
-  end
   return adapters[origin]
 end
 
---- Origins of the sources that are on, sorted.
+--- Origins of the sources that are on, sorted: the ones searches may use.
 ---@return string[]
 function M.origins()
   local origins = vim.tbl_filter(M.is_enabled, vim.tbl_keys(adapters))
@@ -76,7 +77,7 @@ function M.origins()
   return origins
 end
 
---- Conversion processes per install.
+--- How many async jobs (page conversions, registry searches) run at once.
 function M.workers()
   return settings.workers
 end
