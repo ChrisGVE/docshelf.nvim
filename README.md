@@ -74,6 +74,10 @@ return {
     -- require('apidocs').setup({languages = {add = {"Fortran", "Prolog"}}, tools = {add = {{"Kubernetes", aliases = {"k8s"}}}}})
     -- In the ApidocsFilter picker, the key that sets the language of the source under the cursor (false unbinds it):
     -- require('apidocs').setup({assign_key = "<c-e>"})
+    -- An install converts pages on 8 processes at once; 'workers' changes that (installs still run one at a time):
+    -- require('apidocs').setup({workers = 4})
+    -- Every documentation source is on. Switch one off by its origin; docs already installed from it stay readable:
+    -- require('apidocs').setup({sources = {["devdocs.io"] = false}})
   end,
   keys = {
     -- A capital letter is the same thing over every source, ignoring the

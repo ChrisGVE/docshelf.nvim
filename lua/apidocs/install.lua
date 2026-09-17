@@ -2,11 +2,8 @@ local common = require("apidocs.common")
 local sections = require("apidocs.sections")
 local install_queue = require("apidocs.install_queue")
 local folders = require("apidocs.folders")
--- Source adapters by origin (see sources/devdocs.lua for the contract).
-local sources = {}
-for _, adapter in ipairs({ require("apidocs.sources.devdocs") }) do
-  sources[adapter.origin] = adapter
-end
+-- Source adapters by origin, and the settings that govern them.
+local sources = require("apidocs.sources")
 local metadata = require("apidocs.metadata")
 
 -- docs.json entries by slug, filled by fetch_slugs_and_mtimes_and_then
@@ -368,13 +365,13 @@ local function apidoc_install(choice, slugs_to_mtimes, cont, on_fail)
   -- A source missing from the catalogue has no mtime; its download then fails
   -- inside the coroutine below and is reported like any other failure.
   local mtime = slugs_to_mtimes[choice] or ""
-  local adapter = sources[origin]
+  local adapter, no_adapter = sources.get(origin)
   local function system(cmd)
     return system_async(cmd, { text = true })
   end
   run(function()
     if not adapter then
-      error("no adapter for origin " .. origin)
+      error(no_adapter, 0)
     end
     local data = adapter.index(slug, mtime, system)
     local path_to_name = {}
@@ -599,7 +596,7 @@ local function apidoc_install(choice, slugs_to_mtimes, cont, on_fail)
       progress(choice, "converting pages " .. (html_total - left) .. "/" .. html_total)
     end))
     local start_elinks = vim.loop.hrtime()
-    -- convert the html to text, on 8 processes concurrently (-P8)
+    -- convert the html to text, on `workers` processes concurrently (setup option)
     local sysname = vim.loop.os_uname().sysname
     local xargs_cmd = "xargs"
     if sysname == "Darwin" then
@@ -610,7 +607,7 @@ local function apidoc_install(choice, slugs_to_mtimes, cont, on_fail)
     end
     system_async({
       "sh", "-c",
-      [[find . -maxdepth 1 -name '*.html' -print0 | ]] .. xargs_cmd .. [[ -0 -P 8 -I param sh -c "elinks -config-dir ]] .. data_folder .. [[ -dump 'param' > 'param'.md && rm 'param'"]]
+      [[find . -maxdepth 1 -name '*.html' -print0 | ]] .. xargs_cmd .. [[ -0 -P ]] .. sources.workers() .. [[ -I param sh -c "elinks -config-dir ]] .. data_folder .. [[ -dump 'param' > 'param'.md && rm 'param'"]]
       -- [[find . -maxdepth 1 -name '*.html' -print0 | xargs -0 -P 8 -I param sh -c "elinks -config-dir ]] .. data_folder .. [[ -dump 'param' > 'param'.md"]]
     }, {cwd=target_path})
     converting:stop()
@@ -787,6 +784,11 @@ local function apidocs_install()
   if vim.fn.executable("elinks") ~= 1 or vim.fn.executable("rg") ~= 1 or vim.fn.executable("find") ~= 1 then
     print("The 'elinks', 'rg' and 'find' programs must be installed to proceed, refusing to run.")
   else
+    if not sources.is_enabled(metadata.devdocs_origin) then
+      vim.notify("apidocs: " .. metadata.devdocs_origin .. " is switched off in setup(), nothing to install from",
+        vim.log.levels.WARN, { title = "apidocs" })
+      return
+    end
     fetch_slugs_and_mtimes_and_then(function (slugs_to_mtimes)
       local keys = vim.tbl_keys(slugs_to_mtimes)
       table.sort(keys)
@@ -825,9 +827,7 @@ return {
   apidoc_install = apidoc_install,
   -- Add a source adapter (see sources/devdocs.lua); its folders are
   -- "<docset>~~<adapter.origin>".
-  register_source = function(adapter)
-    sources[adapter.origin] = adapter
-  end,
+  register_source = sources.register,
   queue_install = queue_install,
   apidocs_install = apidocs_install,
 }

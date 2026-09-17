@@ -270,6 +270,12 @@ local function setup(conf)
     vim.notify(err .. "; using the default lists", vim.log.levels.ERROR, { title = "apidocs" })
     require("apidocs.languages").configure({})
   end
+  local sources = require("apidocs.sources")
+  local sources_ok, sources_err = pcall(sources.configure, conf or {})
+  if not sources_ok then
+    sources.configure({})
+    vim.notify(sources_err .. "; using the defaults", vim.log.levels.ERROR, { title = "apidocs" })
+  end
 
   ensure_treesitter_dependency()
 
