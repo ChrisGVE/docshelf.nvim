@@ -229,6 +229,22 @@ function M.installed_languages(installed)
   return links
 end
 
+--- Every language recorded in the manifest, sorted. Together with the
+--- configured lists these are the names a docset can be given: a language the
+--- user typed once for one docset is offered for the next.
+---@return string[]
+function M.recorded_languages()
+  local seen, names = {}, {}
+  for _, record in pairs(M.read(manifest_path())) do
+    if type(record.language) == "string" and not seen[record.language] then
+      seen[record.language] = true
+      table.insert(names, record.language)
+    end
+  end
+  table.sort(names)
+  return names
+end
+
 --- Give an installed source a language from the user's list, replacing the
 --- one it had. The choice is kept across refreshes and reinstalls.
 ---@param slug string

@@ -252,16 +252,47 @@ local function assign_language(slug, on_done)
   local languages = require("apidocs.languages")
   local metadata = require("apidocs.metadata")
   local current = languages.label(metadata.installed_languages({ slug })[slug])
-  vim.ui.select(languages.list(), { prompt = "Language of " .. slug .. " (now " .. current .. ")" }, function(choice)
-    if choice == nil then
-      return on_done and on_done(false)
-    end
-    local ok, why = metadata.assign_language(slug, choice)
-    vim.notify(ok and ("apidocs: " .. slug .. " is now " .. choice) or ("apidocs: " .. why),
-      ok and vim.log.levels.INFO or vim.log.levels.WARN, { title = "apidocs" })
+  local names = languages.available()
+  local display = require("apidocs.folders").display(slug)
+
+  local function chosen(name)
+    local ok, why = metadata.assign_language(slug, name)
+    vim.notify(
+      ok and ("apidocs: " .. display .. " is now " .. name) or ("apidocs: " .. why),
+      ok and vim.log.levels.INFO or vim.log.levels.WARN,
+      { title = "apidocs" }
+    )
     if on_done then
       on_done(ok)
     end
+  end
+
+  if Config.picker == "snacks" then
+    return require("apidocs.snacks").pick_language({
+      folder = slug,
+      display = display,
+      current = current,
+      names = names,
+      on_choice = chosen,
+    })
+  end
+  -- Without snacks: the names, then a last row that asks for a new one.
+  local new_name = "+ add a new language..."
+  vim.ui.select(vim.list_extend(vim.deepcopy(names), { new_name }), {
+    prompt = "Language of " .. display .. " (now " .. current .. ")",
+  }, function(choice)
+    if choice == nil then
+      return on_done and on_done(false)
+    end
+    if choice ~= new_name then
+      return chosen(choice)
+    end
+    vim.ui.input({ prompt = "New language for " .. display .. ": " }, function(typed)
+      if typed == nil or vim.trim(typed) == "" then
+        return on_done and on_done(false)
+      end
+      chosen(vim.trim(typed))
+    end)
   end)
 end
 

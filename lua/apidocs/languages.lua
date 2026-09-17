@@ -343,16 +343,51 @@ function M.resolve(slug, opts)
   return M.guess(slug)
 end
 
---- The link recorded when the user gives a docset `language`, which must be
---- in the configured list.
+--- The link recorded when the user gives a docset `language`. A name the
+--- lists know (by name or alias) is recorded in its listed spelling; any other
+--- name is taken as typed, and joins the offered names through the manifest.
 ---@param slug string
 ---@param language string
 ---@return { kind: "language"|"package", language: string }? link, string? why
 function M.for_assignment(slug, language)
-  if not M.find(language) then
-    return nil, vim.inspect(language) .. " is not in the configured list"
+  if type(language) ~= "string" or language:match("^%s*$") then
+    return nil, vim.inspect(language) .. " is not a name"
   end
-  return link(slug, language)
+  return link(slug, vim.trim(language))
+end
+
+--- The names a docset can be given: the configured lists, then the languages
+--- already recorded on installed docsets, which is where a name the user typed
+--- for one docset comes back for the next.
+---@param extra? string[] defaults to the languages in the install manifest
+---@return string[]
+function M.available(extra)
+  extra = extra or require("apidocs.metadata").recorded_languages()
+  local names, seen = {}, {}
+  for _, name in ipairs(vim.list_extend(M.list(), extra)) do
+    if not seen[key(name)] then
+      seen[key(name)] = true
+      table.insert(names, name)
+    end
+  end
+  return names
+end
+
+--- Whether `word` already names one of `names`, or an alias of a configured
+--- entry: then it is a choice, not a new name.
+---@param word string
+---@param names string[]
+---@return string? the name it refers to
+function M.named(word, names)
+  local listed = M.find(word)
+  if listed then
+    return listed
+  end
+  for _, name in ipairs(names) do
+    if key(name) == key(word) then
+      return name
+    end
+  end
 end
 
 --- What a picker shows for a docset's language.

@@ -115,7 +115,44 @@ local function apidocs_search(opts)
   })
 end
 
+-- The language picker: every offered name, narrowed by what is typed, with a
+-- first row offering to take an unknown word as a new name (see
+-- language_pick.lua). Live, so that row follows every keystroke.
+---@param opts { folder: string, display: string, current: string, names: string[], on_choice: fun(name: string) }
+local function pick_language(opts)
+  Snacks.picker.pick({
+    source = "apidocs_language",
+    title = "Language of " .. opts.display .. " (now " .. opts.current .. ")",
+    layout = get_layout(opts),
+    live = true,
+    finder = function(_, ctx)
+      local typed = ctx.filter.search
+      if typed == "" then
+        typed = ctx.filter.pattern
+      end
+      local rows = require("apidocs.language_pick").rows(opts.names, typed)
+      return vim.tbl_map(function(row)
+        return { text = row.name, name = row.name, add = row.add }
+      end, rows)
+    end,
+    format = function(item)
+      if item.add then
+        return { { "+ add ", "SnacksPickerSpecial" }, { item.name, "SnacksPickerLabel" } }
+      end
+      return { { item.name, "SnacksPickerLabel" } }
+    end,
+    confirm = function(picker, item)
+      picker:close()
+      local name = item and item.name or vim.trim(picker.input.filter.search)
+      if name ~= "" then
+        opts.on_choice(name)
+      end
+    end,
+  })
+end
+
 return {
+  pick_language = pick_language,
   apidocs_open = apidocs_open,
   apidocs_search = apidocs_search,
   drop_link_footer_matches = drop_link_footer_matches,

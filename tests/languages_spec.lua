@@ -237,11 +237,16 @@ test("a declared language is a package unless the docset is named after it", fun
   eq(languages.resolve("haskell~9~~example.org", { declared = "Haskell" }), { kind = "language", language = "Haskell" })
 end)
 
-test("an assignment must name a listed entry, by name or alias", function()
+test("an assignment records a listed entry in its listed spelling", function()
   eq(languages.for_assignment("pycairo", "python"), { kind = "package", language = "Python" })
   eq(languages.for_assignment("golang", "Go"), { kind = "language", language = "Go" })
   eq(languages.for_assignment("git_cheatsheet", "git"), { kind = "package", language = "Git" })
-  eq({ languages.for_assignment("pycairo", "Haskell") }, { nil, '"Haskell" is not in the configured list' })
+end)
+
+test("a name no list knows is taken as typed", function()
+  eq(languages.for_assignment("swi_prolog", "Prolog"), { kind = "package", language = "Prolog" })
+  eq(languages.for_assignment("prolog~9", "Prolog"), { kind = "language", language = "Prolog" })
+  eq({ languages.for_assignment("pycairo", "  ") }, { nil, '"  " is not a name' })
 end)
 
 test("labels read Unknown or the language", function()
