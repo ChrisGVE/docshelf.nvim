@@ -348,7 +348,7 @@ local function setup(conf)
         -- A removed docset leaves the filter too, which would otherwise point
         -- at a folder that is no longer there.
         filter.forget({ args.fargs[1] })
-        vim.notify("Apidocs: removed source " .. args.fargs[1])
+        vim.notify("Apidocs: removed source " .. require("apidocs.folders").display(args.fargs[1]))
       end)
     )
   end, {
