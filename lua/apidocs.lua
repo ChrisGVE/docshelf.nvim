@@ -122,7 +122,10 @@ local function apidocs_open_only(opts)
       end
       if type2 == "file" and vim.endswith(name2, ".html.md") then
         local name_no_txt = common.filename_to_display(name2)
-        table.insert(candidates, { display = name .. "/" .. name_no_txt, path = name .. "/" .. name2 })
+        table.insert(candidates, {
+          display = require("apidocs.folders").display(name) .. "/" .. name_no_txt,
+          path = name .. "/" .. name2,
+        })
       end
     end
   end

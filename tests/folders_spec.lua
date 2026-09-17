@@ -46,6 +46,12 @@ test("display is the docset name alone", function()
   eq(folders.display("python~3.14"), "python~3.14")
 end)
 
+test("display_path shows a page path under its docset name", function()
+  eq(folders.display_path("text~2.1~~hackage.haskell.org/Data.Text"), "text~2.1/Data.Text")
+  eq(folders.display_path("python~3.14/library/os"), "python~3.14/library/os")
+  eq(folders.display_path("lua~5.4"), "lua~5.4")
+end)
+
 test("folder names only use characters elinks leaves unencoded in links", function()
   -- elinks percent-encodes anything else, and the link fixer then cannot
   -- recognise the folder's own pages.

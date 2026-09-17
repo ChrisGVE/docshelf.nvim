@@ -39,4 +39,11 @@ function M.display(folder)
   return (M.split(folder))
 end
 
+--- A path relative to the data folder (`<folder>/<page>`), with its folder
+--- shown as `display(folder)`.
+function M.display_path(path)
+  local folder, rest = path:match("^([^/]+)(.*)$")
+  return M.display(folder) .. rest
+end
+
 return M
