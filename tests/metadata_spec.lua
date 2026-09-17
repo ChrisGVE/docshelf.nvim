@@ -32,6 +32,23 @@ test("record keeps version, release, mtime and the install time", function()
   )
 end)
 
+test("record links the installed source to its language", function()
+  eq(metadata.record(catalogue_entry, 500, "haskell~9").language, "Haskell")
+  eq(metadata.record(catalogue_entry, 500, "haskell~9").language_kind, "language")
+  eq(metadata.record({ slug = "git" }, 500, "git").language_kind, "tool")
+end)
+
+test("a source's declared language wins over the shipped table", function()
+  -- devdocs' async is a JavaScript package; Hackage's async is Haskell
+  local record = metadata.record({ origin = "hackage.haskell.org", language = "Haskell" }, 1, "async~2.2~~hackage.haskell.org")
+  eq({ record.language, record.language_kind }, { "Haskell", "package" })
+end)
+
+test("the shipped table only applies to devdocs sources", function()
+  local record = metadata.record({ origin = "example.org" }, 1, "numpy~2~~example.org")
+  eq(record.language_kind, nil)
+end)
+
 -- status -------------------------------------------------------------------
 
 test("same release and mtime is current", function()
@@ -69,22 +86,22 @@ test("backfill trusts a folder newer than the catalogue mtime", function()
   local manifest = metadata.backfill({}, { "haskell~9" }, { ["haskell~9"] = catalogue_entry }, { ["haskell~9"] = 250 })
   eq(
     manifest["haskell~9"],
-    { version = "9", release = "9.14.1", mtime = 200, installed_at = 250, origin = "devdocs.io" }
+    { version = "9", release = "9.14.1", mtime = 200, installed_at = 250, origin = "devdocs.io", language = "Haskell", language_kind = "language" }
   )
 end)
 
 test("backfill leaves a folder older than the catalogue mtime unknown", function()
   local manifest = metadata.backfill({}, { "haskell~9" }, { ["haskell~9"] = catalogue_entry }, { ["haskell~9"] = 150 })
-  eq(manifest["haskell~9"], { installed_at = 150 })
+  eq(manifest["haskell~9"], { installed_at = 150, language = "Haskell", language_kind = "language" })
   eq(metadata.status(manifest["haskell~9"], catalogue_entry), { kind = "unknown" })
 end)
 
 test("backfill records a source that left the catalogue", function()
   local manifest = metadata.backfill({}, { "scala~3.2" }, {}, { ["scala~3.2"] = 150 })
-  eq(manifest["scala~3.2"], { installed_at = 150 })
+  eq(manifest["scala~3.2"], { installed_at = 150, language = "Scala", language_kind = "language" })
 end)
 
-test("backfill never overwrites an existing record", function()
+test("backfill never overwrites an existing record, only links its language", function()
   local existing = { ["haskell~9"] = { release = "9.14.0", mtime = 1, installed_at = 2 } }
   local manifest = metadata.backfill(
     existing,
@@ -92,7 +109,17 @@ test("backfill never overwrites an existing record", function()
     { ["haskell~9"] = catalogue_entry },
     { ["haskell~9"] = 999 }
   )
-  eq(manifest["haskell~9"], { release = "9.14.0", mtime = 1, installed_at = 2 })
+  eq(manifest["haskell~9"], { release = "9.14.0", mtime = 1, installed_at = 2, language = "Haskell", language_kind = "language" })
+end)
+
+test("backfill links an Unknown record again, and keeps a made link", function()
+  local existing = {
+    ["mystery"] = { installed_at = 1 },
+    ["numpy~2.5"] = { installed_at = 1, language = "Rust", language_kind = "package" },
+  }
+  local manifest = metadata.backfill(existing, { "mystery", "numpy~2.5" }, {}, {})
+  eq(manifest["mystery"], { installed_at = 1 })
+  eq(manifest["numpy~2.5"].language, "Rust")
 end)
 
 test("backfill drops records whose folder is gone", function()
@@ -182,6 +209,47 @@ end)
 test("reading a missing manifest gives an empty table", function()
   eq(metadata.read(vim.fn.tempname() .. "/none.json"), {})
 end)
+
+-- assignment --------------------------------------------------------------
+
+local scratch = vim.fn.tempname() .. "/"
+for _, dir in ipairs({ "mystery", "python~3.14", "pycairo" }) do
+  vim.fn.mkdir(scratch .. dir, "p")
+end
+require("apidocs.common").data_folder = function()
+  return scratch
+end
+
+test("an Unknown source can be assigned a language once", function()
+  eq({ metadata.assign_language("pycairo", "python") }, { true })
+  eq(metadata.installed_languages({ "pycairo" })["pycairo"], { kind = "package", language = "Python" })
+  local ok, why = metadata.assign_language("pycairo", "Rust")
+  eq(ok, false)
+  eq(why, "pycairo is already linked to Python; reinstall it to change that")
+end)
+
+test("a source with a known language cannot be assigned", function()
+  eq(metadata.assign_language("python~3.14", "Rust"),
+    false)
+end)
+
+test("only a language from the configured list can be assigned", function()
+  local ok, why = metadata.assign_language("mystery", "Haskell")
+  eq(ok, false)
+  eq(why, '"Haskell" is not in the configured language list')
+end)
+
+test("a source that is not installed cannot be assigned", function()
+  eq({ metadata.assign_language("nowhere", "Python") }, { false, "nowhere is not installed" })
+end)
+
+test("installed_languages leaves Unknown sources out", function()
+  local links = metadata.installed_languages({ "mystery", "python~3.14" })
+  eq(links["mystery"], nil)
+  eq(links["python~3.14"], { kind = "language", language = "Python" })
+end)
+
+vim.fn.delete(scratch, "rf")
 
 if failures > 0 then
   print(failures .. " test(s) failed")

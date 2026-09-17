@@ -187,6 +187,11 @@ end
 
 local function setup(conf)
   set_config(conf)
+  local ok, err = pcall(require("apidocs.languages").configure, (conf or {}).languages)
+  if not ok then
+    vim.notify(err .. "; using the default language list", vim.log.levels.ERROR, { title = "apidocs" })
+    require("apidocs.languages").configure({})
+  end
 
   ensure_treesitter_dependency()
 
@@ -237,8 +242,35 @@ local function setup(conf)
   })
 end
 
+--- Link an installed docset of Unknown language to a language picked from the
+--- configured list. A link is final: to change it, reinstall the docset.
+---@param slug string the installed folder name
+---@param on_done? fun(ok: boolean)
+local function assign_language(slug, on_done)
+  local languages = require("apidocs.languages")
+  local metadata = require("apidocs.metadata")
+  local current = metadata.installed_languages({ slug })[slug]
+  if current then
+    vim.notify("apidocs: " .. slug .. " is already linked to " .. languages.label(current) .. "; reinstall it to change that",
+      vim.log.levels.WARN, { title = "apidocs" })
+    return on_done and on_done(false)
+  end
+  vim.ui.select(languages.list(), { prompt = "Language of " .. slug }, function(choice)
+    if choice == nil then
+      return on_done and on_done(false)
+    end
+    local ok, why = metadata.assign_language(slug, choice)
+    vim.notify(ok and ("apidocs: " .. slug .. " is now " .. choice) or ("apidocs: " .. why),
+      ok and vim.log.levels.INFO or vim.log.levels.WARN, { title = "apidocs" })
+    if on_done then
+      on_done(ok)
+    end
+  end)
+end
+
 return {
   setup = setup,
+  assign_language = assign_language,
   config = Config,
   apidocs_install = install.apidocs_install,
   apidocs_open = apidocs_open,

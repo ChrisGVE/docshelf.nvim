@@ -9,6 +9,13 @@
 -- install time; `installed_at` is os.time(). A record with no `mtime` belongs
 -- to a source installed before metadata was tracked.
 --
+-- `language` and `language_kind` link the source to its language (see
+-- languages.lua): kind "language" (the language's own reference), "package"
+-- or "tool" (no language). A record without `language_kind` is Unknown.
+-- The link is decided at install, or assigned by the user to an Unknown
+-- source, and is then final until the source is reinstalled. Records written
+-- before languages were tracked are linked by the same rules when read.
+--
 -- An installed source is compared with the current catalogue entry:
 --   current      same release and same build
 --   release      the catalogue has a different release (e.g. 9.14.0 -> 9.14.1)
@@ -28,14 +35,45 @@ local function present(value)
   return value
 end
 
-function M.record(entry, now)
-  return {
+--- The language link of an installed source, decided by languages.resolve.
+---@param slug string
+---@param origin string
+---@param declared? string the language its source declares
+local function resolve_language(slug, origin, declared)
+  return require("apidocs.languages").resolve(slug, { devdocs = origin == M.devdocs_origin, declared = declared })
+end
+
+local function with_language(record, link)
+  record.language = link and link.language or nil
+  record.language_kind = link and link.kind or nil
+  return record
+end
+
+--- `entry` is the catalogue entry; `slug` (the installed folder) lets the
+--- record carry the source's language link.
+function M.record(entry, now, slug)
+  local record = {
     version = present(entry.version),
     release = present(entry.release),
     mtime = present(entry.mtime),
     installed_at = now,
     origin = M.origin(entry),
   }
+  if slug then
+    with_language(record, resolve_language(slug, record.origin, present(entry.language)))
+  end
+  return record
+end
+
+--- The language link a record holds, or the one its source would get today
+--- when the record predates language tracking. Nil means Unknown.
+---@param slug string
+---@param record? table
+function M.language_link(slug, record)
+  if record and record.language_kind then
+    return { kind = record.language_kind, language = record.language }
+  end
+  return resolve_language(slug, M.installed_origin(record))
 end
 
 function M.status(record, entry)
@@ -71,6 +109,11 @@ function M.backfill(manifest, installed, catalogue, dir_mtimes)
       result[slug] = M.record(entry, dir_mtime)
     else
       result[slug] = { installed_at = dir_mtime }
+    end
+    -- An Unknown source is linked again on every refresh, so adding a
+    -- language to the user's list can make it known; a link once made stays.
+    if not result[slug].language_kind then
+      with_language(result[slug], M.language_link(slug, result[slug]))
     end
   end
   return result
@@ -170,10 +213,48 @@ function M.installed_origins(installed)
   return origins
 end
 
+--- The language link of every installed source, by slug; Unknown sources are
+--- absent.
+---@param installed string[]
+---@return table<string, { kind: string, language?: string }>
+function M.installed_languages(installed)
+  local manifest = M.read(manifest_path())
+  local links = {}
+  for _, slug in ipairs(installed) do
+    links[slug] = M.language_link(slug, manifest[slug])
+  end
+  return links
+end
+
+--- Give an Unknown installed source a language from the user's list.
+---@param slug string
+---@param language string
+---@return boolean ok, string? why
+function M.assign_language(slug, language)
+  if vim.fn.isdirectory(require("apidocs.common").data_folder() .. slug) ~= 1 then
+    return false, slug .. " is not installed"
+  end
+  local path = manifest_path()
+  local manifest = M.read(path)
+  local current = M.language_link(slug, manifest[slug])
+  if current then
+    return false,
+      slug .. " is already linked to " .. require("apidocs.languages").label(current)
+        .. "; reinstall it to change that"
+  end
+  local link, why = require("apidocs.languages").for_assignment(slug, language)
+  if not link then
+    return false, why
+  end
+  manifest[slug] = with_language(manifest[slug] or { installed_at = os.time() }, link)
+  M.write(path, manifest)
+  return true
+end
+
 function M.mark_installed(slug, entry)
   local path = manifest_path()
   local manifest = M.read(path)
-  manifest[slug] = M.record(entry, os.time())
+  manifest[slug] = M.record(entry, os.time(), slug)
   M.write(path, manifest)
 end
 
