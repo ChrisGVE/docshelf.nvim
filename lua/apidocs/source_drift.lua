@@ -4,14 +4,13 @@
 -- or retires a source. This module compares it with the catalogue
 -- (https://devdocs.io/docs.json) and PROPOSES rows; it never writes the table.
 -- A proposal is seeded from the source's GitHub repository language, which is
--- what the program is written in (git: C), so every proposal needs a person.
+-- what the program is written in (git: C), so every proposal needs a person;
+-- without one, the source's own name is proposed, as for a tool.
 -- A row that exists but is wrong cannot be detected here.
 --
 -- Driven by scripts/check_source_languages.lua; tested offline by
 -- tests/source_drift_spec.lua.
 local M = {}
-
-local kinds = { language = true, package = true, tool = true }
 
 --- Collapse catalogue entries into families (the slug before "~").
 ---@param catalogue table[] docs.json entries
@@ -69,38 +68,38 @@ end
 function M.proposal(missing, repo_language)
   if repo_language then
     return string.format(
-      '  ["%s"] = { kind = "package", language = "%s" }, -- %s -- PROPOSED from repo language, check kind and language',
+      '  ["%s"] = { language = "%s" }, -- %s -- PROPOSED from repo language, check it',
       missing.family,
       repo_language,
       missing.name
     )
   end
   return string.format(
-    '  ["%s"] = { kind = "tool", language = nil }, -- %s -- PROPOSED, no repo language found, classify by hand',
+    '  ["%s"] = { language = "%s" }, -- %s -- PROPOSED, no repo language found, check it',
     missing.family,
+    missing.name,
     missing.name
   )
 end
 
 --- Rows that break the table's own rules, one message each, sorted by family.
 ---@param table_ table<string, table> source_languages.lua
----@param linguist table<string, table> linguist_languages.lua
 ---@return string[]
-function M.row_errors(table_, linguist)
+function M.row_errors(table_)
   local families = vim.tbl_keys(table_)
   table.sort(families)
   local errors = {}
   for _, family in ipairs(families) do
     local row = table_[family]
     local message
-    if not kinds[row.kind] then
-      message = string.format('kind "%s" is not language, package or tool', tostring(row.kind))
-    elseif row.kind == "tool" and row.language then
-      message = "a tool row must not name a language"
-    elseif row.kind ~= "tool" and not row.language then
-      message = string.format("a %s row needs a language", row.kind)
-    elseif row.language and not linguist[row.language] then
-      message = string.format('language "%s" is not a Linguist language', row.language)
+    if type(row.language) ~= "string" or row.language:match("^%s*$") then
+      message = "a row needs a language"
+    else
+      for field in pairs(row) do
+        if field ~= "language" then
+          message = string.format('unexpected field "%s"', tostring(field))
+        end
+      end
     end
     if message then
       errors[#errors + 1] = family .. ": " .. message

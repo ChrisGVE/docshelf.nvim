@@ -9,12 +9,14 @@
 -- install time; `installed_at` is os.time(). A record with no `mtime` belongs
 -- to a source installed before metadata was tracked.
 --
--- `language` and `language_kind` link the source to its language (see
--- languages.lua): kind "language" (the language's own reference), "package"
--- or "tool" (no language). A record without `language_kind` is Unknown.
--- The link is decided at install, or assigned by the user to an Unknown
--- source, and is then final until the source is reinstalled. Records written
--- before languages were tracked are linked by the same rules when read.
+-- `language` links the source to its language (see languages.lua); a record
+-- without one is Unknown. `language_kind` says whether the source is that
+-- language's own reference ("language") or not ("package"); it is derived
+-- from the language's aliases and recomputed on every refresh. The language
+-- is decided at install; an Unknown source is tried again on every refresh.
+-- `language_assigned` marks a language the user chose: it is kept when the
+-- source is refreshed or reinstalled. Records written before languages were
+-- tracked are linked by the same rules when read.
 --
 -- An installed source is compared with the current catalogue entry:
 --   current      same release and same build
@@ -43,9 +45,10 @@ local function resolve_language(slug, origin, declared)
   return require("apidocs.languages").resolve(slug, { devdocs = origin == M.devdocs_origin, declared = declared })
 end
 
-local function with_language(record, link)
+local function with_language(record, link, assigned)
   record.language = link and link.language or nil
   record.language_kind = link and link.kind or nil
+  record.language_assigned = assigned or nil
   return record
 end
 
@@ -70,8 +73,8 @@ end
 ---@param slug string
 ---@param record? table
 function M.language_link(slug, record)
-  if record and record.language_kind then
-    return { kind = record.language_kind, language = record.language }
+  if record and record.language then
+    return require("apidocs.languages").link(slug, record.language)
   end
   return resolve_language(slug, M.installed_origin(record))
 end
@@ -111,10 +114,10 @@ function M.backfill(manifest, installed, catalogue, dir_mtimes)
       result[slug] = { installed_at = dir_mtime }
     end
     -- An Unknown source is linked again on every refresh, so adding a
-    -- language to the user's list can make it known; a link once made stays.
-    if not result[slug].language_kind then
-      with_language(result[slug], M.language_link(slug, result[slug]))
-    end
+    -- language to the user's list can make it known; a language once found
+    -- stays, and its kind follows the current aliases.
+    local record = result[slug]
+    with_language(record, M.language_link(slug, record), record.language_assigned)
   end
   return result
 end
@@ -226,7 +229,8 @@ function M.installed_languages(installed)
   return links
 end
 
---- Give an Unknown installed source a language from the user's list.
+--- Give an installed source a language from the user's list, replacing the
+--- one it had. The choice is kept across refreshes and reinstalls.
 ---@param slug string
 ---@param language string
 ---@return boolean ok, string? why
@@ -236,17 +240,11 @@ function M.assign_language(slug, language)
   end
   local path = manifest_path()
   local manifest = M.read(path)
-  local current = M.language_link(slug, manifest[slug])
-  if current then
-    return false,
-      slug .. " is already linked to " .. require("apidocs.languages").label(current)
-        .. "; reinstall it to change that"
-  end
   local link, why = require("apidocs.languages").for_assignment(slug, language)
   if not link then
     return false, why
   end
-  manifest[slug] = with_language(manifest[slug] or { installed_at = os.time() }, link)
+  manifest[slug] = with_language(manifest[slug] or { installed_at = os.time() }, link, true)
   M.write(path, manifest)
   return true
 end
@@ -254,7 +252,11 @@ end
 function M.mark_installed(slug, entry)
   local path = manifest_path()
   local manifest = M.read(path)
+  local previous = manifest[slug]
   manifest[slug] = M.record(entry, os.time(), slug)
+  if previous and previous.language_assigned then
+    with_language(manifest[slug], M.language_link(slug, previous), true)
+  end
   M.write(path, manifest)
 end
 

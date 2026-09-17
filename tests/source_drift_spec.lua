@@ -31,9 +31,9 @@ local catalogue = {
 }
 
 local table_ = {
-  python = { kind = "language", language = "Python" },
-  git = { kind = "tool" },
-  scala = { kind = "language", language = "Scala" },
+  python = { language = "Python" },
+  git = { language = "Git" },
+  scala = { language = "Scala" },
 }
 
 -- families ---------------------------------------------------------------------
@@ -64,8 +64,8 @@ end)
 
 test("a table matching the catalogue reports nothing", function()
   local full = vim.tbl_extend("force", table_, {
-    numpy = { kind = "package", language = "Python" },
-    zig = { kind = "language", language = "Zig" },
+    numpy = { language = "Python" },
+    zig = { language = "Zig" },
   })
   full.scala = nil
   eq(drift.check(catalogue, full), { missing = {}, gone = {} })
@@ -89,28 +89,26 @@ end)
 test("a proposal names the repository language and says it is unchecked", function()
   eq(
     drift.proposal({ family = "numpy", name = "NumPy" }, "Python"),
-    '  ["numpy"] = { kind = "package", language = "Python" }, -- NumPy -- PROPOSED from repo language, check kind and language'
+    '  ["numpy"] = { language = "Python" }, -- NumPy -- PROPOSED from repo language, check it'
   )
 end)
 
-test("a proposal without a repository language is a tool placeholder", function()
+test("a proposal without a repository language names the source itself", function()
   eq(
     drift.proposal({ family = "zig", name = "Zig" }, nil),
-    '  ["zig"] = { kind = "tool", language = nil }, -- Zig -- PROPOSED, no repo language found, classify by hand'
+    '  ["zig"] = { language = "Zig" }, -- Zig -- PROPOSED, no repo language found, check it'
   )
 end)
 
 -- row_errors -------------------------------------------------------------------
 
-local linguist = { Python = {}, Lua = {} }
-
 test("well-formed rows have no errors", function()
   eq(
     drift.row_errors({
-      python = { kind = "language", language = "Python" },
-      love = { kind = "package", language = "Lua" },
-      git = { kind = "tool" },
-    }, linguist),
+      python = { language = "Python" },
+      love = { language = "Lua" },
+      git = { language = "Git" },
+    }),
     {}
   )
 end)
@@ -118,16 +116,14 @@ end)
 test("malformed rows are each reported once, sorted by family", function()
   eq(
     drift.row_errors({
-      a = { kind = "librery", language = "Python" },
-      b = { kind = "package", language = "Pyhton" },
-      c = { kind = "language" },
-      d = { kind = "tool", language = "Lua" },
-    }, linguist),
+      a = { kind = "package", language = "Python" },
+      b = { language = "  " },
+      c = {},
+    }),
     {
-      'a: kind "librery" is not language, package or tool',
-      'b: language "Pyhton" is not a Linguist language',
-      "c: a language row needs a language",
-      "d: a tool row must not name a language",
+      'a: unexpected field "kind"',
+      "b: a row needs a language",
+      "c: a row needs a language",
     }
   )
 end)
@@ -135,7 +131,7 @@ end)
 -- the real table ---------------------------------------------------------------
 
 test("every row of source_languages.lua is well formed", function()
-  eq(drift.row_errors(require("apidocs.source_languages"), require("apidocs.linguist_languages")), {})
+  eq(drift.row_errors(require("apidocs.source_languages")), {})
 end)
 
 print(failures == 0 and "all passed" or (failures .. " failed"))

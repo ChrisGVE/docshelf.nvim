@@ -35,7 +35,7 @@ end)
 test("record links the installed source to its language", function()
   eq(metadata.record(catalogue_entry, 500, "haskell~9").language, "Haskell")
   eq(metadata.record(catalogue_entry, 500, "haskell~9").language_kind, "language")
-  eq(metadata.record({ slug = "git" }, 500, "git").language_kind, "tool")
+  eq({ metadata.record({ slug = "git" }, 500, "git").language, metadata.record({ slug = "git" }, 500, "git").language_kind }, { "Git", "language" })
 end)
 
 test("a source's declared language wins over the shipped table", function()
@@ -112,14 +112,16 @@ test("backfill never overwrites an existing record, only links its language", fu
   eq(manifest["haskell~9"], { release = "9.14.0", mtime = 1, installed_at = 2, language = "Haskell", language_kind = "language" })
 end)
 
-test("backfill links an Unknown record again, and keeps a made link", function()
+test("backfill links an Unknown record again, keeps a found language and updates its kind", function()
   local existing = {
     ["mystery"] = { installed_at = 1 },
     ["numpy~2.5"] = { installed_at = 1, language = "Rust", language_kind = "package" },
+    ["openjdk~21"] = { installed_at = 1, language = "Java", language_kind = "package" },
   }
-  local manifest = metadata.backfill(existing, { "mystery", "numpy~2.5" }, {}, {})
+  local manifest = metadata.backfill(existing, { "mystery", "numpy~2.5", "openjdk~21" }, {}, {})
   eq(manifest["mystery"], { installed_at = 1 })
   eq(manifest["numpy~2.5"].language, "Rust")
+  eq(manifest["openjdk~21"].language_kind, "language")
 end)
 
 test("backfill drops records whose folder is gone", function()
@@ -220,23 +222,39 @@ require("apidocs.common").data_folder = function()
   return scratch
 end
 
-test("an Unknown source can be assigned a language once", function()
-  eq({ metadata.assign_language("pycairo", "python") }, { true })
+test("an Unknown source can be given a language, by name or alias", function()
+  eq({ metadata.assign_language("pycairo", "py") }, { true })
   eq(metadata.installed_languages({ "pycairo" })["pycairo"], { kind = "package", language = "Python" })
-  local ok, why = metadata.assign_language("pycairo", "Rust")
-  eq(ok, false)
-  eq(why, "pycairo is already linked to Python; reinstall it to change that")
 end)
 
-test("a source with a known language cannot be assigned", function()
-  eq(metadata.assign_language("python~3.14", "Rust"),
-    false)
+test("any source's language can be changed, again and again", function()
+  eq({ metadata.assign_language("pycairo", "Rust") }, { true })
+  eq(metadata.installed_languages({ "pycairo" })["pycairo"], { kind = "package", language = "Rust" })
+  eq({ metadata.assign_language("python~3.14", "Go") }, { true })
+  eq(metadata.installed_languages({ "python~3.14" })["python~3.14"], { kind = "package", language = "Go" })
+  eq({ metadata.assign_language("python~3.14", "Python") }, { true })
+  eq(metadata.installed_languages({ "python~3.14" })["python~3.14"], { kind = "language", language = "Python" })
 end)
 
-test("only a language from the configured list can be assigned", function()
+test("only a name from the configured lists can be given", function()
   local ok, why = metadata.assign_language("mystery", "Haskell")
   eq(ok, false)
-  eq(why, '"Haskell" is not in the configured language list')
+  eq(why, '"Haskell" is not in the configured list')
+end)
+
+test("a user's choice survives a refresh and a reinstall", function()
+  eq({ metadata.assign_language("mystery", "Git") }, { true })
+  local manifest = metadata.backfill(
+    metadata.read(scratch .. metadata.manifest_name), { "mystery" }, {}, { mystery = 1 })
+  eq({ manifest.mystery.language, manifest.mystery.language_assigned }, { "Git", true })
+  metadata.write(scratch .. metadata.manifest_name, manifest)
+  -- a reinstall writes a fresh record from the catalogue, where the table would say otherwise
+  metadata.mark_installed("python~3.14", { slug = "python~3.14", release = "3.14.7", mtime = 5 })
+  eq(metadata.installed_languages({ "python~3.14" })["python~3.14"].language, "Python")
+  eq({ metadata.assign_language("python~3.14", "Rust") }, { true })
+  metadata.mark_installed("python~3.14", { slug = "python~3.14", release = "3.14.8", mtime = 6 })
+  local record = metadata.read(scratch .. metadata.manifest_name)["python~3.14"]
+  eq({ record.release, record.language, record.language_assigned }, { "3.14.8", "Rust", true })
 end)
 
 test("a source that is not installed cannot be assigned", function()
@@ -244,8 +262,9 @@ test("a source that is not installed cannot be assigned", function()
 end)
 
 test("installed_languages leaves Unknown sources out", function()
-  local links = metadata.installed_languages({ "mystery", "python~3.14" })
-  eq(links["mystery"], nil)
+  vim.fn.delete(scratch .. metadata.manifest_name)
+  local links = metadata.installed_languages({ "pycairo", "python~3.14" })
+  eq(links["pycairo"], nil)
   eq(links["python~3.14"], { kind = "language", language = "Python" })
 end)
 

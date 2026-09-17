@@ -35,7 +35,7 @@ end
 
 local catalogue = vim.json.decode(fetched.stdout)
 local result = drift.check(catalogue, require("apidocs.source_languages"))
-local errors = drift.row_errors(require("apidocs.source_languages"), require("apidocs.linguist_languages"))
+local errors = drift.row_errors(require("apidocs.source_languages"))
 
 if #result.missing > 0 then
   print(#result.missing .. " families missing from source_languages.lua; proposed rows:")

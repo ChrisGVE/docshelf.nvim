@@ -1,259 +1,260 @@
 -- Which language each devdocs source belongs to. Hand-maintained: this table
 -- is the source of truth, not a detector.
 --
--- Keyed by source family (the slug before "~": python~3.14 -> python).
---   language  the source documents the language itself (python, lua, rust)
---   package   a library or framework of that language (numpy, tokio)
---   tool      a program or service; no language link (git, redis, docker)
--- A language name is a key of linguist_languages.lua.
+-- Keyed by source family (the slug before "~": python~3.14 -> python). The
+-- value names the language the source documents or belongs to. A tool is its
+-- own language (git is Git, docker is Docker). Whether a source is the
+-- language's own reference or a package of it is not stored here: it is
+-- derived by the name rule in languages.lua (python, openjdk -> reference;
+-- numpy -> package).
 --
 -- Seeded 2026-09-15 from each source's GitHub repository language and a name
 -- match against Linguist, then corrected by hand: a repository's language is
 -- what the program is written in (git: C), not what its documentation is for.
 -- Families devdocs adds later are simply absent, and so unlinked.
 return {
-  ["angular"] = { kind = "package", language = "TypeScript" }, -- Angular
-  ["angularjs"] = { kind = "package", language = "JavaScript" }, -- Angular.js
-  ["ansible"] = { kind = "tool", language = nil }, -- Ansible
-  ["apache_http_server"] = { kind = "tool", language = nil }, -- Apache HTTP Server
-  ["apache_pig"] = { kind = "package", language = "PigLatin" }, -- Apache Pig
-  ["astro"] = { kind = "language", language = "Astro" }, -- Astro
-  ["async"] = { kind = "package", language = "JavaScript" }, -- Async
-  ["axios"] = { kind = "package", language = "JavaScript" }, -- Axios
-  ["babel"] = { kind = "package", language = "TypeScript" }, -- Babel
-  ["backbone"] = { kind = "package", language = "JavaScript" }, -- Backbone.js
-  ["bash"] = { kind = "language", language = "Shell" }, -- Bash
-  ["bazel"] = { kind = "tool", language = nil }, -- Bazel
-  ["bluebird"] = { kind = "package", language = "JavaScript" }, -- Bluebird
-  ["bootstrap"] = { kind = "package", language = "CSS" }, -- Bootstrap
-  ["bottle"] = { kind = "package", language = "Python" }, -- Bottle
-  ["bower"] = { kind = "tool", language = nil }, -- Bower
-  ["browser_support_tables"] = { kind = "tool", language = nil }, -- Support Tables
-  ["bun"] = { kind = "package", language = "JavaScript" }, -- Bun
-  ["c"] = { kind = "language", language = "C" }, -- C
-  ["cakephp"] = { kind = "package", language = "PHP" }, -- CakePHP
-  ["celery"] = { kind = "package", language = "Python" }, -- Celery
-  ["chai"] = { kind = "package", language = "JavaScript" }, -- Chai
-  ["chef"] = { kind = "tool", language = nil }, -- Chef
-  ["click"] = { kind = "package", language = "Python" }, -- click
-  ["clojure"] = { kind = "language", language = "Clojure" }, -- Clojure
-  ["cmake"] = { kind = "tool", language = nil }, -- CMake
-  ["codeception"] = { kind = "package", language = "PHP" }, -- Codeception
-  ["codeceptjs"] = { kind = "package", language = "JavaScript" }, -- CodeceptJS
-  ["codeigniter"] = { kind = "package", language = "PHP" }, -- CodeIgniter
-  ["coffeescript"] = { kind = "language", language = "CoffeeScript" }, -- CoffeeScript
-  ["coldfusion"] = { kind = "language", language = "ColdFusion" }, -- ColdFusion
-  ["composer"] = { kind = "package", language = "PHP" }, -- Composer
-  ["cordova"] = { kind = "package", language = "JavaScript" }, -- Cordova
-  ["couchdb"] = { kind = "tool", language = nil }, -- CouchDB
-  ["cpp"] = { kind = "language", language = "C++" }, -- C++
-  ["crystal"] = { kind = "language", language = "Crystal" }, -- Crystal
-  ["css"] = { kind = "language", language = "CSS" }, -- CSS
-  ["cyclejs"] = { kind = "package", language = "TypeScript" }, -- Cycle.js
-  ["cypress"] = { kind = "package", language = "TypeScript" }, -- Cypress
-  ["d"] = { kind = "language", language = "D" }, -- D
-  ["d3"] = { kind = "package", language = "JavaScript" }, -- D3.js
-  ["dart"] = { kind = "language", language = "Dart" }, -- Dart
-  ["date_fns"] = { kind = "package", language = "TypeScript" }, -- date-fns
-  ["deno"] = { kind = "package", language = "TypeScript" }, -- Deno
-  ["django"] = { kind = "package", language = "Python" }, -- Django
-  ["django_rest_framework"] = { kind = "package", language = "Python" }, -- Django REST Framework
-  ["docker"] = { kind = "tool", language = nil }, -- Docker
-  ["dojo"] = { kind = "package", language = "JavaScript" }, -- Dojo
-  ["dom"] = { kind = "package", language = "JavaScript" }, -- Web APIs
-  ["drupal"] = { kind = "package", language = "PHP" }, -- Drupal
-  ["duckdb"] = { kind = "package", language = "SQL" }, -- DuckDB
-  ["eigen3"] = { kind = "package", language = "C++" }, -- Eigen3
-  ["electron"] = { kind = "package", language = "JavaScript" }, -- Electron
-  ["elisp"] = { kind = "language", language = "Emacs Lisp" }, -- Elisp
-  ["elixir"] = { kind = "language", language = "Elixir" }, -- Elixir
-  ["ember"] = { kind = "package", language = "TypeScript" }, -- Ember.js
-  ["enzyme"] = { kind = "package", language = "JavaScript" }, -- Enzyme
-  ["erlang"] = { kind = "language", language = "Erlang" }, -- Erlang
-  ["es_toolkit"] = { kind = "package", language = "TypeScript" }, -- es-toolkit
-  ["esbuild"] = { kind = "package", language = "JavaScript" }, -- esbuild
-  ["eslint"] = { kind = "package", language = "JavaScript" }, -- ESLint
-  ["express"] = { kind = "package", language = "JavaScript" }, -- Express
-  ["falcon"] = { kind = "package", language = "Python" }, -- Falcon
-  ["fastapi"] = { kind = "package", language = "Python" }, -- FastAPI
-  ["fish"] = { kind = "language", language = "fish" }, -- Fish
-  ["flask"] = { kind = "package", language = "Python" }, -- Flask
-  ["flow"] = { kind = "package", language = "JavaScript" }, -- Flow
-  ["fluture"] = { kind = "package", language = "JavaScript" }, -- Fluture
-  ["gcc"] = { kind = "package", language = "C" }, -- GCC
-  ["git"] = { kind = "tool", language = nil }, -- Git
-  ["gnu_cobol"] = { kind = "language", language = "COBOL" }, -- GnuCOBOL
-  ["gnu_fortran"] = { kind = "language", language = "Fortran" }, -- GNU Fortran
-  ["gnu_make"] = { kind = "tool", language = nil }, -- GNU Make
-  ["gnuplot"] = { kind = "tool", language = nil }, -- Gnuplot
-  ["go"] = { kind = "language", language = "Go" }, -- Go
-  ["godot"] = { kind = "tool", language = nil }, -- Godot
-  ["graphite"] = { kind = "tool", language = nil }, -- Graphite
-  ["graphviz"] = { kind = "tool", language = nil }, -- Graphviz
-  ["groovy"] = { kind = "language", language = "Groovy" }, -- Groovy
-  ["grunt"] = { kind = "package", language = "JavaScript" }, -- Grunt
-  ["gtk"] = { kind = "package", language = "C" }, -- GTK
-  ["hammerspoon"] = { kind = "package", language = "Lua" }, -- Hammerspoon
-  ["handlebars"] = { kind = "language", language = "Handlebars" }, -- Handlebars.js
-  ["hapi"] = { kind = "package", language = "JavaScript" }, -- Hapi
-  ["haproxy"] = { kind = "tool", language = nil }, -- HAProxy
-  ["haskell"] = { kind = "language", language = "Haskell" }, -- Haskell
-  ["haxe"] = { kind = "language", language = "Haxe" }, -- Haxe
-  ["homebrew"] = { kind = "tool", language = nil }, -- Homebrew
-  ["html"] = { kind = "language", language = "HTML" }, -- HTML
-  ["htmx"] = { kind = "package", language = "JavaScript" }, -- htmx
-  ["http"] = { kind = "tool", language = nil }, -- HTTP
-  ["i3"] = { kind = "tool", language = nil }, -- i3
-  ["immutable"] = { kind = "package", language = "TypeScript" }, -- Immutable.js
-  ["influxdata"] = { kind = "tool", language = nil }, -- InfluxData
-  ["jasmine"] = { kind = "package", language = "JavaScript" }, -- Jasmine
-  ["javascript"] = { kind = "language", language = "JavaScript" }, -- JavaScript
-  ["jekyll"] = { kind = "package", language = "Ruby" }, -- Jekyll
-  ["jest"] = { kind = "package", language = "TypeScript" }, -- Jest
-  ["jinja"] = { kind = "language", language = "Jinja" }, -- Jinja
-  ["joi"] = { kind = "package", language = "JavaScript" }, -- Joi
-  ["jq"] = { kind = "tool", language = nil }, -- jq
-  ["jquery"] = { kind = "package", language = "JavaScript" }, -- jQuery
-  ["jquerymobile"] = { kind = "package", language = "JavaScript" }, -- jQuery Mobile
-  ["jqueryui"] = { kind = "package", language = "JavaScript" }, -- jQuery UI
-  ["jsdoc"] = { kind = "package", language = "JavaScript" }, -- JSDoc
-  ["julia"] = { kind = "language", language = "Julia" }, -- Julia
-  ["knockout"] = { kind = "package", language = "JavaScript" }, -- Knockout.js
-  ["koa"] = { kind = "package", language = "JavaScript" }, -- Koa
-  ["kotlin"] = { kind = "language", language = "Kotlin" }, -- Kotlin
-  ["kubectl"] = { kind = "tool", language = nil }, -- Kubectl
-  ["kubernetes"] = { kind = "tool", language = nil }, -- Kubernetes
-  ["laravel"] = { kind = "package", language = "PHP" }, -- Laravel
-  ["latex"] = { kind = "language", language = "TeX" }, -- LaTeX
-  ["leaflet"] = { kind = "package", language = "JavaScript" }, -- Leaflet
-  ["less"] = { kind = "language", language = "Less" }, -- Less
-  ["liquid"] = { kind = "language", language = "Liquid" }, -- Liquid
-  ["lit"] = { kind = "package", language = "TypeScript" }, -- Lit
-  ["lodash"] = { kind = "package", language = "JavaScript" }, -- lodash
-  ["love"] = { kind = "package", language = "Lua" }, -- LÖVE
-  ["lua"] = { kind = "language", language = "Lua" }, -- Lua
-  ["man"] = { kind = "tool", language = nil }, -- Linux man pages
-  ["maplibre_gl"] = { kind = "package", language = "TypeScript" }, -- MapLibre GL JS
-  ["mariadb"] = { kind = "package", language = "SQL" }, -- MariaDB
-  ["marionette"] = { kind = "package", language = "JavaScript" }, -- Marionette.js
-  ["markdown"] = { kind = "language", language = "Markdown" }, -- Markdown
-  ["matplotlib"] = { kind = "package", language = "Python" }, -- Matplotlib
-  ["meteor"] = { kind = "package", language = "JavaScript" }, -- Meteor
-  ["minitest"] = { kind = "package", language = "Ruby" }, -- Ruby / Minitest
-  ["mocha"] = { kind = "package", language = "JavaScript" }, -- Mocha
-  ["modernizr"] = { kind = "package", language = "JavaScript" }, -- Modernizr
-  ["moment"] = { kind = "package", language = "JavaScript" }, -- Moment.js
-  ["moment_timezone"] = { kind = "package", language = "JavaScript" }, -- Moment.js Timezone
-  ["mongoose"] = { kind = "package", language = "JavaScript" }, -- Mongoose
-  ["nextjs"] = { kind = "package", language = "JavaScript" }, -- Next.js
-  ["nginx"] = { kind = "tool", language = nil }, -- nginx
-  ["nginx_lua_module"] = { kind = "package", language = "Lua" }, -- nginx / Lua Module
-  ["nim"] = { kind = "language", language = "Nim" }, -- Nim
-  ["nix"] = { kind = "language", language = "Nix" }, -- Nix
-  ["node"] = { kind = "package", language = "JavaScript" }, -- Node.js
-  ["nokogiri"] = { kind = "package", language = "Ruby" }, -- Nokogiri
-  ["npm"] = { kind = "package", language = "JavaScript" }, -- npm
-  ["numpy"] = { kind = "package", language = "Python" }, -- NumPy
-  ["nushell"] = { kind = "language", language = "Nushell" }, -- Nushell
-  ["ocaml"] = { kind = "language", language = "OCaml" }, -- OCaml
-  ["octave"] = { kind = "language", language = "MATLAB" }, -- Octave
-  ["odin"] = { kind = "language", language = "Odin" }, -- Odin
-  ["opengl"] = { kind = "package", language = "C" }, -- OpenGL
-  ["openjdk"] = { kind = "language", language = "Java" }, -- OpenJDK
-  ["openlayers"] = { kind = "package", language = "JavaScript" }, -- OpenLayers
-  ["opentofu"] = { kind = "language", language = "HCL" }, -- OpenTofu
-  ["opentsdb"] = { kind = "tool", language = nil }, -- OpenTSDB
-  ["padrino"] = { kind = "package", language = "Ruby" }, -- Padrino
-  ["pandas"] = { kind = "package", language = "Python" }, -- pandas
-  ["perl"] = { kind = "language", language = "Perl" }, -- Perl
-  ["phalcon"] = { kind = "package", language = "PHP" }, -- Phalcon
-  ["phaser"] = { kind = "package", language = "JavaScript" }, -- Phaser
-  ["phoenix"] = { kind = "package", language = "Elixir" }, -- Phoenix
-  ["php"] = { kind = "language", language = "PHP" }, -- PHP
-  ["phpunit"] = { kind = "package", language = "PHP" }, -- PHPUnit
-  ["playwright"] = { kind = "package", language = "TypeScript" }, -- Playwright
-  ["point_cloud_library"] = { kind = "package", language = "C++" }, -- PointCloudLibrary
-  ["polars"] = { kind = "package", language = "Python" }, -- Polars
-  ["pony"] = { kind = "language", language = "Pony" }, -- Pony
-  ["postgresql"] = { kind = "language", language = "SQL" }, -- PostgreSQL
-  ["powershell"] = { kind = "language", language = "PowerShell" }, -- PowerShell
-  ["prettier"] = { kind = "package", language = "JavaScript" }, -- Prettier
-  ["pug"] = { kind = "language", language = "Pug" }, -- Pug
-  ["puppeteer"] = { kind = "package", language = "TypeScript" }, -- Puppeteer
-  ["pygame"] = { kind = "package", language = "Python" }, -- Pygame
-  ["pytest"] = { kind = "package", language = "Python" }, -- pytest
-  ["python"] = { kind = "language", language = "Python" }, -- Python
-  ["pytorch"] = { kind = "package", language = "Python" }, -- PyTorch
-  ["q"] = { kind = "language", language = "q" }, -- Q
-  ["qt"] = { kind = "package", language = "C++" }, -- Qt
-  ["qunit"] = { kind = "package", language = "JavaScript" }, -- QUnit
-  ["r"] = { kind = "language", language = "R" }, -- R
-  ["rabbitmq"] = { kind = "tool", language = nil }, -- RabbitMQ
-  ["rack"] = { kind = "package", language = "Ruby" }, -- Ruby / Rack
-  ["rails"] = { kind = "package", language = "Ruby" }, -- Ruby on Rails
-  ["ramda"] = { kind = "package", language = "JavaScript" }, -- Ramda
-  ["react"] = { kind = "package", language = "JavaScript" }, -- React
-  ["react_bootstrap"] = { kind = "package", language = "TypeScript" }, -- React Bootstrap
-  ["react_native"] = { kind = "package", language = "JavaScript" }, -- React Native
-  ["react_router"] = { kind = "package", language = "TypeScript" }, -- React Router
-  ["reactivex"] = { kind = "package", language = "JavaScript" }, -- ReactiveX
-  ["redis"] = { kind = "tool", language = nil }, -- Redis
-  ["redux"] = { kind = "package", language = "TypeScript" }, -- Redux
-  ["relay"] = { kind = "package", language = "JavaScript" }, -- Relay
-  ["requests"] = { kind = "package", language = "Python" }, -- Requests
-  ["requirejs"] = { kind = "package", language = "JavaScript" }, -- RequireJS
-  ["rethinkdb"] = { kind = "tool", language = nil }, -- RethinkDB
-  ["ruby"] = { kind = "language", language = "Ruby" }, -- Ruby
-  ["rust"] = { kind = "language", language = "Rust" }, -- Rust
-  ["rxjs"] = { kind = "package", language = "TypeScript" }, -- RxJS
-  ["saltstack"] = { kind = "tool", language = nil }, -- SaltStack
-  ["sanctuary"] = { kind = "package", language = "JavaScript" }, -- Sanctuary
-  ["sanctuary_def"] = { kind = "package", language = "JavaScript" }, -- Sanctuary Def
-  ["sanctuary_type_classes"] = { kind = "package", language = "JavaScript" }, -- Sanctuary Type Classes
-  ["sass"] = { kind = "language", language = "SCSS" }, -- Sass
-  ["scala"] = { kind = "language", language = "Scala" }, -- Scala
-  ["scikit_image"] = { kind = "package", language = "Python" }, -- scikit-image
-  ["scikit_learn"] = { kind = "package", language = "Python" }, -- scikit-learn
-  ["sequelize"] = { kind = "package", language = "TypeScript" }, -- Sequelize
-  ["sinon"] = { kind = "package", language = "JavaScript" }, -- Sinon.JS
-  ["socketio"] = { kind = "package", language = "TypeScript" }, -- Socket.IO
-  ["spring_boot"] = { kind = "package", language = "Java" }, -- Spring Boot
-  ["sqlite"] = { kind = "language", language = "SQL" }, -- SQLite
-  ["statsmodels"] = { kind = "package", language = "Python" }, -- Statsmodels
-  ["svelte"] = { kind = "language", language = "Svelte" }, -- Svelte
-  ["svg"] = { kind = "language", language = "SVG" }, -- SVG
-  ["symfony"] = { kind = "package", language = "PHP" }, -- Symfony
-  ["tailwindcss"] = { kind = "package", language = "CSS" }, -- Tailwind CSS
-  ["tcl_tk"] = { kind = "language", language = "Tcl" }, -- Tcl/Tk
-  ["tcllib"] = { kind = "package", language = "Tcl" }, -- Tcllib
-  ["tensorflow"] = { kind = "package", language = "Python" }, -- TensorFlow
-  ["tensorflow_cpp"] = { kind = "package", language = "C++" }, -- TensorFlow C++
-  ["terraform"] = { kind = "language", language = "HCL" }, -- Terraform
-  ["threejs"] = { kind = "package", language = "JavaScript" }, -- Three.js
-  ["tokio"] = { kind = "package", language = "Rust" }, -- Tokio
-  ["trio"] = { kind = "package", language = "Python" }, -- Trio
-  ["twig"] = { kind = "language", language = "Twig" }, -- Twig
-  ["typescript"] = { kind = "language", language = "TypeScript" }, -- TypeScript
-  ["underscore"] = { kind = "package", language = "JavaScript" }, -- Underscore.js
-  ["vagrant"] = { kind = "tool", language = nil }, -- Vagrant
-  ["valibot"] = { kind = "package", language = "TypeScript" }, -- Valibot
-  ["varnish"] = { kind = "tool", language = nil }, -- Varnish
-  ["vertx"] = { kind = "package", language = "Java" }, -- Vert.x
-  ["vite"] = { kind = "package", language = "TypeScript" }, -- Vite
-  ["vitest"] = { kind = "package", language = "TypeScript" }, -- Vitest
-  ["vue"] = { kind = "language", language = "Vue" }, -- Vue
-  ["vue_router"] = { kind = "package", language = "JavaScript" }, -- Vue Router
-  ["vueuse"] = { kind = "package", language = "TypeScript" }, -- VueUse
-  ["vuex"] = { kind = "package", language = "JavaScript" }, -- Vuex
-  ["vulkan"] = { kind = "package", language = "C" }, -- Vulkan
-  ["wagtail"] = { kind = "package", language = "Python" }, -- Wagtail
-  ["web_extensions"] = { kind = "package", language = "JavaScript" }, -- Web Extensions
-  ["webpack"] = { kind = "package", language = "JavaScript" }, -- webpack
-  ["werkzeug"] = { kind = "package", language = "Python" }, -- Werkzeug
-  ["wordpress"] = { kind = "package", language = "PHP" }, -- WordPress
-  ["xslt_xpath"] = { kind = "language", language = "XSLT" }, -- XSLT & XPath
-  ["yarn"] = { kind = "package", language = "JavaScript" }, -- Yarn
-  ["yii"] = { kind = "package", language = "PHP" }, -- Yii
-  ["zig"] = { kind = "language", language = "Zig" }, -- Zig
-  ["zsh"] = { kind = "language", language = "Shell" }, -- Zsh
+  ["angular"] = { language = "TypeScript" }, -- Angular
+  ["angularjs"] = { language = "JavaScript" }, -- Angular.js
+  ["ansible"] = { language = "Ansible" }, -- Ansible
+  ["apache_http_server"] = { language = "Apache HTTP Server" }, -- Apache HTTP Server
+  ["apache_pig"] = { language = "PigLatin" }, -- Apache Pig
+  ["astro"] = { language = "Astro" }, -- Astro
+  ["async"] = { language = "JavaScript" }, -- Async
+  ["axios"] = { language = "JavaScript" }, -- Axios
+  ["babel"] = { language = "TypeScript" }, -- Babel
+  ["backbone"] = { language = "JavaScript" }, -- Backbone.js
+  ["bash"] = { language = "Bash" }, -- Bash
+  ["bazel"] = { language = "Bazel" }, -- Bazel
+  ["bluebird"] = { language = "JavaScript" }, -- Bluebird
+  ["bootstrap"] = { language = "CSS" }, -- Bootstrap
+  ["bottle"] = { language = "Python" }, -- Bottle
+  ["bower"] = { language = "Bower" }, -- Bower
+  ["browser_support_tables"] = { language = "Browser Support Tables" }, -- Support Tables
+  ["bun"] = { language = "JavaScript" }, -- Bun
+  ["c"] = { language = "C" }, -- C
+  ["cakephp"] = { language = "PHP" }, -- CakePHP
+  ["celery"] = { language = "Python" }, -- Celery
+  ["chai"] = { language = "JavaScript" }, -- Chai
+  ["chef"] = { language = "Chef" }, -- Chef
+  ["click"] = { language = "Python" }, -- click
+  ["clojure"] = { language = "Clojure" }, -- Clojure
+  ["cmake"] = { language = "CMake" }, -- CMake
+  ["codeception"] = { language = "PHP" }, -- Codeception
+  ["codeceptjs"] = { language = "JavaScript" }, -- CodeceptJS
+  ["codeigniter"] = { language = "PHP" }, -- CodeIgniter
+  ["coffeescript"] = { language = "CoffeeScript" }, -- CoffeeScript
+  ["coldfusion"] = { language = "ColdFusion" }, -- ColdFusion
+  ["composer"] = { language = "PHP" }, -- Composer
+  ["cordova"] = { language = "JavaScript" }, -- Cordova
+  ["couchdb"] = { language = "CouchDB" }, -- CouchDB
+  ["cpp"] = { language = "C++" }, -- C++
+  ["crystal"] = { language = "Crystal" }, -- Crystal
+  ["css"] = { language = "CSS" }, -- CSS
+  ["cyclejs"] = { language = "TypeScript" }, -- Cycle.js
+  ["cypress"] = { language = "TypeScript" }, -- Cypress
+  ["d"] = { language = "D" }, -- D
+  ["d3"] = { language = "JavaScript" }, -- D3.js
+  ["dart"] = { language = "Dart" }, -- Dart
+  ["date_fns"] = { language = "TypeScript" }, -- date-fns
+  ["deno"] = { language = "TypeScript" }, -- Deno
+  ["django"] = { language = "Python" }, -- Django
+  ["django_rest_framework"] = { language = "Python" }, -- Django REST Framework
+  ["docker"] = { language = "Docker" }, -- Docker
+  ["dojo"] = { language = "JavaScript" }, -- Dojo
+  ["dom"] = { language = "JavaScript" }, -- Web APIs
+  ["drupal"] = { language = "PHP" }, -- Drupal
+  ["duckdb"] = { language = "SQL" }, -- DuckDB
+  ["eigen3"] = { language = "C++" }, -- Eigen3
+  ["electron"] = { language = "JavaScript" }, -- Electron
+  ["elisp"] = { language = "Emacs Lisp" }, -- Elisp
+  ["elixir"] = { language = "Elixir" }, -- Elixir
+  ["ember"] = { language = "TypeScript" }, -- Ember.js
+  ["enzyme"] = { language = "JavaScript" }, -- Enzyme
+  ["erlang"] = { language = "Erlang" }, -- Erlang
+  ["es_toolkit"] = { language = "TypeScript" }, -- es-toolkit
+  ["esbuild"] = { language = "JavaScript" }, -- esbuild
+  ["eslint"] = { language = "JavaScript" }, -- ESLint
+  ["express"] = { language = "JavaScript" }, -- Express
+  ["falcon"] = { language = "Python" }, -- Falcon
+  ["fastapi"] = { language = "Python" }, -- FastAPI
+  ["fish"] = { language = "Fish" }, -- Fish
+  ["flask"] = { language = "Python" }, -- Flask
+  ["flow"] = { language = "JavaScript" }, -- Flow
+  ["fluture"] = { language = "JavaScript" }, -- Fluture
+  ["gcc"] = { language = "C" }, -- GCC
+  ["git"] = { language = "Git" }, -- Git
+  ["gnu_cobol"] = { language = "COBOL" }, -- GnuCOBOL
+  ["gnu_fortran"] = { language = "Fortran" }, -- GNU Fortran
+  ["gnu_make"] = { language = "GNU Make" }, -- GNU Make
+  ["gnuplot"] = { language = "Gnuplot" }, -- Gnuplot
+  ["go"] = { language = "Go" }, -- Go
+  ["godot"] = { language = "Godot" }, -- Godot
+  ["graphite"] = { language = "Graphite" }, -- Graphite
+  ["graphviz"] = { language = "Graphviz" }, -- Graphviz
+  ["groovy"] = { language = "Groovy" }, -- Groovy
+  ["grunt"] = { language = "JavaScript" }, -- Grunt
+  ["gtk"] = { language = "C" }, -- GTK
+  ["hammerspoon"] = { language = "Lua" }, -- Hammerspoon
+  ["handlebars"] = { language = "Handlebars" }, -- Handlebars.js
+  ["hapi"] = { language = "JavaScript" }, -- Hapi
+  ["haproxy"] = { language = "HAProxy" }, -- HAProxy
+  ["haskell"] = { language = "Haskell" }, -- Haskell
+  ["haxe"] = { language = "Haxe" }, -- Haxe
+  ["homebrew"] = { language = "Homebrew" }, -- Homebrew
+  ["html"] = { language = "HTML" }, -- HTML
+  ["htmx"] = { language = "JavaScript" }, -- htmx
+  ["http"] = { language = "HTTP" }, -- HTTP
+  ["i3"] = { language = "i3" }, -- i3
+  ["immutable"] = { language = "TypeScript" }, -- Immutable.js
+  ["influxdata"] = { language = "InfluxData" }, -- InfluxData
+  ["jasmine"] = { language = "JavaScript" }, -- Jasmine
+  ["javascript"] = { language = "JavaScript" }, -- JavaScript
+  ["jekyll"] = { language = "Ruby" }, -- Jekyll
+  ["jest"] = { language = "TypeScript" }, -- Jest
+  ["jinja"] = { language = "Jinja" }, -- Jinja
+  ["joi"] = { language = "JavaScript" }, -- Joi
+  ["jq"] = { language = "jq" }, -- jq
+  ["jquery"] = { language = "JavaScript" }, -- jQuery
+  ["jquerymobile"] = { language = "JavaScript" }, -- jQuery Mobile
+  ["jqueryui"] = { language = "JavaScript" }, -- jQuery UI
+  ["jsdoc"] = { language = "JavaScript" }, -- JSDoc
+  ["julia"] = { language = "Julia" }, -- Julia
+  ["knockout"] = { language = "JavaScript" }, -- Knockout.js
+  ["koa"] = { language = "JavaScript" }, -- Koa
+  ["kotlin"] = { language = "Kotlin" }, -- Kotlin
+  ["kubectl"] = { language = "Kubectl" }, -- Kubectl
+  ["kubernetes"] = { language = "Kubernetes" }, -- Kubernetes
+  ["laravel"] = { language = "PHP" }, -- Laravel
+  ["latex"] = { language = "TeX" }, -- LaTeX
+  ["leaflet"] = { language = "JavaScript" }, -- Leaflet
+  ["less"] = { language = "Less" }, -- Less
+  ["liquid"] = { language = "Liquid" }, -- Liquid
+  ["lit"] = { language = "TypeScript" }, -- Lit
+  ["lodash"] = { language = "JavaScript" }, -- lodash
+  ["love"] = { language = "Lua" }, -- LÖVE
+  ["lua"] = { language = "Lua" }, -- Lua
+  ["man"] = { language = "Linux man pages" }, -- Linux man pages
+  ["maplibre_gl"] = { language = "TypeScript" }, -- MapLibre GL JS
+  ["mariadb"] = { language = "SQL" }, -- MariaDB
+  ["marionette"] = { language = "JavaScript" }, -- Marionette.js
+  ["markdown"] = { language = "Markdown" }, -- Markdown
+  ["matplotlib"] = { language = "Python" }, -- Matplotlib
+  ["meteor"] = { language = "JavaScript" }, -- Meteor
+  ["minitest"] = { language = "Ruby" }, -- Ruby / Minitest
+  ["mocha"] = { language = "JavaScript" }, -- Mocha
+  ["modernizr"] = { language = "JavaScript" }, -- Modernizr
+  ["moment"] = { language = "JavaScript" }, -- Moment.js
+  ["moment_timezone"] = { language = "JavaScript" }, -- Moment.js Timezone
+  ["mongoose"] = { language = "JavaScript" }, -- Mongoose
+  ["nextjs"] = { language = "JavaScript" }, -- Next.js
+  ["nginx"] = { language = "nginx" }, -- nginx
+  ["nginx_lua_module"] = { language = "Lua" }, -- nginx / Lua Module
+  ["nim"] = { language = "Nim" }, -- Nim
+  ["nix"] = { language = "Nix" }, -- Nix
+  ["node"] = { language = "JavaScript" }, -- Node.js
+  ["nokogiri"] = { language = "Ruby" }, -- Nokogiri
+  ["npm"] = { language = "JavaScript" }, -- npm
+  ["numpy"] = { language = "Python" }, -- NumPy
+  ["nushell"] = { language = "Nushell" }, -- Nushell
+  ["ocaml"] = { language = "OCaml" }, -- OCaml
+  ["octave"] = { language = "MATLAB" }, -- Octave
+  ["odin"] = { language = "Odin" }, -- Odin
+  ["opengl"] = { language = "C" }, -- OpenGL
+  ["openjdk"] = { language = "Java" }, -- OpenJDK
+  ["openlayers"] = { language = "JavaScript" }, -- OpenLayers
+  ["opentofu"] = { language = "HCL" }, -- OpenTofu
+  ["opentsdb"] = { language = "OpenTSDB" }, -- OpenTSDB
+  ["padrino"] = { language = "Ruby" }, -- Padrino
+  ["pandas"] = { language = "Python" }, -- pandas
+  ["perl"] = { language = "Perl" }, -- Perl
+  ["phalcon"] = { language = "PHP" }, -- Phalcon
+  ["phaser"] = { language = "JavaScript" }, -- Phaser
+  ["phoenix"] = { language = "Elixir" }, -- Phoenix
+  ["php"] = { language = "PHP" }, -- PHP
+  ["phpunit"] = { language = "PHP" }, -- PHPUnit
+  ["playwright"] = { language = "TypeScript" }, -- Playwright
+  ["point_cloud_library"] = { language = "C++" }, -- PointCloudLibrary
+  ["polars"] = { language = "Python" }, -- Polars
+  ["pony"] = { language = "Pony" }, -- Pony
+  ["postgresql"] = { language = "SQL" }, -- PostgreSQL
+  ["powershell"] = { language = "PowerShell" }, -- PowerShell
+  ["prettier"] = { language = "JavaScript" }, -- Prettier
+  ["pug"] = { language = "Pug" }, -- Pug
+  ["puppeteer"] = { language = "TypeScript" }, -- Puppeteer
+  ["pygame"] = { language = "Python" }, -- Pygame
+  ["pytest"] = { language = "Python" }, -- pytest
+  ["python"] = { language = "Python" }, -- Python
+  ["pytorch"] = { language = "Python" }, -- PyTorch
+  ["q"] = { language = "q" }, -- Q
+  ["qt"] = { language = "C++" }, -- Qt
+  ["qunit"] = { language = "JavaScript" }, -- QUnit
+  ["r"] = { language = "R" }, -- R
+  ["rabbitmq"] = { language = "RabbitMQ" }, -- RabbitMQ
+  ["rack"] = { language = "Ruby" }, -- Ruby / Rack
+  ["rails"] = { language = "Ruby" }, -- Ruby on Rails
+  ["ramda"] = { language = "JavaScript" }, -- Ramda
+  ["react"] = { language = "JavaScript" }, -- React
+  ["react_bootstrap"] = { language = "TypeScript" }, -- React Bootstrap
+  ["react_native"] = { language = "JavaScript" }, -- React Native
+  ["react_router"] = { language = "TypeScript" }, -- React Router
+  ["reactivex"] = { language = "JavaScript" }, -- ReactiveX
+  ["redis"] = { language = "Redis" }, -- Redis
+  ["redux"] = { language = "TypeScript" }, -- Redux
+  ["relay"] = { language = "JavaScript" }, -- Relay
+  ["requests"] = { language = "Python" }, -- Requests
+  ["requirejs"] = { language = "JavaScript" }, -- RequireJS
+  ["rethinkdb"] = { language = "RethinkDB" }, -- RethinkDB
+  ["ruby"] = { language = "Ruby" }, -- Ruby
+  ["rust"] = { language = "Rust" }, -- Rust
+  ["rxjs"] = { language = "TypeScript" }, -- RxJS
+  ["saltstack"] = { language = "SaltStack" }, -- SaltStack
+  ["sanctuary"] = { language = "JavaScript" }, -- Sanctuary
+  ["sanctuary_def"] = { language = "JavaScript" }, -- Sanctuary Def
+  ["sanctuary_type_classes"] = { language = "JavaScript" }, -- Sanctuary Type Classes
+  ["sass"] = { language = "SCSS" }, -- Sass
+  ["scala"] = { language = "Scala" }, -- Scala
+  ["scikit_image"] = { language = "Python" }, -- scikit-image
+  ["scikit_learn"] = { language = "Python" }, -- scikit-learn
+  ["sequelize"] = { language = "TypeScript" }, -- Sequelize
+  ["sinon"] = { language = "JavaScript" }, -- Sinon.JS
+  ["socketio"] = { language = "TypeScript" }, -- Socket.IO
+  ["spring_boot"] = { language = "Java" }, -- Spring Boot
+  ["sqlite"] = { language = "SQL" }, -- SQLite
+  ["statsmodels"] = { language = "Python" }, -- Statsmodels
+  ["svelte"] = { language = "Svelte" }, -- Svelte
+  ["svg"] = { language = "SVG" }, -- SVG
+  ["symfony"] = { language = "PHP" }, -- Symfony
+  ["tailwindcss"] = { language = "CSS" }, -- Tailwind CSS
+  ["tcl_tk"] = { language = "Tcl" }, -- Tcl/Tk
+  ["tcllib"] = { language = "Tcl" }, -- Tcllib
+  ["tensorflow"] = { language = "Python" }, -- TensorFlow
+  ["tensorflow_cpp"] = { language = "C++" }, -- TensorFlow C++
+  ["terraform"] = { language = "HCL" }, -- Terraform
+  ["threejs"] = { language = "JavaScript" }, -- Three.js
+  ["tokio"] = { language = "Rust" }, -- Tokio
+  ["trio"] = { language = "Python" }, -- Trio
+  ["twig"] = { language = "Twig" }, -- Twig
+  ["typescript"] = { language = "TypeScript" }, -- TypeScript
+  ["underscore"] = { language = "JavaScript" }, -- Underscore.js
+  ["vagrant"] = { language = "Vagrant" }, -- Vagrant
+  ["valibot"] = { language = "TypeScript" }, -- Valibot
+  ["varnish"] = { language = "Varnish" }, -- Varnish
+  ["vertx"] = { language = "Java" }, -- Vert.x
+  ["vite"] = { language = "TypeScript" }, -- Vite
+  ["vitest"] = { language = "TypeScript" }, -- Vitest
+  ["vue"] = { language = "Vue" }, -- Vue
+  ["vue_router"] = { language = "JavaScript" }, -- Vue Router
+  ["vueuse"] = { language = "TypeScript" }, -- VueUse
+  ["vuex"] = { language = "JavaScript" }, -- Vuex
+  ["vulkan"] = { language = "C" }, -- Vulkan
+  ["wagtail"] = { language = "Python" }, -- Wagtail
+  ["web_extensions"] = { language = "JavaScript" }, -- Web Extensions
+  ["webpack"] = { language = "JavaScript" }, -- webpack
+  ["werkzeug"] = { language = "Python" }, -- Werkzeug
+  ["wordpress"] = { language = "PHP" }, -- WordPress
+  ["xslt_xpath"] = { language = "XSLT" }, -- XSLT & XPath
+  ["yarn"] = { language = "JavaScript" }, -- Yarn
+  ["yii"] = { language = "PHP" }, -- Yii
+  ["zig"] = { language = "Zig" }, -- Zig
+  ["zsh"] = { language = "Zsh" }, -- Zsh
 }
