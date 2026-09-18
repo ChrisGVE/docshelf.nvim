@@ -123,7 +123,10 @@ local function pick_language(opts)
   Snacks.picker.pick({
     source = "apidocs_language",
     title = "Language of " .. opts.display .. " (now " .. opts.current .. ")",
-    layout = get_layout(opts),
+    -- A list of names, not of documents: the "select" preset (prompt on top,
+    -- no preview pane), never the layout chosen for reading pages, which puts
+    -- the prompt at the bottom and shows a preview of nothing.
+    layout = opts.layout or { preset = "select" },
     live = true,
     finder = function(_, ctx)
       local typed = ctx.filter.search

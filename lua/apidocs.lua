@@ -253,7 +253,10 @@ local function assign_language(slug, on_done)
   local metadata = require("apidocs.metadata")
   local current = languages.label(metadata.installed_languages({ slug })[slug])
   local names = languages.available()
-  local display = require("apidocs.folders").display(slug)
+  -- folders.lua belongs to the multi-origin work; without it a docset's folder
+  -- name is what a person reads.
+  local ok_folders, folders = pcall(require, "apidocs.folders")
+  local display = ok_folders and folders.display(slug) or slug
 
   local function chosen(name)
     local ok, why = metadata.assign_language(slug, name)
