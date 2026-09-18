@@ -63,7 +63,7 @@ return {
   ["dojo"] = { language = "JavaScript" }, -- Dojo
   ["dom"] = { language = "JavaScript" }, -- Web APIs
   ["drupal"] = { language = "PHP" }, -- Drupal
-  ["duckdb"] = { language = "SQL" }, -- DuckDB
+  ["duckdb"] = { language = "DuckDB" }, -- DuckDB
   ["eigen3"] = { language = "C++" }, -- Eigen3
   ["electron"] = { language = "JavaScript" }, -- Electron
   ["elisp"] = { language = "Emacs Lisp" }, -- Elisp
@@ -125,7 +125,7 @@ return {
   ["kubectl"] = { language = "Kubectl" }, -- Kubectl
   ["kubernetes"] = { language = "Kubernetes" }, -- Kubernetes
   ["laravel"] = { language = "PHP" }, -- Laravel
-  ["latex"] = { language = "TeX" }, -- LaTeX
+  ["latex"] = { language = "LaTeX" }, -- LaTeX
   ["leaflet"] = { language = "JavaScript" }, -- Leaflet
   ["less"] = { language = "Less" }, -- Less
   ["liquid"] = { language = "Liquid" }, -- Liquid
@@ -135,7 +135,7 @@ return {
   ["lua"] = { language = "Lua" }, -- Lua
   ["man"] = { language = "Linux man pages" }, -- Linux man pages
   ["maplibre_gl"] = { language = "TypeScript" }, -- MapLibre GL JS
-  ["mariadb"] = { language = "SQL" }, -- MariaDB
+  ["mariadb"] = { language = "MariaDB" }, -- MariaDB
   ["marionette"] = { language = "JavaScript" }, -- Marionette.js
   ["markdown"] = { language = "Markdown" }, -- Markdown
   ["matplotlib"] = { language = "Python" }, -- Matplotlib
@@ -176,7 +176,7 @@ return {
   ["point_cloud_library"] = { language = "C++" }, -- PointCloudLibrary
   ["polars"] = { language = "Python" }, -- Polars
   ["pony"] = { language = "Pony" }, -- Pony
-  ["postgresql"] = { language = "SQL" }, -- PostgreSQL
+  ["postgresql"] = { language = "PostgreSQL" }, -- PostgreSQL
   ["powershell"] = { language = "PowerShell" }, -- PowerShell
   ["prettier"] = { language = "JavaScript" }, -- Prettier
   ["pug"] = { language = "Pug" }, -- Pug
@@ -211,7 +211,7 @@ return {
   ["sanctuary"] = { language = "JavaScript" }, -- Sanctuary
   ["sanctuary_def"] = { language = "JavaScript" }, -- Sanctuary Def
   ["sanctuary_type_classes"] = { language = "JavaScript" }, -- Sanctuary Type Classes
-  ["sass"] = { language = "SCSS" }, -- Sass
+  ["sass"] = { language = "Sass" }, -- Sass
   ["scala"] = { language = "Scala" }, -- Scala
   ["scikit_image"] = { language = "Python" }, -- scikit-image
   ["scikit_learn"] = { language = "Python" }, -- scikit-learn
@@ -219,7 +219,7 @@ return {
   ["sinon"] = { language = "JavaScript" }, -- Sinon.JS
   ["socketio"] = { language = "TypeScript" }, -- Socket.IO
   ["spring_boot"] = { language = "Java" }, -- Spring Boot
-  ["sqlite"] = { language = "SQL" }, -- SQLite
+  ["sqlite"] = { language = "SQLite" }, -- SQLite
   ["statsmodels"] = { language = "Python" }, -- Statsmodels
   ["svelte"] = { language = "Svelte" }, -- Svelte
   ["svg"] = { language = "SVG" }, -- SVG

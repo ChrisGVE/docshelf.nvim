@@ -56,13 +56,17 @@ test("an unknown word is offered as a new name, first", function()
   eq(names_of(pick.rows(names, "hask")), { "+hask", "Haskell" })
 end)
 
-test("the offered names are the lists plus what installed docsets hold", function()
+test("the offered names are the lists plus what installed docsets hold, A-Z", function()
   local available = languages.available({ "Prolog", "Python" })
   eq(vim.tbl_contains(available, "Prolog"), true)
   eq(#vim.tbl_filter(function(n)
     return n == "Python"
   end, available), 1)
-  eq(available[1], "Python")
+  local sorted = vim.deepcopy(available)
+  table.sort(sorted, function(a, b)
+    return a:lower() < b:lower()
+  end)
+  eq(available, sorted)
 end)
 
 if failures > 0 then

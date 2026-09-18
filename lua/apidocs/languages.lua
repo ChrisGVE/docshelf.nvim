@@ -34,21 +34,63 @@ local M = {}
 --- user's list: they spell the name the way docset families do.
 M.known = {
   { "Python", aliases = { "py", "python3" } },
+  { "CPython" },
   { "Rust", aliases = { "rs" } },
   { "C" },
   { "C++", aliases = { "cpp", "cxx" } },
+  { "C#", aliases = { "csharp", "cs" } },
+  { ".NET", aliases = { "dotnet" } },
   { "Java", aliases = { "openjdk" } },
   { "TypeScript", aliases = { "ts" } },
   { "JavaScript", aliases = { "js" } },
   { "Go", aliases = { "golang" } },
+  { "PHP" },
+  { "Ruby" },
   { "Odin" },
   { "Zig" },
-  { "SQL", aliases = { "postgresql", "sqlite" } },
+  { "Elixir" },
+  { "Kotlin" },
+  { "Swift" },
+  { "Dart" },
+  { "Scala" },
+  { "Haskell" },
+  { "Lua" },
+  { "Perl" },
+  { "R" },
+  { "Julia" },
+  { "Erlang" },
+  { "OCaml" },
+  { "Nim" },
+  { "Clojure" },
+  { "WebAssembly", aliases = { "wasm" } },
+  { "HTML" },
+  { "CSS" },
+  { "Sass", aliases = { "scss" } },
+  { "Less" },
+  { "GraphQL" },
+  { "Vue" },
+  { "Svelte" },
+  -- Each engine is its own name (Chris 2026-09-18): its docs are the engine's,
+  -- not generic SQL, so selecting one never pulls the others in. SQL stays for
+  -- what really is engine-independent.
+  { "SQL" },
+  { "PostgreSQL", aliases = { "postgres", "psql" } },
+  { "SQLite" },
+  { "MariaDB" },
+  { "DuckDB" },
+  { "MS SQL", aliases = { "tsql", "transact-sql", "sqlserver", "sql server" } },
   { "Bash", aliases = { "sh" } },
   { "Zsh" },
   { "Fish" },
+  { "PowerShell", aliases = { "pwsh" } },
+  -- LaTeX is built on TeX and stays so, but most people read them as distinct
+  -- (Chris 2026-09-18), so neither is an alias of the other.
+  { "TeX" },
+  { "LaTeX" },
+  { "BibTeX" },
   { "Markdown", aliases = { "md" } },
   { "JSON" },
+  { "JSON5" },
   { "YAML", aliases = { "yml" } },
   { "TOML" },
   { "Typst" },
@@ -72,8 +114,6 @@ M.known = {
   { "COBOL", aliases = { "gnu_cobol" } },
   { "Tcl", aliases = { "tcl_tk" } },
   { "XSLT", aliases = { "xslt_xpath" } },
-  { "SCSS", aliases = { "sass" } },
-  { "TeX", aliases = { "latex" } },
   { "MATLAB", aliases = { "octave" } },
   { "HCL", aliases = { "opentofu", "terraform" } },
   { "Emacs Lisp", aliases = { "elisp" } },
@@ -84,35 +124,55 @@ M.known = {
 M.defaults = {
   languages = {
     "Python",
+    "CPython",
     "Rust",
     "C",
     "C++",
+    "C#",
+    ".NET",
     "Java",
     "TypeScript",
     "JavaScript",
     "Go",
+    "PHP",
+    "Ruby",
     "Odin",
     "Zig",
+    "Elixir",
+    "Kotlin",
+    "Swift",
+    "Dart",
+    "Scala",
+    "Haskell",
+    "Lua",
+    "Perl",
+    "R",
+    "Julia",
+    "Erlang",
+    "OCaml",
+    "Nim",
+    "Clojure",
+    "WebAssembly",
+    "HTML",
+    "CSS",
+    "Sass",
+    "Less",
+    "GraphQL",
+    "Vue",
+    "Svelte",
     "SQL",
+    "PostgreSQL",
+    "SQLite",
+    "MS SQL",
     "Bash",
     "Zsh",
     "Fish",
+    "PowerShell",
+    "TeX",
+    "LaTeX",
+    "BibTeX",
   },
-  formats = {
-    "Markdown",
-    "JSON",
-    "JSON with Comments",
-    "JSON5",
-    "JSONLD",
-    "OASv2-json",
-    "OASv3-json",
-    "YAML",
-    "MiniYAML",
-    "OASv2-yaml",
-    "OASv3-yaml",
-    "TOML",
-    "Typst",
-  },
+  formats = { "Markdown", "JSON", "JSON5", "YAML", "TOML", "Typst" },
   tools = {
     "Git",
     "GitHub",
@@ -356,9 +416,9 @@ function M.for_assignment(slug, language)
   return link(slug, vim.trim(language))
 end
 
---- The names a docset can be given: the configured lists, then the languages
---- already recorded on installed docsets, which is where a name the user typed
---- for one docset comes back for the next.
+--- The names a docset can be given, A-Z: the configured lists plus the
+--- languages already recorded on installed docsets, which is where a name the
+--- user typed for one docset comes back for the next.
 ---@param extra? string[] defaults to the languages in the install manifest
 ---@return string[]
 function M.available(extra)
@@ -370,6 +430,11 @@ function M.available(extra)
       table.insert(names, name)
     end
   end
+  -- A-Z, ignoring case: the picker is read, not walked in config order
+  -- (Chris 2026-09-18, "easier to read").
+  table.sort(names, function(a, b)
+    return key(a) < key(b)
+  end)
   return names
 end
 

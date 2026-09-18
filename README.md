@@ -62,11 +62,14 @@ return {
     -- require('apidocs').setup({picker = "snacks", layout = "ivy_split"})
     -- You can change the keymap for following "local://" links by setting the configuration option 'follow_link_keymap' (default is "<C-]>"):
     -- require('apidocs').setup({follow_link_keymap = "<C-]>"})
-    -- The names a source can be linked to, in three lists joined into one: languages (default Python, Rust, C, C++,
-    -- Java, TypeScript, JavaScript, Go, Odin, Zig, SQL, Bash, Zsh, Fish), formats (Markdown, the JSON and YAML flavours, TOML,
-    -- Typst) and tools (Git, GitHub, Jujutsu, Docker, tmux, herdr, Neovim, Make, CMake, Homebrew, curl, ripgrep, fd, jq,
-    -- SSH). For each list, 'add' extends it and 'only' replaces it. A name can carry aliases that match it too:
-    -- require('apidocs').setup({languages = {add = {"Haskell", "Lua"}}, tools = {add = {{"Kubernetes", aliases = {"k8s"}}}}})
+    -- The names a source can be linked to, in three lists joined into one. Languages: Python, CPython, Rust, C, C++,
+    -- C#, .NET, Java, TypeScript, JavaScript, Go, PHP, Ruby, Odin, Zig, Elixir, Kotlin, Swift, Dart, Scala, Haskell,
+    -- Lua, Perl, R, Julia, Erlang, OCaml, Nim, Clojure, WebAssembly, HTML, CSS, Sass, Less, GraphQL, Vue, Svelte, SQL,
+    -- PostgreSQL, SQLite, MS SQL, Bash, Zsh, Fish, PowerShell, TeX, LaTeX, BibTeX. Formats: Markdown, JSON, JSON5,
+    -- YAML, TOML, Typst. Tools: Git, GitHub, Jujutsu, Docker, tmux, herdr, Neovim, Make, CMake, Homebrew, curl,
+    -- ripgrep, fd, jq, SSH. Each SQL engine is its own name rather than a flavour of SQL, and LaTeX, TeX and BibTeX
+    -- are distinct. For each list, 'add' extends it and 'only' replaces it. A name can carry aliases that match it too:
+    -- require('apidocs').setup({languages = {add = {"Fortran", "Prolog"}}, tools = {add = {{"Kubernetes", aliases = {"k8s"}}}}})
   end,
   keys = {
     { '<leader>sad', '<cmd>ApidocsOpen<cr>', desc = 'Search Api Doc' },
