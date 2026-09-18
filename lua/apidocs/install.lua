@@ -688,8 +688,28 @@ end
 -- (<Tab> marks one, and marks survive a change of search); other pickers take
 -- one per call. Picking again while sources install adds to the same run.
 -- `format_item(slug)` is the name, release and install state; `origin_of(slug)`
--- is where the source comes from, shown dimmed at the right edge.
-local function pick_and_queue(keys, format_item, origin_of, slugs_to_mtimes)
+-- is where the source comes from, shown dimmed at the right edge;
+-- `language_of(slug)` is the language it would be installed with, in a column
+-- before the name, so the list can be narrowed by language as well as by name.
+-- A language wider than this is cut: the column is a signpost, not the answer.
+local language_column = 18
+
+local function pick_and_queue(keys, format_item, origin_of, language_of, slugs_to_mtimes)
+  local function language(slug)
+    local name = language_of(slug)
+    if vim.fn.strdisplaywidth(name) > language_column then
+      name = vim.fn.strcharpart(name, 0, language_column - 1) .. "…"
+    end
+    return name
+  end
+  local width = 0
+  for _, slug in ipairs(keys) do
+    width = math.max(width, vim.fn.strdisplaywidth(language(slug)))
+  end
+  local function padded(slug)
+    local name = language(slug)
+    return string.rep(" ", width - vim.fn.strdisplaywidth(name)) .. name
+  end
   local function enqueue(choices)
     local added = queue_install(choices, slugs_to_mtimes)
     if #added < #choices then
@@ -703,10 +723,16 @@ local function pick_and_queue(keys, format_item, origin_of, slugs_to_mtimes)
       title = "Install documentation (<Tab> marks several)",
       layout = { preset = "select" },
       items = vim.tbl_map(function(slug)
-        return { text = format_item(slug), slug = slug, origin = origin_of(slug) }
+        return {
+          text = language(slug) .. " " .. format_item(slug),
+          label = format_item(slug),
+          language = padded(slug),
+          slug = slug,
+          origin = origin_of(slug),
+        }
       end, keys),
       format = function(item)
-        local line = { { item.text } }
+        local line = { { item.language, "SnacksPickerComment" }, { " | ", "SnacksPickerDelim" }, { item.label } }
         if item.origin then
           line[#line + 1] = {
             col = 0,
@@ -730,8 +756,9 @@ local function pick_and_queue(keys, format_item, origin_of, slugs_to_mtimes)
     return
   end
   local function format_with_origin(slug)
+    local line = padded(slug) .. " | " .. format_item(slug)
     local origin = origin_of(slug)
-    return origin and (format_item(slug) .. "  · " .. origin) or format_item(slug)
+    return origin and (line .. "  · " .. origin) or line
   end
   vim.ui.select(keys, { prompt = "Pick a documentation to install", format_item = format_with_origin }, function(choice)
     if choice ~= nil then
@@ -752,6 +779,14 @@ local function apidocs_install()
         return metadata.label(catalogue[slug], manifest[slug])
       end, function(slug)
         return metadata.origin(catalogue[slug])
+      end, function(slug)
+        -- An installed source shows the language it was installed with, which
+        -- the user may have changed; anything else, the one it would get.
+        local languages = require("apidocs.languages")
+        local link = manifest[slug] and metadata.language_link(slug, manifest[slug])
+        return languages.label(
+          link or languages.resolve(slug, { devdocs = metadata.origin(catalogue[slug]) == metadata.devdocs_origin })
+        )
       end, slugs_to_mtimes)
     end)
   end
