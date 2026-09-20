@@ -183,6 +183,15 @@ test("the site a docset came from is remembered, so it can be installed again", 
   eq(sphinx.site("widget~3.1"), { url = site, language = "Python" })
 end)
 
+test("latest reads the site again and names what it offers now", function()
+  sphinx.from_url(site, runner())
+  eq(sphinx.latest("widget~3.1", runner()), "widget~3.1")
+end)
+
+test("latest says nothing for a docset whose site is not remembered", function()
+  eq(sphinx.latest("never-seen~1.0", runner()), nil)
+end)
+
 test("a docset whose site is not remembered says how to name it again", function()
   local ok, err = pcall(sphinx.index, "never-seen~1.0", "", runner())
   eq(ok, false)

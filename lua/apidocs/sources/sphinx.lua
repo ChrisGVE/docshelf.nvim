@@ -359,6 +359,26 @@ function M.release(docset)
   return version
 end
 
+--- The docset the site offers today. The site a docset came from is
+--- remembered, so its inventory is read again and named the same way an
+--- install names it: a project that has published 2.6 since gives numpy~2.6
+--- where numpy~2.5 is installed. The new name is remembered against the same
+--- site, which is what lets it be installed.
+---@param docset string
+---@param system fun(cmd: string[], opts?: table): vim.SystemCompleted
+---@return string? docset nil when the site a docset came from is not known
+function M.latest(docset, system)
+  local site = M.site(docset)
+  if not site or type(site.url) ~= "string" then
+    return nil
+  end
+  local inv = inventory(site.url, system)
+  local name = docset_name(inv.project, inv.version)
+  read[name] = { base = site.url, inventory = inv }
+  remember_site(name, { url = site.url, language = inv.language })
+  return name
+end
+
 --- The language the site's inventory shows it documents, which is better than
 --- this adapter's fallback: a Sphinx site can document C or JavaScript just as
 --- well as Python.
