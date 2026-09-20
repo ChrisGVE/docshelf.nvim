@@ -1,0 +1,89 @@
+{
+  "schemaVersion": { "major": 0, "minor": 3, "patch": 0 },
+  "kind": "symbol",
+  "identifier": { "interfaceLanguage": "swift", "url": "doc://com.example.Widget/documentation/Widget/Wheel" },
+  "metadata": {
+    "title": "Wheel",
+    "role": "symbol",
+    "roleHeading": "Structure",
+    "symbolKind": "struct",
+    "modules": [{ "name": "Widget" }],
+    "platforms": [
+      { "name": "iOS", "introducedAt": "13.0", "beta": false, "deprecated": false, "unavailable": false },
+      { "name": "watchOS", "unavailable": true }
+    ],
+    "fragments": [
+      { "kind": "keyword", "text": "struct" },
+      { "kind": "text", "text": " " },
+      { "kind": "identifier", "text": "Wheel" }
+    ]
+  },
+  "abstract": [{ "type": "text", "text": "A thing that turns." }],
+  "primaryContentSections": [
+    {
+      "kind": "declarations",
+      "declarations": [
+        {
+          "languages": ["swift"],
+          "platforms": ["iOS"],
+          "tokens": [
+            { "kind": "keyword", "text": "struct" },
+            { "kind": "text", "text": " " },
+            { "kind": "identifier", "text": "Wheel" }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "content",
+      "content": [
+        {
+          "type": "paragraph",
+          "inlineContent": [
+            { "type": "text", "text": "Call " },
+            {
+              "type": "reference",
+              "identifier": "doc://com.example.Widget/documentation/Widget/Wheel/spin()",
+              "isActive": true,
+              "overridingTitle": "the spin method"
+            },
+            { "type": "text", "text": " to turn it." }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationshipsSections": [
+    {
+      "type": "conformsTo",
+      "kind": "relationships",
+      "title": "Conforms To",
+      "identifiers": ["doc://com.example.Other/documentation/OtherFramework"]
+    }
+  ],
+  "topicSections": [
+    {
+      "title": "Turning a wheel",
+      "identifiers": ["doc://com.example.Widget/documentation/Widget/Wheel/spin()"]
+    }
+  ],
+  "references": {
+    "doc://com.example.Widget/documentation/Widget/Wheel/spin()": {
+      "type": "topic",
+      "identifier": "doc://com.example.Widget/documentation/Widget/Wheel/spin()",
+      "kind": "symbol",
+      "role": "symbol",
+      "title": "spin()",
+      "url": "/documentation/widget/wheel/spin()",
+      "abstract": [{ "type": "text", "text": "Turns the wheel once." }]
+    },
+    "doc://com.example.Other/documentation/OtherFramework": {
+      "type": "topic",
+      "identifier": "doc://com.example.Other/documentation/OtherFramework",
+      "kind": "symbol",
+      "role": "collection",
+      "title": "OtherFramework",
+      "url": "/documentation/otherframework"
+    }
+  }
+}

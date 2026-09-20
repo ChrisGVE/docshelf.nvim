@@ -1,0 +1,58 @@
+{
+  "schemaVersion": { "major": 0, "minor": 1, "patch": 0 },
+  "includedArchiveIdentifiers": ["com.example.Widget"],
+  "interfaceLanguages": {
+    "occ": [],
+    "swift": [
+      {
+        "title": "Widget",
+        "path": "/documentation/widget",
+        "type": "module",
+        "children": [
+          { "title": "Essentials", "type": "groupMarker" },
+          {
+            "title": "Getting started",
+            "path": "/documentation/widget/getting-started",
+            "type": "article"
+          },
+          {
+            "title": "Adopting Liquid Glass",
+            "path": "/documentation/otherframework/adopting",
+            "type": "article",
+            "external": true
+          },
+          {
+            "title": "Wheel",
+            "path": "/documentation/widget/wheel",
+            "type": "struct",
+            "children": [
+              { "title": "Turning a wheel", "type": "groupMarker" },
+              {
+                "title": "spin()",
+                "path": "/documentation/widget/wheel/spin()",
+                "type": "method"
+              },
+              {
+                "title": "var radius: Double",
+                "path": "/documentation/widget/wheel/radius",
+                "type": "property"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "OtherFramework",
+        "path": "/documentation/otherframework",
+        "type": "module",
+        "children": [
+          {
+            "title": "Adopting",
+            "path": "/documentation/otherframework/adopting",
+            "type": "article"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -117,6 +117,19 @@ pkg.go.dev URL and the row shows the package, its version and how many pages the
 install will fetch -- the package the address names plus every package under it,
 internal ones excepted. The standard library is reached the same way. A docset's
 language is Go without being asked.
+### DocC sites
+
+Apple's frameworks, the Swift book and anything else built with DocC are named by
+their address: paste a documentation URL
+(`https://developer.apple.com/documentation/swiftui`,
+`https://docs.swift.org/swift-book/documentation/the-swift-programming-language`) and
+the row shows the module and how many pages the install will fetch. A DocC site
+publishes one JSON document per page rather than a page, so the install reads the
+site's navigator index once and then fetches a document per symbol -- SwiftUI is over
+seven thousand of them, which is why the count is shown before you pick.
+
+A DocC site publishes no version, so such a docset carries none, and the update check
+leaves it alone rather than reinstalling it on a guess.
 
 ## Dependencies
 

@@ -1,0 +1,135 @@
+{
+  "schemaVersion": { "major": 0, "minor": 3, "patch": 0 },
+  "kind": "symbol",
+  "identifier": { "interfaceLanguage": "swift", "url": "doc://com.example.Widget/documentation/Widget" },
+  "metadata": {
+    "title": "Widget",
+    "role": "collection",
+    "roleHeading": "Framework",
+    "modules": [{ "name": "Widget" }]
+  },
+  "abstract": [{ "type": "text", "text": "Build wheels that turn." }],
+  "primaryContentSections": [
+    {
+      "kind": "content",
+      "content": [
+        { "type": "heading", "level": 2, "anchor": "overview", "text": "Overview" },
+        {
+          "type": "paragraph",
+          "inlineContent": [
+            { "type": "text", "text": "A " },
+            { "type": "codeVoice", "code": "Wheel" },
+            { "type": "text", "text": " is the thing that turns. See " },
+            { "type": "reference", "identifier": "doc://com.example.Widget/documentation/Widget/Wheel", "isActive": true },
+            { "type": "text", "text": " and " },
+            { "type": "reference", "identifier": "doc://com.example.Other/documentation/OtherFramework", "isActive": true },
+            { "type": "text", "text": "." }
+          ]
+        },
+        {
+          "type": "aside",
+          "style": "note",
+          "name": "Note",
+          "content": [
+            {
+              "type": "paragraph",
+              "inlineContent": [
+                { "type": "text", "text": "Wheels are " },
+                { "type": "emphasis", "inlineContent": [{ "type": "text", "text": "round" }] },
+                { "type": "text", "text": "." }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "codeListing",
+          "syntax": "swift",
+          "code": ["let wheel = Wheel()", "wheel.spin()"]
+        },
+        {
+          "type": "unorderedList",
+          "items": [
+            { "content": [{ "type": "paragraph", "inlineContent": [{ "type": "text", "text": "One <wheel> & another" }] }] },
+            { "content": [{ "type": "paragraph", "inlineContent": [{ "type": "text", "text": "Two" }] }] }
+          ]
+        },
+        {
+          "type": "table",
+          "header": "row",
+          "rows": [
+            [
+              [{ "type": "paragraph", "inlineContent": [{ "type": "text", "text": "Part" }] }],
+              [{ "type": "paragraph", "inlineContent": [{ "type": "text", "text": "Turns" }] }]
+            ],
+            [
+              [{ "type": "paragraph", "inlineContent": [{ "type": "text", "text": "Wheel" }] }],
+              [{ "type": "paragraph", "inlineContent": [{ "type": "text", "text": "Yes" }] }]
+            ]
+          ]
+        },
+        {
+          "type": "termList",
+          "items": [
+            {
+              "term": { "inlineContent": [{ "type": "text", "text": "radius" }] },
+              "definition": { "content": [{ "type": "paragraph", "inlineContent": [{ "type": "text", "text": "How far out it goes." }] }] }
+            }
+          ]
+        },
+        { "type": "image", "identifier": "widget-hero.png" },
+        {
+          "type": "unheardOfBlock",
+          "content": [
+            { "type": "paragraph", "inlineContent": [{ "type": "text", "text": "Still readable." }] }
+          ]
+        }
+      ]
+    }
+  ],
+  "topicSections": [
+    {
+      "title": "Wheels",
+      "identifiers": ["doc://com.example.Widget/documentation/Widget/Wheel"]
+    }
+  ],
+  "seeAlsoSections": [
+    {
+      "title": "Related",
+      "identifiers": ["https://widget.example/handbook"]
+    }
+  ],
+  "references": {
+    "doc://com.example.Widget/documentation/Widget/Wheel": {
+      "type": "topic",
+      "identifier": "doc://com.example.Widget/documentation/Widget/Wheel",
+      "kind": "symbol",
+      "role": "symbol",
+      "title": "Wheel",
+      "url": "/documentation/widget/wheel",
+      "abstract": [{ "type": "text", "text": "A thing that turns." }]
+    },
+    "doc://com.example.Other/documentation/OtherFramework": {
+      "type": "topic",
+      "identifier": "doc://com.example.Other/documentation/OtherFramework",
+      "kind": "symbol",
+      "role": "collection",
+      "title": "OtherFramework",
+      "url": "/documentation/otherframework"
+    },
+    "https://widget.example/handbook": {
+      "type": "link",
+      "identifier": "https://widget.example/handbook",
+      "title": "The wheel handbook",
+      "url": "https://widget.example/handbook"
+    },
+    "widget-hero.png": {
+      "type": "image",
+      "identifier": "widget-hero.png",
+      "alt": "A wheel, turning",
+      "variants": [
+        { "traits": ["2x", "dark"], "url": "/docs/images/widget-hero~dark@2x.png" },
+        { "traits": ["2x", "light"], "url": "/docs/images/widget-hero@2x.png" }
+      ]
+    }
+  }
+}

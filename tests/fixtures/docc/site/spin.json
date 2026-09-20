@@ -1,0 +1,119 @@
+{
+  "schemaVersion": {
+    "major": 0,
+    "minor": 3,
+    "patch": 0
+  },
+  "kind": "symbol",
+  "identifier": {
+    "interfaceLanguage": "swift",
+    "url": "doc://com.example.Widget/documentation/Widget/Wheel/spin()"
+  },
+  "metadata": {
+    "title": "spin()",
+    "role": "symbol",
+    "roleHeading": "Instance Method",
+    "symbolKind": "method",
+    "modules": [
+      {
+        "name": "Widget"
+      }
+    ]
+  },
+  "abstract": [
+    {
+      "type": "text",
+      "text": "Turns the wheel once."
+    }
+  ],
+  "primaryContentSections": [
+    {
+      "kind": "declarations",
+      "declarations": [
+        {
+          "languages": [
+            "swift"
+          ],
+          "tokens": [
+            {
+              "kind": "keyword",
+              "text": "func"
+            },
+            {
+              "kind": "text",
+              "text": " "
+            },
+            {
+              "kind": "identifier",
+              "text": "spin"
+            },
+            {
+              "kind": "text",
+              "text": "("
+            },
+            {
+              "kind": "externalParam",
+              "text": "times"
+            },
+            {
+              "kind": "text",
+              "text": ": Int)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "parameters",
+      "parameters": [
+        {
+          "name": "times",
+          "content": [
+            {
+              "type": "paragraph",
+              "inlineContent": [
+                {
+                  "type": "text",
+                  "text": "How many turns."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "content",
+      "content": [
+        {
+          "type": "paragraph",
+          "inlineContent": [
+            {
+              "type": "text",
+              "text": "Defined on "
+            },
+            {
+              "type": "reference",
+              "identifier": "doc://com.example.Widget/documentation/Widget/Wheel",
+              "isActive": true
+            },
+            {
+              "type": "text",
+              "text": "."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "references": {
+    "doc://com.example.Widget/documentation/Widget/Wheel": {
+      "type": "topic",
+      "identifier": "doc://com.example.Widget/documentation/Widget/Wheel",
+      "kind": "symbol",
+      "role": "symbol",
+      "title": "Wheel",
+      "url": "/documentation/widget/wheel"
+    }
+  }
+}

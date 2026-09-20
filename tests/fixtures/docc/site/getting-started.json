@@ -1,0 +1,32 @@
+{
+  "schemaVersion": { "major": 0, "minor": 3, "patch": 0 },
+  "kind": "article",
+  "identifier": { "interfaceLanguage": "swift", "url": "doc://com.example.Widget/documentation/Widget/GettingStarted" },
+  "metadata": { "title": "Getting started", "role": "article" },
+  "abstract": [{ "type": "text", "text": "Fit your first wheel." }],
+  "primaryContentSections": [
+    {
+      "kind": "content",
+      "content": [
+        {
+          "type": "paragraph",
+          "inlineContent": [
+            { "type": "text", "text": "Start with " },
+            { "type": "reference", "identifier": "doc://com.example.Widget/documentation/Widget/Wheel", "isActive": true },
+            { "type": "text", "text": "." }
+          ]
+        }
+      ]
+    }
+  ],
+  "references": {
+    "doc://com.example.Widget/documentation/Widget/Wheel": {
+      "type": "topic",
+      "identifier": "doc://com.example.Widget/documentation/Widget/Wheel",
+      "kind": "symbol",
+      "role": "symbol",
+      "title": "Wheel",
+      "url": "/documentation/widget/wheel"
+    }
+  }
+}
