@@ -76,6 +76,31 @@ test("a registry row with no version yet has no folder, and shows its name alone
   eq(row.language, "")
 end)
 
+test("a documentation URL is told apart from a package name", function()
+  eq(pick.is_url("https://numpy.org/doc/stable"), true)
+  eq(pick.is_url("numpy"), false)
+  eq(pick.is_url("https://numpy.org/doc/ stable"), false)
+end)
+
+test("a row found by URL shows its page count and keeps the name matchable", function()
+  local row = pick.registry_row(
+    { name = "numpy", version = "2.5", pages = 2671, origin = "sphinx", url = "https://numpy.org/doc/stable/" },
+    "Python"
+  )
+  eq(row.label, "numpy~2.5 · 2671 pages")
+  eq(row.text, "numpy~2.5")
+  eq(row.slug, "numpy~2.5~~sphinx")
+  eq(row.always, true)
+end)
+
+test("a row found by URL survives an order that the typed URL cannot match", function()
+  local url_row = pick.registry_row({ name = "numpy", version = "2.5", origin = "sphinx", url = "https://x/" })
+  local other = { text = "numpy~2.4" }
+  local ordered = pick.order({ other, url_row }, "https://numpy.org/doc/stable/")
+  eq(#ordered, 1)
+  eq(ordered[1].text, "numpy~2.5")
+end)
+
 test("the title says nothing extra when nothing is being waited on", function()
   eq(pick.title("Install documentation", {}), "Install documentation")
 end)

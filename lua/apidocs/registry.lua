@@ -13,6 +13,13 @@
 -- `version` is optional: a registry that does not return one leaves the
 -- version to be resolved when a row is picked.
 --
+-- A source that is not a registry at all -- a Sphinx site stands alone, with
+-- nothing to search -- may instead declare:
+--   from_url(url, system) -> { { name = "numpy", version? = "2.5",
+--                                pages? = 2671, url = "https://…/" } }
+-- which is asked only when what was typed is a URL. `pages` is shown in the
+-- row, because such a source installs one page per HTTP request.
+--
 -- A source outside devdocs has no catalogue entry to record at install, so it
 -- may also declare:
 --   release(slug) -> string?   -- the patch release the docset holds
@@ -111,13 +118,14 @@ end
 --- The origins a search may ask: on, able to search, and -- when `languages`
 --- is given -- documenting one of those languages. A source that declares no
 --- language cannot be narrowed to one, so it is left out of a narrowed search.
----@param opts? { languages?: table<string, boolean> }
+---@param opts? { languages?: table<string, boolean>, method?: string }
 ---@return string[]
 function M.searchable(opts)
   local languages = opts and opts.languages
+  local method = (opts and opts.method) or "search"
   return vim.tbl_filter(function(origin)
     local adapter = sources.get(origin)
-    if not (adapter and adapter.search) then
+    if not (adapter and adapter[method]) then
       return false
     end
     if languages then
@@ -150,7 +158,9 @@ end
 --- none is left. `run` and `system` default to the coroutine helpers; tests
 --- pass their own.
 ---@param query string
----@param opts { origins: string[], cache: table, on_batch: fun(origin: string, rows: table[]), on_done: fun(), run?: fun(fn: fun()), system?: fun(cmd: string[]): table }
+--- `method` names the adapter function to ask ("search", or "from_url" when
+--- what was typed is a documentation URL).
+---@param opts { origins: string[], cache: table, on_batch: fun(origin: string, rows: table[]), on_done: fun(), method?: string, run?: fun(fn: fun()), system?: fun(cmd: string[]): table }
 function M.search(query, opts)
   local run = opts.run or async.run
   local system = opts.system or function(cmd)
@@ -177,7 +187,7 @@ function M.search(query, opts)
     run(function()
       -- A registry that is down, slow or answering something unexpected must
       -- not empty the picker: it is reported as having found nothing.
-      local ok, rows = pcall(adapter.search, query, system)
+      local ok, rows = pcall(adapter[opts.method or "search"], query, system)
       if not ok then
         vim.notify(
           "apidocs: " .. origin .. " could not be searched: " .. tostring(rows),

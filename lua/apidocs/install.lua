@@ -346,7 +346,13 @@ local function apidoc_install(choice, slugs_to_mtimes, cont, on_fail)
     if not adapter then
       error(no_adapter, 0)
     end
-    local data = adapter.index(slug, mtime, system)
+    -- A source with no archive fetches a page at a time and can take minutes;
+    -- `report` lets it say how far along it is in the same notification the
+    -- rest of the install uses. A source that downloads one archive ignores it.
+    local function report(text)
+      progress(choice, text)
+    end
+    local data = adapter.index(slug, mtime, system, report)
     local path_to_name = {}
     local path_to_type = {}
     local known_keys_per_path = {}
@@ -368,7 +374,7 @@ local function apidoc_install(choice, slugs_to_mtimes, cont, on_fail)
 
     progress(choice, "fetching pages")
     do
-      local data = adapter.db(slug, mtime, system)
+      local data = adapter.db(slug, mtime, system, report)
       local target_path = data_folder .. choice
       vim.system({"sh", "-c", "rm -Rf " .. target_path}):wait()
       vim.fn.mkdir(target_path, "p")
@@ -649,7 +655,14 @@ local function apidoc_install(choice, slugs_to_mtimes, cont, on_fail)
       -- what the source offers later.
       local entry = catalogue[choice]
       if not entry then
-        entry = { mtime = mtime, origin = origin, language = adapter and adapter.language }
+        -- A source that documents one language declares it; one that does
+        -- not -- a Sphinx site documents whatever its project is -- reads it
+        -- from what it just installed, and that is the better answer.
+        local declared = adapter and adapter.language
+        if adapter and adapter.language_of then
+          declared = adapter.language_of(slug) or declared
+        end
+        entry = { mtime = mtime, origin = origin, language = declared }
         if adapter and adapter.release then
           entry.release = adapter.release(slug)
         end
@@ -696,6 +709,9 @@ local picker_title = "Install documentation (<Tab> marks several)"
 -- Registries are only asked once the typed name is worth a request: one or two
 -- letters match thousands of packages and tell nobody anything.
 local min_registry_query = 3
+
+-- How long a typed URL must stand still before the site behind it is asked.
+local url_settle_ms = 600
 
 -- The live picker re-runs its finder whenever an answer lands, so the search
 -- has to be fired from the typed name changing, never from the finder running.
@@ -777,6 +793,10 @@ local function pick_and_queue(keys, format_item, origin_of, language_of, slugs_t
     end
     local cache = registry.default_cache()
     local origins = registry.searchable({ languages = opts.languages })
+    -- A URL names one specific site, so the language filter does not narrow
+    -- this: the user has already said which documentation they mean, and what
+    -- language it turns out to document is only known once it is asked.
+    local url_origins = registry.searchable({ method = "from_url" })
     local function origin_language(origin)
       local adapter = sources.get(origin)
       return adapter and adapter.language or ""
@@ -798,7 +818,10 @@ local function pick_and_queue(keys, format_item, origin_of, language_of, slugs_t
         if typed ~= search_state.query then
           stop_registry_search()
           search_state.query = typed
-          if #origins > 0 and #typed >= min_registry_query then
+          local url = install_pick.is_url(typed)
+          local asked = url and url_origins or origins
+          local enough = url or #typed >= min_registry_query
+          if #asked > 0 and enough then
             local picker = ctx.picker
             local function answered()
               vim.schedule(function()
@@ -813,12 +836,28 @@ local function pick_and_queue(keys, format_item, origin_of, language_of, slugs_t
                 picker:find({ refresh = true })
               end)
             end
-            search_state.handle = registry.search(typed, {
-              origins = origins,
-              cache = cache,
-              on_batch = answered,
-              on_done = answered,
-            })
+            local function ask()
+              search_state.handle = registry.search(typed, {
+                origins = asked,
+                method = url and "from_url" or "search",
+                cache = cache,
+                on_batch = answered,
+                on_done = answered,
+              })
+            end
+            if url then
+              -- A URL is typed character by character, and every prefix of one
+              -- is still a URL: asking on each keystroke would send a stream of
+              -- requests to a site for addresses that do not exist yet. Wait
+              -- until the typing stops.
+              vim.defer_fn(function()
+                if search_state.query == typed and not picker.closed then
+                  ask()
+                end
+              end, url_settle_ms)
+            else
+              ask()
+            end
           end
         end
         return install_pick.order(items, typed)

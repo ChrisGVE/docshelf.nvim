@@ -77,16 +77,19 @@ end
 
 local function run_search(query, opts)
   local batches, done = {}, false
-  local handle = registry.search(query, vim.tbl_extend("keep", opts, {
-    run = now,
-    system = function() end,
-    on_batch = function(origin, rows)
-      table.insert(batches, { origin = origin, rows = rows })
-    end,
-    on_done = function()
-      done = true
-    end,
-  }))
+  local handle = registry.search(
+    query,
+    vim.tbl_extend("keep", opts, {
+      run = now,
+      system = function() end,
+      on_batch = function(origin, rows)
+        table.insert(batches, { origin = origin, rows = rows })
+      end,
+      on_done = function()
+        done = true
+      end,
+    })
+  )
   return batches, done, handle
 end
 
@@ -123,9 +126,12 @@ test("a cached row is matched by any part of its name, whatever the case", funct
     { name = "lens-aeson", origin = "hackage.haskell.org" },
     { name = "text", origin = "hackage.haskell.org" },
   })
-  eq(vim.tbl_map(function(r)
-    return r.name
-  end, cache:match("AES")), { "aeson", "lens-aeson" })
+  eq(
+    vim.tbl_map(function(r)
+      return r.name
+    end, cache:match("AES")),
+    { "aeson", "lens-aeson" }
+  )
 end)
 
 test("an empty query matches nothing: the cache is not a catalogue to browse", function()
@@ -219,6 +225,56 @@ test("a cancelled search reports nothing further", function()
   handle:cancel()
   eq(handle:cancelled(), true)
   eq(#batches, 0)
+end)
+
+-- A source that is not a registry: it reads one documentation URL, the way a
+-- Sphinx site is named.
+local function url_source(origin)
+  return {
+    origin = origin,
+    index = function() end,
+    db = function() end,
+    from_url = function(url)
+      return { { name = "numpy", version = "2.5", pages = 2671, url = url } }
+    end,
+  }
+end
+
+test("a URL source is not offered for a name search", function()
+  sources.register(url_source("sphinx"))
+  eq(vim.tbl_contains(registry.searchable(), "sphinx"), false)
+end)
+
+test("a URL source is the one asked about a URL", function()
+  sources.register(url_source("sphinx"))
+  sources.register(bind(fake_source("one.example", {})))
+  -- containment, not equality: every URL source shipped answers here too
+  eq(vim.tbl_contains(registry.searchable({ method = "from_url" }), "sphinx"), true)
+  eq(vim.tbl_contains(registry.searchable({ method = "from_url" }), "one.example"), false)
+end)
+
+test("a URL search asks from_url, and the row carries its page count", function()
+  sources.register(url_source("sphinx"))
+  local batches, cache = {}, fresh_cache()
+  registry.search("https://numpy.org/doc/stable/", {
+    origins = { "sphinx" },
+    method = "from_url",
+    cache = cache,
+    run = function(fn)
+      fn()
+    end,
+    system = function() end,
+    on_batch = function(origin, rows)
+      table.insert(batches, { origin = origin, rows = rows })
+    end,
+    on_done = function() end,
+  })
+  eq(#batches, 1)
+  eq(batches[1].rows[1].name, "numpy")
+  eq(batches[1].rows[1].pages, 2671)
+  eq(batches[1].rows[1].origin, "sphinx")
+  -- and it is remembered, so the site is offered again by name
+  eq(cache:match("numpy")[1].origin, "sphinx")
 end)
 
 print(failures == 0 and "all passed" or (failures .. " failed"))

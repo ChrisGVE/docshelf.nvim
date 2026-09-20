@@ -97,6 +97,18 @@ without being asked.
 It answers the install picker's search: type three letters of a crate name and its
 crates.io matches join the list, each already carrying the version that will be
 installed.
+### Sphinx sites
+
+A Sphinx site -- numpy, the Python docs, most Read the Docs pages -- stands alone:
+there is no registry to search, so it is reached by its address. Paste the URL into
+the install picker and the row shows the project, its version and how many pages the
+install will fetch. That last number is worth reading before you pick: such a site
+ships no archive, so the install is one request per page (numpy is 2673 of them).
+
+What makes it readable is the site's own `objects.inv`, the inventory Sphinx
+publishes for cross-project linking: every documented name, the page it is on and
+the anchor it sits at. A link therefore lands on the item it names rather than at
+the top of its page.
 
 ## Dependencies
 
