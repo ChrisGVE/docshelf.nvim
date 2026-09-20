@@ -92,12 +92,25 @@ Example, with lazy.nvim: >lua
 
                                                              *:ApidocsInstall*
 :ApidocsInstall		Fetch the list of documentation sources devdocs.io
-			offers and ask which to install.
+			offers and ask which ones to install.
+
+			With snacks.nvim, `<Tab>` marks a source and a mark
+			survives a change of search, so several can be picked
+			in one round.
 
 			Installing is slow — a large source is thousands of
-			pages — and it WILL BRIEFLY FREEZE NEOVIM, because the
-			pages are post-processed with tree-sitter. It happens
-			once per source, never again while you read.
+			pages, post-processed with tree-sitter — but it runs
+			in the background and Neovim stays usable. Sources
+			install one at a time from a single queue: picking
+			more while one runs appends to it, a source already
+			queued is reported rather than queued twice, and a
+			source that fails is reported and skipped so the rest
+			carry on. One notification, replaced in place, names
+			the stage and the place in the queue, as in
+			`2/4 lua~5.4: converting pages 310/390`.
+
+			It happens once per source, never again while you
+			read.
 
 			Every row carries the release devdocs offers today.
 			An installed source also says how what you have
@@ -189,8 +202,11 @@ match is not always the one meant.
                                                     *apidocs.ensure_install()*
 `require("apidocs").ensure_install(`{sources}`)`
 		Install every source in the list that is not installed yet,
-		and do nothing for the ones that are. Meant to be called after
-		`setup()` so a configuration carries its own docsets: >lua
+		and do nothing for the ones that are. The missing ones join
+		the same queue |:ApidocsInstall| uses, so they never install
+		alongside each other or alongside a source picked there.
+		Meant to be called after `setup()` so a configuration carries
+		its own docsets: >lua
 		require("apidocs").ensure_install({ "lua~5.4", "rust" })
 <
                                                        *apidocs.data_folder()*
