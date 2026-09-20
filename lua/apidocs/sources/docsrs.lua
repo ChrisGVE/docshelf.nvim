@@ -150,6 +150,11 @@ end
 
 local function download(docset, system)
   local name, version = split_docset(docset)
+  -- docs.rs ships one zip per build, so this source needs an unzip the rest of
+  -- the plugin does not; say so here rather than let the unpack fail oddly.
+  if vim.fn.executable("unzip") ~= 1 then
+    error("the 'unzip' program must be installed to read docs.rs documentation", 0)
+  end
   local url = base .. "/crate/" .. name .. "/" .. version .. "/download"
   local dir = vim.fn.tempname()
   vim.fn.mkdir(dir, "p")
@@ -247,7 +252,9 @@ local function rewrite_href(href, dir, docs, known)
     -- Page keys are relative to the crate folder, a resolved link is not.
     return page:sub(#docs.root + 2) .. anchor
   end
-  return crate_base .. docs.root .. "/" .. resolved .. anchor
+  -- The build's own root is what docs.rs serves under /<crate>/<version>/, so
+  -- a resolved path is already the rest of the address.
+  return crate_base .. resolved .. anchor
 end
 
 local function clean_page(html, dir, docs, known)

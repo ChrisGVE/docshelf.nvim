@@ -18,7 +18,7 @@
 local M = {}
 
 local adapters = {}
-for _, adapter in ipairs({ require("apidocs.sources.devdocs"), require("apidocs.sources.hackage") }) do
+for _, adapter in ipairs({ require("apidocs.sources.devdocs"), require("apidocs.sources.docsrs"), require("apidocs.sources.hackage") }) do
   adapters[adapter.origin] = adapter
 end
 

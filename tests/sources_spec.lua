@@ -62,9 +62,9 @@ test("switching a source back on in a later setup works", function()
   eq(sources.is_enabled("example.org"), true)
 end)
 
-test("origins are listed in a stable order", function()
+test("origins are listed in a stable order, shipped sources included", function()
   sources.register(example)
-  eq(sources.origins(), { "devdocs.io", "example.org", "hackage.haskell.org" })
+  eq(sources.origins(), { "devdocs.io", "docs.rs", "example.org", "hackage.haskell.org" })
 end)
 
 test("workers defaults to 4 async jobs", function()
