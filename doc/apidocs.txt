@@ -318,6 +318,17 @@ hackage.haskell.org ~
 
 	Installs as `<name>~<version>~~hackage.haskell.org`; its language is
 	Haskell without being asked.
+docs.rs ~
+	A Rust crate. docs.rs builds every crates.io release and ships each
+	build as one zip, so an install is a single request. It needs the
+	`unzip` program.
+
+	It answers the install picker's search: three letters of a crate
+	name and its crates.io matches join the list, each already carrying
+	the version that will be installed.
+
+	Installs as `<crate>~<version>~~docs.rs`; its language is Rust
+	without being asked.
 
 ==============================================================================
 6. KEEPING DOCS CURRENT					*apidocs-updating*
