@@ -117,6 +117,16 @@ test("a URL that is not pkg.go.dev's is left to whoever owns it", function()
   eq(#seen.urls, 0)
 end)
 
+test("latest reads the package page again and names what it offers now", function()
+  local system = runner()
+  pkggodev.from_url("https://pkg.go.dev/example.com/widget", system)
+  eq(pkggodev.latest("example.com_widget~1.2.3", system), "example.com_widget~1.2.3")
+end)
+
+test("latest says nothing for a docset whose package is not remembered", function()
+  eq(pkggodev.latest("example.com_never~0.1.0", runner()), nil)
+end)
+
 test("the release is the version the docset is named for", function()
   eq(pkggodev.release("example.com_widget~1.2.3"), "1.2.3")
 end)

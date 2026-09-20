@@ -219,6 +219,33 @@ function M.from_url(url, system)
   }
 end
 
+--- The docset pkg.go.dev offers today for the package a docset came from. The
+--- package is remembered, so its page is read again and named the way an
+--- install names it: a module that has tagged v1.10.0 since gives
+--- ...cobra~1.10.0 where ...cobra~1.9.1 is installed. The new name is
+--- remembered against the same package, which is what lets it be installed.
+---@param docset string
+---@param system fun(cmd: string[], opts?: table): vim.SystemCompleted
+---@return string? docset nil when the package a docset came from is not known
+function M.latest(docset, system)
+  local entry = M.package(docset)
+  if not entry or type(entry.path) ~= "string" then
+    return nil
+  end
+  local html = fetch(address_of(entry.href or ("/" .. entry.path)), system)
+  local page = read_page(html)
+  local name = docset_name(page.path, page.version)
+  read[name] = {
+    root = page.path,
+    version = page.version,
+    href = page.href,
+    subs = page.subs,
+    html = { [page.path] = html },
+  }
+  remember(name, { path = page.path, version = page.version, href = page.href })
+  return name
+end
+
 --- The release a docset holds: the version its page named, which the docset is
 --- named for.
 ---@param docset string
