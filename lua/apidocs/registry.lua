@@ -13,6 +13,10 @@
 -- `version` is optional: a registry that does not return one leaves the
 -- version to be resolved when a row is picked.
 --
+-- A source outside devdocs has no catalogue entry to record at install, so it
+-- may also declare:
+--   release(slug) -> string?   -- the patch release the docset holds
+--
 -- Answers are kept in a cache file beside the installed docsets, so a name
 -- searched once is offered again at the next keystroke with no network at all.
 -- A registry is community-run and may be slow or down: a source that fails is

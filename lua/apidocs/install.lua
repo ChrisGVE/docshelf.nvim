@@ -643,7 +643,18 @@ local function apidoc_install(choice, slugs_to_mtimes, cont, on_fail)
 
       local elapsed = (vim.loop.hrtime() - start_install) / 1e9
 
-      metadata.mark_installed(choice, catalogue[choice] or { mtime = mtime })
+      -- devdocs' catalogue entry carries the release and mtime. Another source
+      -- has no catalogue, so it says what it installed itself: an adapter that
+      -- knows its version reports it, and the record can then be compared with
+      -- what the source offers later.
+      local entry = catalogue[choice]
+      if not entry then
+        entry = { mtime = mtime }
+        if adapter and adapter.release then
+          entry.release = adapter.release(slug)
+        end
+      end
+      metadata.mark_installed(choice, entry)
 
       progress(choice, "finished in " .. elapsed .. "s. All parsing: " .. all_parsing
       .. "s. All reading IDs: " .. all_reading_ids .. "s. All writing: " .. elapsed_writing .. "s. All elinks: " .. elapsed_elinks .. "s. All post-process: " .. elapsed_pp .. "s.")
