@@ -1,56 +1,110 @@
 -- Keeping installed documentation current.
 --
 -- A docset is a copy of something that keeps moving: devdocs rebuilds its
--- catalogue and the thing it documents publishes new releases. This module
--- answers two questions -- which installed docsets are behind, and how to
--- bring them level -- and arms the idle check that asks them on its own.
+-- catalogue, a package publishes a new version, a project's site is edited.
+-- This module answers two questions -- which installed docsets are behind, and
+-- how to bring them level -- and arms the idle check that asks them on its own.
 --
--- The planning half (`plan`, `summary`, `due`) is pure: it is handed the
--- manifest and the devdocs catalogue, and it returns a list of items. That is
--- what the specs exercise; nothing in it touches the network or the data
--- folder.
+-- The planning half (`plan`, `askable`, `summary`, `due`) is pure: it is handed
+-- the manifest, the devdocs catalogue and what each source says it offers now,
+-- and it returns a list of items. That is what the specs exercise; nothing in
+-- it touches the network or the data folder.
 --
--- What "behind" means comes from the install record: `.installed.json` keeps
--- the release a docset was installed at and the catalogue's build time, so a
--- new release (3.14.6 -> 3.14.7) and a rebuild at the same release are both
--- visible from one catalogue request, the same one the install picker already
--- makes. A docset installed before metadata was recorded, and one the
--- catalogue has since dropped, cannot be compared -- neither is reported,
--- because reinstalling on a guess costs thousands of requests.
+-- Where "what is offered now" comes from differs by source, and `release` is
+-- not the answer: every adapter's `release(docset)` reads the version out of
+-- the docset's own name, which is what is INSTALLED. Asking the source takes
+-- one request, so it is a separate, optional part of the contract:
 --
--- An update is a reinstall in place: a devdocs docset's name carries the
--- release line, not the release (`python~3.14` covers 3.14.6 and 3.14.7), so
--- the folder that is there is the folder that stays.
+--   latest(docset, system) -> docset?   the docset this source offers today
+--                                       for the same thing, or nil when it
+--                                       cannot say
+--
+-- devdocs needs none: its catalogue (docs.json) already carries the release and
+-- the build time of everything, and one request covers the lot. DocC declares
+-- none either -- a DocC site publishes no version at all, so there is nothing
+-- to compare and a DocC docset is never reported as stale.
+--
+-- Two shapes of update come out of this, and they differ in what they leave
+-- behind. A devdocs docset keeps its folder (python~3.14 is a moving target
+-- whose release goes 3.14.6 -> 3.14.7), so an update is a reinstall in place.
+-- Every other source names the folder for the exact version it holds, so
+-- text~2.1.2~~hackage.haskell.org becomes text~2.1.3~~hackage.haskell.org: the
+-- new one is installed, what the user set on the old one (its language, its
+-- place in the filter) moves over, and the old folder is removed.
 local M = {}
 
+local folders = require("apidocs.folders")
 local metadata = require("apidocs.metadata")
+
+--- The name and version a docset is called, or nil where it carries no
+--- version ("swiftui", a DocC site that publishes none).
+local function split_version(docset)
+  local name, version = docset:match("^(.-)~([^~]*)$")
+  if name == nil or name == "" or version == "" then
+    return nil
+  end
+  return name, version
+end
 
 -- --------------------------------------------------------------- planning
 
---- What is out of date, given the manifest and the devdocs catalogue.
----@param manifest table<string, table> install records by docset name
+--- What is out of date, given the manifest, the devdocs catalogue, and the
+--- docset each other source says it offers now (by installed folder).
+---
+--- Anything that cannot be compared is left out rather than reported: a docset
+--- installed before metadata was tracked, one the catalogue has dropped, one
+--- whose source was not asked or could not answer, and one with no version on
+--- either side. None of those means "stale", and reinstalling on a guess costs
+--- thousands of requests.
+---@param manifest table<string, table>
 ---@param catalogue table<string, table> devdocs entries by docset name
----@return { folder: string, docset: string, target: string, kind: string, name: string, installed?: string, available?: string }[]
-function M.plan(manifest, catalogue)
+---@param offered table<string, string> installed folder -> docset offered now
+---@return { folder: string, docset: string, origin: string, target: string, kind: string, name: string, installed?: string, available?: string, replaces: boolean }[]
+function M.plan(manifest, catalogue, offered)
   local items = {}
-  for docset, record in pairs(manifest) do
-    local status = metadata.status(record, catalogue[docset])
+  for folder, record in pairs(manifest) do
+    local docset, origin = folders.split(folder)
     local item
-    if status.kind == "release" then
-      item = {
-        kind = "release",
-        installed = status.installed,
-        available = status.release,
-      }
-    elseif status.kind == "rebuilt" then
-      item = {
-        kind = "rebuilt",
-        installed = record.release,
-        available = record.release,
-      }
+    if origin == metadata.devdocs_origin then
+      local status = metadata.status(record, catalogue[docset])
+      if status.kind == "release" then
+        item = {
+          kind = "release",
+          name = folder,
+          target = folder,
+          installed = status.installed,
+          available = status.release,
+          replaces = false,
+        }
+      elseif status.kind == "rebuilt" then
+        item = {
+          kind = "rebuilt",
+          name = folder,
+          target = folder,
+          installed = record.release,
+          available = record.release,
+          replaces = false,
+        }
+      end
+    else
+      local available_docset = offered[folder]
+      if available_docset and available_docset ~= docset then
+        local name, installed = split_version(docset)
+        local _, available = split_version(available_docset)
+        if name and available then
+          item = {
+            kind = "release",
+            name = name,
+            target = folders.name(available_docset, origin),
+            installed = installed,
+            available = available,
+            replaces = true,
+          }
+        end
+      end
     end
     if item then
-      item.folder, item.docset, item.name, item.target = docset, docset, docset, docset
+      item.folder, item.docset, item.origin = folder, docset, origin
       items[#items + 1] = item
     end
   end
@@ -58,6 +112,26 @@ function M.plan(manifest, catalogue)
     return a.folder < b.folder
   end)
   return items
+end
+
+--- The installed folders worth asking about: those whose source can say what
+--- it offers. devdocs docsets are not among them -- the catalogue answers for
+--- all of them in the one request the install picker already makes.
+---@param installed string[] folder names
+---@param adapter_of fun(origin: string): table?
+---@return string[]
+function M.askable(installed, adapter_of)
+  local askable = {}
+  for _, folder in ipairs(installed) do
+    local _, origin = folders.split(folder)
+    if origin ~= metadata.devdocs_origin then
+      local adapter = adapter_of(origin)
+      if adapter and type(adapter.latest) == "function" then
+        askable[#askable + 1] = folder
+      end
+    end
+  end
+  return askable
 end
 
 --- One line naming what the plan changes: "python~3.14 3.14.6 → 3.14.7".
@@ -122,30 +196,118 @@ local function notify(text, level)
   vim.notify("apidocs update: " .. text, level or vim.log.levels.INFO, { id = "apidocs_update", title = "apidocs" })
 end
 
---- What is out of date, as `plan` returns it. One devdocs catalogue request,
---- the same one the install picker makes.
+--- Ask each source what it offers now for the docsets installed from it.
+--- Only callable from inside `async.run`: every answer is an HTTP request.
+--- A source that raises is left out rather than allowed to stop the round --
+--- one unreachable registry must not hide what the others have to say.
+---@param askable string[] installed folder names, from `askable`
+---@param system fun(cmd: string[], opts?: table): vim.SystemCompleted
+---@return table<string, string> folder -> the docset it offers now
+function M.offered(askable, system)
+  local sources = require("apidocs.sources")
+  local offered = {}
+  for _, folder in ipairs(askable) do
+    local docset, origin = folders.split(folder)
+    local adapter = sources.get(origin)
+    local ok, answer = pcall(adapter.latest, docset, system)
+    if ok and type(answer) == "string" then
+      offered[folder] = answer
+    end
+    require("apidocs.async").yield_to_editor()
+  end
+  return offered
+end
+
+--- What is out of date, as `plan` returns it. One devdocs catalogue request
+--- plus one request per docset from a source that can be asked.
 ---@param cont fun(items: table[], catalogue: table, slugs_to_mtimes: table)
-function M.check(cont)
+---@param on_fail? fun(message: string)
+function M.check(cont, on_fail)
   local install = require("apidocs.install")
+  local sources = require("apidocs.sources")
   install.fetch_slugs_and_mtimes_and_then(function(slugs_to_mtimes)
     local catalogue = install.catalogue()
-    cont(M.plan(metadata.refresh(catalogue), catalogue), catalogue, slugs_to_mtimes)
+    local manifest = metadata.refresh(catalogue)
+    local installed = vim.tbl_keys(manifest)
+    table.sort(installed)
+    require("apidocs.async").run(function()
+      local system = function(cmd, opts)
+        return require("apidocs.async").system(cmd, opts or { text = true })
+      end
+      local offered = M.offered(M.askable(installed, sources.get), system)
+      cont(M.plan(manifest, catalogue, offered), catalogue, slugs_to_mtimes)
+    end, function()
+      if on_fail then
+        on_fail("the sources could not all be asked")
+      end
+    end)
   end)
 end
 
 -- --------------------------------------------------------------- applying
 
+--- What the user set on a docset, to be carried to the folder that replaces
+--- it: the language they assigned, and its place in the filter.
+local function carried(folder)
+  local manifest = metadata.read(require("apidocs.common").data_folder() .. metadata.manifest_name)
+  local record = manifest[folder] or {}
+  local ok, filter = pcall(require, "apidocs.filter")
+  local filtered = false
+  if ok then
+    filtered = vim.tbl_contains(filter.active() or {}, folder)
+  end
+  return { language = record.language_assigned and record.language or nil, filtered = filtered }
+end
+
+--- Hand the superseded folder's settings to the one that replaced it, then
+--- remove it. Only for a source that names its folder for the version it
+--- holds; a devdocs docset was reinstalled in place and has nothing to clean.
+local function supersede(item, held)
+  if vim.fn.isdirectory(require("apidocs.common").data_folder() .. item.target) ~= 1 then
+    return -- the install did not happen; leave what is there alone
+  end
+  if held.language then
+    metadata.assign_language(item.target, held.language)
+  end
+  local ok, filter = pcall(require, "apidocs.filter")
+  if ok and held.filtered then
+    local active = vim.tbl_filter(function(name)
+      return name ~= item.folder
+    end, filter.active() or {})
+    active[#active + 1] = item.target
+    filter.set(active)
+  end
+  vim.system({ "rm", "-Rf", require("apidocs.common").data_folder() .. item.folder }, { text = true }):wait()
+  metadata.forget(item.folder)
+  if ok then
+    filter.forget({ item.folder })
+  end
+end
+
 --- Install everything the plan names, through the same queue as any other
---- install.
+--- install, and hand each superseded folder's settings to its replacement.
 ---@param items table[]
 ---@param slugs_to_mtimes table
 ---@param cont? fun()
 function M.apply(items, slugs_to_mtimes, cont)
-  local targets = {}
+  local install = require("apidocs.install")
+  local held, targets = {}, {}
   for _, item in ipairs(items) do
+    if item.replaces then
+      held[item.folder] = carried(item.folder)
+    end
     targets[#targets + 1] = item.target
   end
-  require("apidocs.install").queue_install(targets, slugs_to_mtimes, cont)
+  install.queue_install(targets, slugs_to_mtimes, function()
+    for _, item in ipairs(items) do
+      if item.replaces then
+        supersede(item, held[item.folder])
+      end
+    end
+    if cont then
+      cont()
+    end
+  end)
 end
 
 -- ------------------------------------------------------------- the command
@@ -191,6 +353,10 @@ function M.run(opts)
         opts.on_done(items)
       end
     end)
+  end, function(message)
+    if not opts.quiet then
+      notify(message, vim.log.levels.WARN)
+    end
   end)
 end
 

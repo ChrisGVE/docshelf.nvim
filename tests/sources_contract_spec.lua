@@ -73,6 +73,17 @@ for module, adapter in pairs(adapters) do
     is(adapter.release, "function", "release")
   end)
 
+  -- `release` reads the version out of a docset's own name, so it says what
+  -- is INSTALLED. `latest` asks the source what it offers TODAY, which costs a
+  -- request -- so it is optional: devdocs answers for all of its docsets from
+  -- one catalogue, and a source that publishes no version (DocC) has nothing
+  -- to compare and declares none.
+  test(module .. " keeps latest optional, and a function when it is there", function()
+    if adapter.latest ~= nil then
+      is(adapter.latest, "function", "latest")
+    end
+  end)
+
   test(module .. " keeps search optional, and a function when it is there", function()
     if adapter.search ~= nil then
       is(adapter.search, "function", "search")
