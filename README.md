@@ -18,6 +18,7 @@ The plugin exports the following commands:
 - `ApidocsInstall` - will fetch the list of supported documentation sources (lua, openjdk, rust...) from devdocs.io and ask you which ones you wish to install. Each source shows its release and install state, with where it comes from (`devdocs.io`) at the right edge. Each install records its origin in the data folder's `.installed.json`, so pickers over installed sources can show it too (`require("apidocs.metadata").installed_origins(slugs)`); sources installed before origins were recorded count as `devdocs.io`. With snacks.nvim, `<Tab>` marks several sources, and marks are kept when you change the search. Sources install one at a time, in the background, with their place in the queue and their progress shown in a notification; picking more while an install runs adds them to the queue, and a source that fails to install is reported and skipped. A large source can take a minute or more, since the plugin uses Neovim's tree-sitter to post-process the files, but Neovim stays usable meanwhile.
 - `ApidocsOpen` (requires telescope.nvim or snacks.nvim) - open a picker listing all apidocs. If you want to display only a subset of sources, call the lua function: `:lua require("apidocs").apidocs_open({restrict_sources={"rust"}})`. With snacks you can also pick the picker layout: `:lua require("apidocs").apidocs_open({layout="ivy_split"})`
 - `ApidocsSearch` (requires telescope.nvim or snacks.nvim) - open a picker to grep for text in all apidocs. If you want to display only a subset of sources, call the lua function: `:lua require("apidocs").apidocs_search({restrict_sources={"rust"}})`. The `layout` option works here too. Each match is shown once: the install writes a `.rgignore` in each source folder listing the per-entry section files, which repeat text from their page (the open picker still lists them), and matches inside a page's footer of links are left out. Sources installed before this change show repeats until they are reinstalled.
+- `ApidocsUpdate` - install again whatever has gone out of date: a source whose release has moved on (3.14.6 to 3.14.7) or that devdocs has rebuilt since it was installed. Name sources to limit the round to them, with tab completion; with no argument everything installed is considered. A source installed before this release records nothing to compare, and one devdocs no longer lists is left alone rather than reinstalled on a guess. This also runs on its own: the first time you pause after opening Neovim, and at most once a day, apidocs checks and updates in the background, using the same queue and the same progress notification as any other install. Switch that off with `update = { auto = false }` in `setup()`, or change how long it waits with `update = { every_hours = 24 }`. The automatic check is armed by `setup()`, so if you load the plugin lazily on its commands it first runs once you have opened the docs, not at startup.
 - `ApidocsUninstall` - allows to uninstall sources. Press tab to get a completion on the available ones.
 
 ## Advanced usage
@@ -49,7 +50,7 @@ return {
     'nvim-treesitter/nvim-treesitter',
     'nvim-telescope/telescope.nvim', -- or, 'folke/snacks.nvim'
   },
-  cmd = { 'ApidocsSearch', 'ApidocsInstall', 'ApidocsOpen', 'ApidocsSelect', 'ApidocsUninstall' },
+  cmd = { 'ApidocsSearch', 'ApidocsInstall', 'ApidocsOpen', 'ApidocsSelect', 'ApidocsUpdate', 'ApidocsUninstall' },
   config = function()
     require('apidocs').setup()
     -- Picker will be auto-detected. To select a picker of your choice explicitly you can set picker by the configuration option 'picker':
@@ -59,6 +60,9 @@ return {
     -- require('apidocs').setup({picker = "snacks", layout = "ivy_split"})
     -- You can change the keymap for following "local://" links by setting the configuration option 'follow_link_keymap' (default is "<C-]>"):
     -- require('apidocs').setup({follow_link_keymap = "<C-]>"})
+    -- Installed docs are checked for updates the first time you pause after opening Neovim, at most once a day, and refreshed in the background. To switch that off, or wait longer:
+    -- require('apidocs').setup({update = {auto = false}})
+    -- require('apidocs').setup({update = {every_hours = 72}})
   end,
   keys = {
     { '<leader>sad', '<cmd>ApidocsOpen<cr>', desc = 'Search Api Doc' },

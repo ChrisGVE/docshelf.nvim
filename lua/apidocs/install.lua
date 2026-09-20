@@ -760,6 +760,17 @@ end
 
 return {
   fetch_slugs_and_mtimes_and_then = fetch_slugs_and_mtimes_and_then,
+  -- devdocs' catalogue entries by docset name, as the last
+  -- fetch_slugs_and_mtimes_and_then left them. Empty until one has run.
+  catalogue = function()
+    return catalogue
+  end,
+  -- Whether a source is installing now. An update check that queued work
+  -- while an install was running would report progress for both at once, and
+  -- the idle check would rather wait for a quiet moment.
+  installing = function()
+    return queue.current ~= nil
+  end,
   apidoc_install = apidoc_install,
   queue_install = queue_install,
   apidocs_install = apidocs_install,

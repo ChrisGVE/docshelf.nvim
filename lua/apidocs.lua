@@ -177,7 +177,12 @@ local function set_config(opts)
   opts = set_picker(opts or {})
   Config = vim.tbl_extend("force", {
     follow_link_keymap = "<C-]>",
+    -- Keeping installed documentation current. `auto = false` leaves it to
+    -- :ApidocsUpdate; `every_hours` is how long the automatic check waits
+    -- between rounds.
+    update = { auto = true, every_hours = 24 },
   }, opts)
+  Config.update = vim.tbl_extend("force", { auto = true, every_hours = 24 }, Config.update or {})
 end
 
 local function setup(conf)
@@ -186,6 +191,21 @@ local function setup(conf)
   ensure_treesitter_dependency()
 
   vim.api.nvim_create_user_command("ApidocsInstall", install.apidocs_install, {})
+  -- With no argument every installed docset is considered; naming some
+  -- limits the round to them, which is what a big collection wants when only
+  -- one thing needs refreshing.
+  vim.api.nvim_create_user_command("ApidocsUpdate", function(args)
+    require("apidocs.update").run({ only = #args.fargs > 0 and args.fargs or nil })
+  end, {
+    nargs = "*",
+    complete = function(lead)
+      return vim.tbl_filter(function(name)
+        return vim.startswith(name, lead)
+      end, get_installed_docs())
+    end,
+    desc = "Install again whatever documentation has gone out of date",
+  })
+  require("apidocs.update").arm(Config.update)
   vim.api.nvim_create_user_command("ApidocsOpen", apidocs_open, {})
   vim.api.nvim_create_user_command("ApidocsSearch", apidocs_search, {})
   vim.api.nvim_create_user_command("ApidocsUninstall", function(args)
