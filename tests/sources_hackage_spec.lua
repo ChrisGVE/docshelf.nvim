@@ -199,6 +199,10 @@ test("an answer that is not a list of packages is an error", function()
   eq(ok, false)
 end)
 
+test("a docset's release is the version it is named for", function()
+  eq(hackage.release("text~2.1.2"), "2.1.2")
+end)
+
 test("Hackage declares the one language it documents", function()
   eq(hackage.language, "Haskell")
 end)

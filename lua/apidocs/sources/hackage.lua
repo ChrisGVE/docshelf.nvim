@@ -82,6 +82,15 @@ local function split_docset(docset)
   return name, version
 end
 
+--- The patch release a docset holds: a Hackage docset is named for the exact
+--- version it was built from, so there is nothing to look up.
+---@param docset string e.g. "text~2.1.2"
+---@return string version
+function M.release(docset)
+  local _, version = split_docset(docset)
+  return version
+end
+
 local function read_file(path)
   local file = assert(io.open(path, "r"))
   local contents = file:read("*a")
