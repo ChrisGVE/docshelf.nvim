@@ -7,10 +7,11 @@ CONTENTS						*apidocs-contents*
 	2. Requirements .................... |apidocs-requirements|
 	3. Setup ........................... |apidocs-setup|
 	4. Commands ........................ |apidocs-commands|
-	5. Reading a page .................. |apidocs-reading|
-	6. Following links ................. |apidocs-links|
-	7. Lua API ......................... |apidocs-api|
-	8. Credits ......................... |apidocs-credits|
+	5. Keeping docs current ............ |apidocs-updating|
+	6. Reading a page .................. |apidocs-reading|
+	7. Following links ................. |apidocs-links|
+	8. Lua API ......................... |apidocs-api|
+	9. Credits ......................... |apidocs-credits|
 
 ==============================================================================
 1. INTRODUCTION					    *apidocs-introduction*
@@ -66,6 +67,16 @@ not fetch anything.
 		preset name, or a layout table. `"ivy_split"` puts the picker
 		along the bottom.
 
+	`update`		table
+		Keeping installed documentation current — see
+		|apidocs-updating|.
+
+			`auto`		boolean	(default: `true`)
+				Check once after Neovim settles, and
+				refresh in the background.
+			`every_hours`	number	(default: `24`)
+				How long a check waits before the next one.
+
 	`follow_link_keymap`	string		(default: `"<C-]>"`)
 		The key that follows a `local://` link from a documentation
 		buffer. See |apidocs-links|.
@@ -78,7 +89,7 @@ Example, with lazy.nvim: >lua
 	    "folke/snacks.nvim", -- or nvim-telescope/telescope.nvim
 	  },
 	  cmd = { "ApidocsInstall", "ApidocsOpen", "ApidocsSearch",
-	          "ApidocsUninstall" },
+	          "ApidocsUpdate", "ApidocsUninstall" },
 	  keys = {
 	    { "<leader>sad", "<cmd>ApidocsOpen<cr>", desc = "Api docs" },
 	  },
@@ -153,6 +164,13 @@ Example, with lazy.nvim: >lua
 :ApidocsSearch		Open a picker that greps the text of every installed
 			page as you type. Requires ripgrep.
 
+                                                              *:ApidocsUpdate*
+:ApidocsUpdate [{source} ...]
+			Install again whatever has gone out of date. Name
+			sources to limit the round to them — <Tab> completes
+			the installed ones — or give no argument to consider
+			everything installed. See |apidocs-updating|.
+
                                                            *:ApidocsUninstall*
 :ApidocsUninstall {source}
 			Remove an installed source. <Tab> completes the
@@ -162,7 +180,37 @@ Both pickers can be narrowed to a few sources, and given a layout, when called
 as Lua functions instead — see |apidocs-api|.
 
 ==============================================================================
-5. READING A PAGE					 *apidocs-reading*
+5. KEEPING DOCS CURRENT					*apidocs-updating*
+
+devdocs.io moves on: a source gets a new patch release (3.14.6 becomes
+3.14.7), or keeps its release and is rebuilt from newer upstream pages. Both
+are recorded at install time (see |apidocs-install-record|), so both can be
+noticed.
+
+|:ApidocsUpdate| installs again every source in either state. Two are left
+alone on purpose:
+
+	- one installed before the plugin recorded anything, because there is
+	  nothing to compare it against;
+	- one devdocs no longer lists, because reinstalling it would be a
+	  guess about what replaced it.
+
+An update is an ordinary install, so it uses the same queue and the same
+progress notification, and Neovim stays usable throughout.
+
+							*apidocs-update-auto*
+The same check also runs on its own: the first time you pause after opening
+Neovim, and then at most once every `every_hours`. It is armed by `setup()`,
+so a plugin loaded lazily on its commands first checks once you have opened
+the docs, not at startup. The time of the last check is kept in `.update.json`
+in the data folder.
+
+To leave updating to |:ApidocsUpdate| alone, or to check less often: >lua
+	require("apidocs").setup({ update = { auto = false } })
+	require("apidocs").setup({ update = { every_hours = 72 } })
+<
+==============================================================================
+6. READING A PAGE					 *apidocs-reading*
 
 A documentation page is an ordinary buffer holding text, so every Neovim
 motion, search and mark works on it. The plugin sets 'conceallevel' and
@@ -170,7 +218,7 @@ motion, search and mark works on it. The plugin sets 'conceallevel' and
 fences read as text rather than as punctuation.
 
 ==============================================================================
-6. FOLLOWING LINKS					   *apidocs-links*
+7. FOLLOWING LINKS					   *apidocs-links*
 
 Links are numbered in the text — `[1]`, `[2]` — and the addresses themselves
 are collected in a footer at the end of the page. Following one is therefore
@@ -190,7 +238,7 @@ searching for the text it names, so you may need |n| to reach it — the first
 match is not always the one meant.
 
 ==============================================================================
-7. LUA API						     *apidocs-api*
+8. LUA API						     *apidocs-api*
 
                                                       *apidocs.apidocs_open()*
 `require("apidocs").apidocs_open(`{opts}`)`
@@ -245,7 +293,7 @@ match is not always the one meant.
 		standalone display.
 
 ==============================================================================
-8. CREDITS						 *apidocs-credits*
+9. CREDITS						 *apidocs-credits*
 
 apidocs.nvim	https://github.com/emmanueltouzery/apidocs.nvim
 
