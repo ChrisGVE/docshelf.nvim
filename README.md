@@ -9,6 +9,8 @@ It will also extract the documentation for individual methods (`List.add()`...) 
 
 ## How to use
 
+Everything below is also in the helpfile, `:help apidocs`.
+
 Call `require("apidocs").setup()` when installing the plugin to register the commands.
 
 The plugin exports the following commands:

@@ -1,0 +1,203 @@
+*apidocs.txt*	Offline devdocs.io documentation, read inside Neovim
+
+==============================================================================
+CONTENTS						*apidocs-contents*
+
+	1. Introduction .................... |apidocs-introduction|
+	2. Requirements .................... |apidocs-requirements|
+	3. Setup ........................... |apidocs-setup|
+	4. Commands ........................ |apidocs-commands|
+	5. Reading a page .................. |apidocs-reading|
+	6. Following links ................. |apidocs-links|
+	7. Lua API ......................... |apidocs-api|
+	8. Credits ......................... |apidocs-credits|
+
+==============================================================================
+1. INTRODUCTION					    *apidocs-introduction*
+
+apidocs.nvim downloads documentation from https://devdocs.io and converts it,
+once, into plain text you read in a normal buffer. Nothing is fetched again
+while you read: a docset is a folder of files on disk, so opening a page and
+searching across every page you have installed are both local operations.
+
+The conversion also splits a page into its individual entries, so `List.add()`
+is a page of its own rather than a heading somewhere inside the `List` page,
+and the pickers list it as such.
+
+==============================================================================
+2. REQUIREMENTS					    *apidocs-requirements*
+
+Required:
+	- elinks	https://github.com/rkd77/elinks, to render HTML
+	- ripgrep	for |:ApidocsSearch|
+	- curl		to fetch the docsets
+	- tree-sitter parsers for `html` and `markdown_inline`
+
+One picker, either one:
+	- telescope.nvim
+	  https://github.com/nvim-telescope/telescope.nvim
+	- snacks.nvim
+	  https://github.com/folke/snacks.nvim
+
+Without either, the plugin falls back to |vim.ui.select()|, which has no
+preview and no search.
+
+Linux and macOS. Windows is not supported; WSL may work.
+
+==============================================================================
+3. SETUP						   *apidocs-setup*
+
+Call `setup()` once when the plugin loads. It registers the commands; it does
+not fetch anything.
+>lua
+	require("apidocs").setup()
+<
+                                                             *apidocs-options*
+`setup()` accepts a table:
+
+	`picker`		string		(default: auto-detected)
+		Which picker to use: `"telescope"`, `"snacks"` or
+		`"ui_select"`.
+		Left unset, whichever of telescope.nvim and snacks.nvim is
+		installed is used.
+
+	`layout`		string|table	(default: `"telescope"`)
+		snacks.nvim only: the layout the pickers open with. Any snacks
+		preset name, or a layout table. `"ivy_split"` puts the picker
+		along the bottom.
+
+	`follow_link_keymap`	string		(default: `"<C-]>"`)
+		The key that follows a `local://` link from a documentation
+		buffer. See |apidocs-links|.
+
+Example, with lazy.nvim: >lua
+	{
+	  "emmanueltouzery/apidocs.nvim",
+	  dependencies = {
+	    "nvim-treesitter/nvim-treesitter",
+	    "folke/snacks.nvim", -- or nvim-telescope/telescope.nvim
+	  },
+	  cmd = { "ApidocsInstall", "ApidocsOpen", "ApidocsSearch",
+	          "ApidocsUninstall" },
+	  keys = {
+	    { "<leader>sad", "<cmd>ApidocsOpen<cr>", desc = "Api docs" },
+	  },
+	  config = function()
+	    require("apidocs").setup({ picker = "snacks" })
+	  end,
+	}
+<
+==============================================================================
+4. COMMANDS						*apidocs-commands*
+
+                                                             *:ApidocsInstall*
+:ApidocsInstall		Fetch the list of documentation sources devdocs.io
+			offers and ask which to install.
+
+			Installing is slow — a large source is thousands of
+			pages — and it WILL BRIEFLY FREEZE NEOVIM, because the
+			pages are post-processed with tree-sitter. It happens
+			once per source, never again while you read.
+
+                                                                *:ApidocsOpen*
+:ApidocsOpen		Open a picker over every page of every installed
+			source. Requires telescope.nvim or snacks.nvim for a
+			preview.
+
+                                                              *:ApidocsSearch*
+:ApidocsSearch		Open a picker that greps the text of every installed
+			page as you type. Requires ripgrep.
+
+                                                           *:ApidocsUninstall*
+:ApidocsUninstall {source}
+			Remove an installed source. <Tab> completes the
+			installed ones.
+
+Both pickers can be narrowed to a few sources, and given a layout, when called
+as Lua functions instead — see |apidocs-api|.
+
+==============================================================================
+5. READING A PAGE					 *apidocs-reading*
+
+A documentation page is an ordinary buffer holding text, so every Neovim
+motion, search and mark works on it. The plugin sets 'conceallevel' and
+'concealcursor' on the window it opens so that link markup and inline code
+fences read as text rather than as punctuation.
+
+==============================================================================
+6. FOLLOWING LINKS					   *apidocs-links*
+
+Links are numbered in the text — `[1]`, `[2]` — and the addresses themselves
+are collected in a footer at the end of the page. Following one is therefore
+two steps, and it only works in an opened document: a picker preview is not
+enough.
+
+	1. Put the cursor on the link number and press `*`. That searches for
+	   the same number in the footer and lands on the address.
+	2. From there:
+	   - a `local://` address is another installed page: press the
+	     `follow_link_keymap` key, |CTRL-]| by default.
+	   - anything else is a URL: open it as you normally would, for
+	     instance with |gx|.
+
+When a link points at one spot inside a long page, the jump is done by
+searching for the text it names, so you may need |n| to reach it — the first
+match is not always the one meant.
+
+==============================================================================
+7. LUA API						     *apidocs-api*
+
+                                                      *apidocs.apidocs_open()*
+`require("apidocs").apidocs_open(`{opts}`)`
+		|:ApidocsOpen| as a function. {opts} may carry:
+			`restrict_sources`	list of source names to list
+			`layout`		snacks layout, as in `setup()`
+>lua
+		require("apidocs").apidocs_open({
+		  restrict_sources = { "rust" },
+		  layout = "ivy_split",
+		})
+<
+                                                    *apidocs.apidocs_search()*
+`require("apidocs").apidocs_search(`{opts}`)`
+		|:ApidocsSearch| as a function. Takes the same {opts}.
+
+                                                    *apidocs.ensure_install()*
+`require("apidocs").ensure_install(`{sources}`)`
+		Install every source in the list that is not installed yet,
+		and do nothing for the ones that are. Meant to be called after
+		`setup()` so a configuration carries its own docsets: >lua
+		require("apidocs").ensure_install({ "lua~5.4", "rust" })
+<
+                                                       *apidocs.data_folder()*
+`require("apidocs").data_folder()`
+		The folder the converted pages live in.
+
+                                            *apidocs.open_doc_in_new_window()*
+`require("apidocs").open_doc_in_new_window(`{path}`)`
+		Open one page in a new window, with conceal and link
+		following set up. 'winfixbuf' is set.
+
+                                            *apidocs.open_doc_in_cur_window()*
+`require("apidocs").open_doc_in_cur_window(`{path}`)`
+		The same, in the current window, without 'winfixbuf'.
+
+                                                *apidocs.load_doc_in_buffer()*
+`require("apidocs").load_doc_in_buffer(`{buf}`, `{path}`)`
+		Load one page into an existing buffer. Nothing is set up for
+		you: set 'conceallevel' to 2 and 'concealcursor' to `"n"`
+		on the window yourself, and link following is not wired.
+		This is the entry point for a picker preview, not for
+		standalone display.
+
+==============================================================================
+8. CREDITS						 *apidocs-credits*
+
+apidocs.nvim	https://github.com/emmanueltouzery/apidocs.nvim
+
+The idea, and the first implementation of it, come from nvim-devdocs:
+https://github.com/luckasRanarison/nvim-devdocs
+
+The documentation itself is devdocs.io's: https://devdocs.io
+
+vim:tw=78:ts=8:noet:ft=help:norl:
