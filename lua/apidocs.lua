@@ -289,7 +289,11 @@ local function setup(conf)
     end, get_installed_docs())
   end
 
-  vim.api.nvim_create_user_command("ApidocsInstall", install.apidocs_install, {})
+  -- The command takes no arguments; apidocs_install's own options (a language
+  -- to narrow the picker to) come from a keymap or a call, not from here.
+  vim.api.nvim_create_user_command("ApidocsInstall", function()
+    install.apidocs_install()
+  end, {})
   vim.api.nvim_create_user_command("ApidocsOpen", function(args)
     apidocs_open({
       follow_filter = not args.bang,

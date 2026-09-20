@@ -146,7 +146,7 @@ end
 --- none is left. `run` and `system` default to the coroutine helpers; tests
 --- pass their own.
 ---@param query string
----@param opts { origins: string[], cache: table, on_batch: fun(origin: string, rows: table[]), on_done: fun(), run?: fun(fn: fun(), on_fail?: fun()), system?: fun(cmd: string[]): table }
+---@param opts { origins: string[], cache: table, on_batch: fun(origin: string, rows: table[]), on_done: fun(), run?: fun(fn: fun()), system?: fun(cmd: string[]): table }
 function M.search(query, opts)
   local run = opts.run or async.run
   local system = opts.system or function(cmd)
@@ -171,7 +171,17 @@ function M.search(query, opts)
   local function ask(origin)
     local adapter = sources.get(origin)
     run(function()
-      local rows = adapter.search(query, system)
+      -- A registry that is down, slow or answering something unexpected must
+      -- not empty the picker: it is reported as having found nothing.
+      local ok, rows = pcall(adapter.search, query, system)
+      if not ok then
+        vim.notify(
+          "apidocs: " .. origin .. " could not be searched: " .. tostring(rows),
+          vim.log.levels.DEBUG,
+          { title = "apidocs" }
+        )
+        rows = {}
+      end
       for _, row in ipairs(rows) do
         row.origin = origin
       end
@@ -179,15 +189,6 @@ function M.search(query, opts)
       if not handle._cancelled and #rows > 0 then
         opts.on_batch(origin, rows)
       end
-      finished(origin)
-      start_next()
-    end, function(err)
-      -- A registry that is down or slow must not empty the picker.
-      vim.notify(
-        "apidocs: " .. origin .. " could not be searched: " .. tostring(err),
-        vim.log.levels.DEBUG,
-        { title = "apidocs" }
-      )
       finished(origin)
       start_next()
     end)

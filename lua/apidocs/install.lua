@@ -7,6 +7,9 @@ local sources = require("apidocs.sources")
 local metadata = require("apidocs.metadata")
 -- Coroutine helpers: long work that keeps the editor responsive.
 local async = require("apidocs.async")
+-- Searching the registries behind the sources, and the rows that come back.
+local registry = require("apidocs.registry")
+local install_pick = require("apidocs.install_pick")
 
 -- docs.json entries by slug, filled by fetch_slugs_and_mtimes_and_then
 local catalogue = {}
@@ -677,7 +680,26 @@ end
 -- A language wider than this is cut: the column is a signpost, not the answer.
 local language_column = 18
 
-local function pick_and_queue(keys, format_item, origin_of, language_of, slugs_to_mtimes)
+local picker_title = "Install documentation (<Tab> marks several)"
+
+-- Registries are only asked once the typed name is worth a request: one or two
+-- letters match thousands of packages and tell nobody anything.
+local min_registry_query = 3
+
+-- The live picker re-runs its finder whenever an answer lands, so the search
+-- has to be fired from the typed name changing, never from the finder running.
+local search_state = { query = nil, handle = nil }
+
+local function stop_registry_search()
+  if search_state.handle then
+    search_state.handle:cancel()
+  end
+  search_state = { query = nil, handle = nil }
+end
+
+---@param opts? { languages?: table<string, boolean> }
+local function pick_and_queue(keys, format_item, origin_of, language_of, slugs_to_mtimes, opts)
+  opts = opts or {}
   local function language(slug)
     local name = language_of(slug)
     if vim.fn.strdisplaywidth(name) > language_column then
@@ -701,11 +723,38 @@ local function pick_and_queue(keys, format_item, origin_of, language_of, slugs_t
       end, choices), ", "), vim.log.levels.INFO, { title = "apidocs" })
     end
   end
+  -- A registry row whose version is not known yet: ask the source which
+  -- version has documentation, then queue that. One request, so it is done
+  -- when the row is picked rather than for every row a search returns.
+  local function resolve_then_enqueue(item)
+    local adapter = sources.get(item.origin)
+    if not (adapter and adapter.resolve) then
+      vim.notify("apidocs: " .. item.origin .. " cannot say which version of " .. item.name
+        .. " to install", vim.log.levels.ERROR, { title = "apidocs" })
+      return
+    end
+    vim.notify("apidocs: asking " .. item.origin .. " about " .. item.name, vim.log.levels.INFO,
+      { id = "apidocs_resolve_" .. item.name, title = "apidocs" })
+    run(function()
+      local docset = adapter.resolve(item.name, function(cmd)
+        return system_async(cmd, { text = true })
+      end)
+      enqueue({ folders.name(docset, item.origin) })
+    end)
+  end
+  local function queue_items(items)
+    for _, item in ipairs(items) do
+      if item.slug then
+        enqueue({ item.slug })
+      else
+        resolve_then_enqueue(item)
+      end
+    end
+  end
   if Config and Config.picker == "snacks" then
-    require("snacks").picker.pick({
-      title = "Install documentation (<Tab> marks several)",
-      layout = { preset = "select" },
-      items = vim.tbl_map(function(slug)
+    -- The rows known before a key is pressed: the devdocs catalogue.
+    local function catalogue_rows()
+      return vim.tbl_map(function(slug)
         return {
           text = language(slug) .. " " .. format_item(slug),
           label = format_item(slug),
@@ -713,7 +762,56 @@ local function pick_and_queue(keys, format_item, origin_of, language_of, slugs_t
           slug = slug,
           origin = origin_of(slug),
         }
-      end, keys),
+      end, keys)
+    end
+    local cache = registry.default_cache()
+    local origins = registry.searchable({ languages = opts.languages })
+    local function origin_language(origin)
+      local adapter = sources.get(origin)
+      return adapter and adapter.language or ""
+    end
+    stop_registry_search()
+    require("snacks").picker.pick({
+      title = picker_title,
+      layout = { preset = "select" },
+      -- Live: what is typed is the query the registries are asked, so snacks
+      -- does no matching of its own and install_pick.order does it instead.
+      live = true,
+      on_close = stop_registry_search,
+      finder = function(_, ctx)
+        local typed = ctx.filter.search or ""
+        local items = catalogue_rows()
+        for _, row in ipairs(cache:match(typed)) do
+          items[#items + 1] = install_pick.registry_row(row, origin_language(row.origin))
+        end
+        if typed ~= search_state.query then
+          stop_registry_search()
+          search_state.query = typed
+          if #origins > 0 and #typed >= min_registry_query then
+            local picker = ctx.picker
+            local function answered()
+              vim.schedule(function()
+                if picker.closed then
+                  return
+                end
+                picker.title = install_pick.title(
+                  picker_title,
+                  search_state.handle and search_state.handle:pending() or {}
+                )
+                picker:update_titles()
+                picker:find({ refresh = true })
+              end)
+            end
+            search_state.handle = registry.search(typed, {
+              origins = origins,
+              cache = cache,
+              on_batch = answered,
+              on_done = answered,
+            })
+          end
+        end
+        return install_pick.order(items, typed)
+      end,
       format = function(item)
         local line = { { item.language, "SnacksPickerComment" }, { " | ", "SnacksPickerDelim" }, { item.label } }
         if item.origin then
@@ -727,17 +825,15 @@ local function pick_and_queue(keys, format_item, origin_of, language_of, slugs_t
         return line
       end,
       confirm = function(picker)
-        local choices = vim.tbl_map(function(item)
-          return item.slug
-        end, picker:selected({ fallback = true }))
+        local items = picker:selected({ fallback = true })
         picker:close()
-        if #choices > 0 then
-          enqueue(choices)
-        end
+        queue_items(items)
       end,
     })
     return
   end
+  -- Pickers other than snacks have no live search, so they offer the
+  -- catalogue and whatever a snacks search has already remembered.
   local function format_with_origin(slug)
     local line = padded(slug) .. " | " .. format_item(slug)
     local origin = origin_of(slug)
@@ -750,34 +846,47 @@ local function pick_and_queue(keys, format_item, origin_of, language_of, slugs_t
   end)
 end
 
-local function apidocs_install()
+--- Open the install picker. `languages` narrows it to the docsets of those
+--- languages, and to the registries that document one of them, so a filtered
+--- reading list can be extended without wading through everything else.
+---@param opts? { languages?: table<string, boolean> }
+local function apidocs_install(opts)
+  opts = opts or {}
   if vim.fn.executable("elinks") ~= 1 or vim.fn.executable("rg") ~= 1 or vim.fn.executable("find") ~= 1 then
     print("The 'elinks', 'rg' and 'find' programs must be installed to proceed, refusing to run.")
   else
-    -- A switched-off source is only left out of the picker; today devdocs is
-    -- the only one listed there, so with it off there is nothing to show.
-    if not sources.is_enabled(metadata.devdocs_origin) then
+    -- A switched-off source is only left out of the picker. devdocs is the
+    -- only catalogue there is; with it off, a registry search is all that is
+    -- left, and with no searchable source either there is nothing to show.
+    local devdocs_on = sources.is_enabled(metadata.devdocs_origin)
+    if not devdocs_on and #registry.searchable({ languages = opts.languages }) == 0 then
       vim.notify("apidocs: " .. metadata.devdocs_origin .. " is switched off in setup(), so the install picker has nothing to list",
         vim.log.levels.WARN, { title = "apidocs" })
       return
     end
     fetch_slugs_and_mtimes_and_then(function (slugs_to_mtimes)
-      local keys = vim.tbl_keys(slugs_to_mtimes)
-      table.sort(keys)
       local manifest = metadata.refresh(catalogue)
-      pick_and_queue(keys, function(slug)
-        return metadata.label(catalogue[slug], manifest[slug])
-      end, function(slug)
-        return metadata.origin(catalogue[slug])
-      end, function(slug)
+      local languages = require("apidocs.languages")
+      local function language_of(slug)
         -- An installed source shows the language it was installed with, which
         -- the user may have changed; anything else, the one it would get.
-        local languages = require("apidocs.languages")
         local link = manifest[slug] and metadata.language_link(slug, manifest[slug])
         return languages.label(
           link or languages.resolve(slug, { devdocs = metadata.origin(catalogue[slug]) == metadata.devdocs_origin })
         )
-      end, slugs_to_mtimes)
+      end
+      local keys = {}
+      for slug in pairs(slugs_to_mtimes) do
+        if devdocs_on and not (opts.languages and not opts.languages[language_of(slug)]) then
+          keys[#keys + 1] = slug
+        end
+      end
+      table.sort(keys)
+      pick_and_queue(keys, function(slug)
+        return metadata.label(catalogue[slug], manifest[slug])
+      end, function(slug)
+        return metadata.origin(catalogue[slug])
+      end, language_of, slugs_to_mtimes, opts)
     end)
   end
 end
