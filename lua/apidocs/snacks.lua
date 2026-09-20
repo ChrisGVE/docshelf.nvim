@@ -154,8 +154,105 @@ local function pick_language(opts)
   })
 end
 
+--- A dimmed right-aligned origin, so provenance shows wherever a docset does
+--- without competing with its name.
+---@param origin? string
+local function origin_mark(origin)
+  return {
+    col = 0,
+    virt_text = { { origin or "", "SnacksPickerComment" } },
+    virt_text_pos = "right_align",
+    hl_mode = "combine",
+  }
+end
+
+-- The filter picker: the installed docsets, the active ones first, tab to tick
+-- several. Each row reads `language | docset` with the origin dimmed at the
+-- right, because the language is what a filter widens through -- so it belongs
+-- where the choice is made.
+--
+-- The assign key relabels the docset under the cursor and redraws, so a docset
+-- that came out Unknown can be fixed here rather than in another command. Its
+-- hint goes in the title: snacks only shows a key's description behind `?`, and
+-- a binding nobody can see is a binding nobody uses.
+---@param opts { title: string, selected: string[]?, on_choice: fun(names: string[]), assign_key: string|false, layout?: table }
+local function pick_sources(opts)
+  -- folders.lua belongs to the multi-origin work further up the stack;
+  -- without it a docset's folder is its name.
+  local ok_folders, folders = pcall(require, "apidocs.folders")
+  if not ok_folders then
+    folders = { display = function(name) return name end }
+  end
+  local metadata = require("apidocs.metadata")
+  local filter = require("apidocs.filter")
+
+  local title = opts.title
+  local keys = {}
+  if opts.assign_key then
+    keys[opts.assign_key] = { "assign_language", mode = { "n", "i" }, desc = "set this docset's language" }
+    title = title .. " · " .. opts.assign_key .. " language"
+  end
+
+  -- Rebuilt on every refresh, so a language changed with the assign key shows
+  -- at once -- including the docsets it now pulls in.
+  local function build()
+    local installed = filter.installed()
+    return require("apidocs.filter_pick").rows(installed, metadata.installed_languages(installed), opts.selected)
+  end
+
+  Snacks.picker.pick({
+    source = "apidocs_sources",
+    title = title,
+    -- A list of names, not of documents: prompt on top, no preview of nothing.
+    layout = opts.layout or { preset = "select" },
+    finder = build,
+    format = function(item)
+      -- A filled dot is what the filter holds, a hollow one what a language
+      -- pulled in: searched too, but not chosen, and unticking it does nothing.
+      local mark = { item.active == 1 and "● " or "  ", "SnacksPickerSpecial" }
+      if item.via then
+        mark = { "◦ ", "SnacksPickerComment" }
+      end
+      local row = {
+        mark,
+        { item.pad .. item.language, "SnacksPickerComment" },
+        { " | ", "SnacksPickerDelim" },
+        { folders.display(item.name), "SnacksPickerLabel" },
+      }
+      if item.via then
+        table.insert(row, { "  via " .. folders.display(item.via), "SnacksPickerComment" })
+      end
+      table.insert(row, origin_mark(metadata.installed_origins({ item.name })[item.name]))
+      return row
+    end,
+    win = { input = { keys = keys } },
+    actions = {
+      assign_language = function(picker, item)
+        if not item then
+          return
+        end
+        require("apidocs").assign_language(item.name, function(ok)
+          if ok then
+            picker:find({ refresh = true })
+          end
+        end)
+      end,
+    },
+    confirm = function(picker)
+      local names = vim.tbl_map(function(item)
+        return item.name
+      end, picker:selected({ fallback = true }))
+      picker:close()
+      vim.schedule(function()
+        opts.on_choice(names)
+      end)
+    end,
+  })
+end
+
 return {
   pick_language = pick_language,
+  pick_sources = pick_sources,
   apidocs_open = apidocs_open,
   apidocs_search = apidocs_search,
   drop_link_footer_matches = drop_link_footer_matches,

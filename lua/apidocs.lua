@@ -145,6 +145,7 @@ local function apidocs_open_only(opts)
 end
 
 local function apidocs_open(opts)
+  opts = require("apidocs.filter").restrict(opts)
   if opts and opts.ensure_installed then
     ensure_install_and_then(opts.ensure_installed, nil, function()
       apidocs_open_only(opts)
@@ -155,6 +156,7 @@ local function apidocs_open(opts)
 end
 
 local function apidocs_search(opts)
+  opts = require("apidocs.filter").restrict(opts)
   local picker = Config.picker
   if opts and opts.picker then
     picker = opts.picker
@@ -173,6 +175,72 @@ local function apidocs_search(opts)
   end
 end
 
+local filter = require("apidocs.filter")
+
+-- Defined below, after setup(), but the command registered inside setup() calls
+-- it at runtime -- so the local has to exist by then.
+local assign_language
+local apidocs_filter
+
+-- folders.lua belongs to the multi-origin work further up the stack; without
+-- it a docset's folder is its name.
+local function docset_display(name)
+  local ok, folders = pcall(require, "apidocs.folders")
+  return ok and folders.display(name) or name
+end
+
+--- Set the filter and say what it now covers, naming the docsets a language
+--- pulled in as well: they are searched too, and a filter that silently held
+--- more than was picked would be a surprise the next grep delivers.
+---@param names string[]
+local function set_filter(names)
+  filter.set(names)
+  local display = docset_display
+  local active = filter.active()
+  if not active then
+    vim.notify("apidocs: filter cleared, every source again", vim.log.levels.INFO, { title = "apidocs" })
+    return
+  end
+  local text = table.concat(vim.tbl_map(display, active), ", ")
+  local pulled = filter.pulled_in(active, filter.installed())
+  if #pulled > 0 then
+    text = text .. " + " .. table.concat(vim.tbl_map(display, pulled), ", ")
+  end
+  vim.notify("apidocs filter: " .. text, vim.log.levels.INFO, { title = "apidocs" })
+end
+
+--- Open the picker that sets the filter. With snacks the docsets are ticked
+--- with tab; the other pickers have no multi-select, so they narrow to one
+--- docset at a time, which is still the common case.
+---@param opts? { layout?: table }
+function apidocs_filter(opts)
+  local installed = filter.installed()
+  if #installed == 0 then
+    vim.notify("apidocs: nothing installed to filter", vim.log.levels.WARN, { title = "apidocs" })
+    return
+  end
+
+  if Config.picker == "snacks" then
+    return require("apidocs.snacks").pick_sources({
+      title = "apidocs filter (tab to select several)",
+      selected = filter.active(),
+      assign_key = Config.assign_key,
+      layout = opts and opts.layout,
+      on_choice = set_filter,
+    })
+  end
+
+  local display = docset_display
+  vim.ui.select(installed, {
+    prompt = "Filter apidocs to",
+    format_item = display,
+  }, function(name)
+    if name then
+      set_filter({ name })
+    end
+  end)
+end
+
 local function set_config(opts)
   opts = set_picker(opts or {})
   Config = vim.tbl_extend("force", {
@@ -181,6 +249,9 @@ local function set_config(opts)
     -- :ApidocsUpdate; `every_hours` is how long the automatic check waits
     -- between rounds.
     update = { auto = true, every_hours = 24 },
+    -- In the filter picker, gives the docset under the cursor a language.
+    -- `false` unbinds it, and the title hint goes with it.
+    assign_key = "<c-e>",
   }, opts)
   Config.update = vim.tbl_extend("force", { auto = true, every_hours = 24 }, Config.update or {})
 end
@@ -188,8 +259,10 @@ end
 local function setup(conf)
   set_config(conf)
   conf = conf or {}
-  local ok, err = pcall(require("apidocs.languages").configure,
-    { languages = conf.languages, formats = conf.formats, tools = conf.tools })
+  local ok, err = pcall(
+    require("apidocs.languages").configure,
+    { languages = conf.languages, formats = conf.formats, tools = conf.tools }
+  )
   if not ok then
     vim.notify(err .. "; using the default lists", vim.log.levels.ERROR, { title = "apidocs" })
     require("apidocs.languages").configure({})
@@ -197,7 +270,61 @@ local function setup(conf)
 
   ensure_treesitter_dependency()
 
+  -- Every command that reads the collection takes a bang meaning "all of it
+  -- this once": `:ApidocsOpen!` looks outside the filter without clearing it,
+  -- the way `:Explore!` and friends read. Arguments name sources (or, for
+  -- install, languages) explicitly, which wins over the filter.
+  local function sources_completion(lead)
+    return vim.tbl_filter(function(name)
+      return vim.startswith(name, lead)
+    end, get_installed_docs())
+  end
+
   vim.api.nvim_create_user_command("ApidocsInstall", install.apidocs_install, {})
+  vim.api.nvim_create_user_command("ApidocsOpen", function(args)
+    apidocs_open({
+      follow_filter = not args.bang,
+      restrict_sources = #args.fargs > 0 and args.fargs or nil,
+    })
+  end, {
+    nargs = "*",
+    bang = true,
+    complete = sources_completion,
+    desc = "Open a documentation page (bang: every source)",
+  })
+  vim.api.nvim_create_user_command("ApidocsSearch", function(args)
+    apidocs_search({
+      follow_filter = not args.bang,
+      restrict_sources = #args.fargs > 0 and args.fargs or nil,
+    })
+  end, {
+    nargs = "*",
+    bang = true,
+    complete = sources_completion,
+    desc = "Grep the documentation (bang: every source)",
+  })
+  vim.api.nvim_create_user_command("ApidocsFilter", function(args)
+    if args.bang then
+      filter.clear()
+      vim.notify("apidocs: filter cleared, every source again", vim.log.levels.INFO, { title = "apidocs" })
+    elseif #args.fargs > 0 then
+      set_filter(args.fargs)
+    else
+      apidocs_filter()
+    end
+  end, {
+    nargs = "*",
+    bang = true,
+    complete = sources_completion,
+    desc = "Narrow every apidocs picker to some sources (bang: clear it)",
+  })
+  vim.api.nvim_create_user_command("ApidocsAssignLanguage", function(args)
+    assign_language(args.fargs[1])
+  end, {
+    nargs = 1,
+    complete = sources_completion,
+    desc = "Set which language a docset documents",
+  })
   -- With no argument every installed docset is considered; naming some
   -- limits the round to them, which is what a big collection wants when only
   -- one thing needs refreshing.
@@ -205,22 +332,19 @@ local function setup(conf)
     require("apidocs.update").run({ only = #args.fargs > 0 and args.fargs or nil })
   end, {
     nargs = "*",
-    complete = function(lead)
-      return vim.tbl_filter(function(name)
-        return vim.startswith(name, lead)
-      end, get_installed_docs())
-    end,
+    complete = sources_completion,
     desc = "Install again whatever documentation has gone out of date",
   })
   require("apidocs.update").arm(Config.update)
-  vim.api.nvim_create_user_command("ApidocsOpen", apidocs_open, {})
-  vim.api.nvim_create_user_command("ApidocsSearch", apidocs_search, {})
   vim.api.nvim_create_user_command("ApidocsUninstall", function(args)
     vim.system(
       { "rm", "-Rf", common.data_folder() .. args.fargs[1] },
       { text = true },
       vim.schedule_wrap(function()
         require("apidocs.metadata").forget(args.fargs[1])
+        -- A removed docset leaves the filter too, which would otherwise point
+        -- at a folder that is no longer there.
+        filter.forget({ args.fargs[1] })
         vim.notify("Apidocs: removed source " .. args.fargs[1])
       end)
     )
@@ -248,7 +372,7 @@ end
 --- replacing the one it had.
 ---@param slug string the installed folder name
 ---@param on_done? fun(ok: boolean)
-local function assign_language(slug, on_done)
+function assign_language(slug, on_done)
   local languages = require("apidocs.languages")
   local metadata = require("apidocs.metadata")
   local current = languages.label(metadata.installed_languages({ slug })[slug])
@@ -306,6 +430,8 @@ return {
   apidocs_install = install.apidocs_install,
   apidocs_open = apidocs_open,
   apidocs_search = apidocs_search,
+  apidocs_filter = apidocs_filter,
+  filter = filter,
   ensure_install = ensure_install,
   data_folder = common.data_folder,
   open_doc_in_new_window = common.open_doc_in_new_window,
