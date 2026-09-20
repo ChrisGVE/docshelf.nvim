@@ -98,6 +98,10 @@ Example, with lazy.nvim: >lua
 			survives a change of search, so several can be picked
 			in one round.
 
+			A row also names, at its right edge, where the source
+			comes from — `devdocs.io` — so that a catalogue drawn
+			from more than one place stays readable.
+
 			Installing is slow — a large source is thousands of
 			pages, post-processed with tree-sitter — but it runs
 			in the background and Neovim stays usable. Sources
@@ -131,10 +135,14 @@ Example, with lazy.nvim: >lua
                                                       *apidocs-install-record*
 			What you installed is recorded in `.installed.json`
 			in the data folder (see |apidocs.data_folder()|): the
-			release, the time devdocs built it, and the time you
-			installed it. It is a dotfile, so the |:ApidocsSearch|
-			grep passes over it. Uninstalling a source drops its
-			record.
+			release, the time devdocs built it, the time you
+			installed it, and where it came from. It is a
+			dotfile, so the |:ApidocsSearch| grep passes over it.
+			Uninstalling a source drops its record.
+
+			A source installed before origins were recorded
+			counts as `devdocs.io`, since that is the only place
+			it could have come from.
 
                                                                 *:ApidocsOpen*
 :ApidocsOpen		Open a picker over every page of every installed
@@ -209,6 +217,12 @@ match is not always the one meant.
 		its own docsets: >lua
 		require("apidocs").ensure_install({ "lua~5.4", "rust" })
 <
+                                        *apidocs.metadata.installed_origins()*
+`require("apidocs.metadata").installed_origins(`{slugs}`)`
+		Where each of {slugs} came from, as a table keyed by slug.
+		For a picker of its own over the installed sources, so it can
+		show the same origin the install picker does.
+
                                                        *apidocs.data_folder()*
 `require("apidocs").data_folder()`
 		The folder the converted pages live in.
