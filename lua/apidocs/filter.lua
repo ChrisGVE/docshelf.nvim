@@ -115,6 +115,35 @@ function M.pulled_in(sources, installed, links)
   return require("apidocs.languages").pulled_in(sources, installed, links)
 end
 
+--- The languages a selection covers, as a set, or nil when it covers none.
+--- This is what the install picker narrows by: a filter is a list of docsets,
+--- and what they have in common is a language.
+---@param sources string[]?
+---@param links table<string, table>
+---@return table<string, boolean>?
+function M.languages_of(sources, links)
+  if not sources then
+    return nil
+  end
+  local set = {}
+  for _, name in ipairs(sources) do
+    local entry = links[name]
+    if entry and entry.language then
+      set[entry.language] = true
+    end
+  end
+  return next(set) and set or nil
+end
+
+--- The languages the active filter covers, or nil when no filter is set.
+---@return table<string, boolean>?
+function M.languages()
+  if not active then
+    return nil
+  end
+  return M.languages_of(active, language_links(M.installed()))
+end
+
 --- Resolve the filter into `restrict_sources`, which every picker already
 --- understands -- so the filter reaches snacks, telescope and ui_select
 --- without any of them knowing it exists.

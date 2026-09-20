@@ -185,6 +185,17 @@ local filter = require("apidocs.filter")
 local assign_language
 local apidocs_filter
 
+--- The languages named on a command line, as the set the pickers take.
+---@param names string[]
+---@return table<string, boolean>
+local function to_set(names)
+  local set = {}
+  for _, name in ipairs(names) do
+    set[name] = true
+  end
+  return set
+end
+
 local docset_display = require("apidocs.folders").display
 
 --- Set the filter and say what it now covers, naming the docsets a language
@@ -284,11 +295,21 @@ local function setup(conf)
     end, get_installed_docs())
   end
 
-  -- The command takes no arguments; apidocs_install's own options (a language
-  -- to narrow the picker to) come from a keymap or a call, not from here.
-  vim.api.nvim_create_user_command("ApidocsInstall", function()
-    install.apidocs_install()
-  end, {})
+  vim.api.nvim_create_user_command("ApidocsInstall", function(args)
+    install.apidocs_install(filter.narrow({
+      follow_filter = not args.bang,
+      languages = #args.fargs > 0 and to_set(args.fargs) or nil,
+    }))
+  end, {
+    nargs = "*",
+    bang = true,
+    complete = function(lead)
+      return vim.tbl_filter(function(name)
+        return vim.startswith(name:lower(), lead:lower())
+      end, require("apidocs.languages").available())
+    end,
+    desc = "Install documentation (bang: offer every language)",
+  })
   vim.api.nvim_create_user_command("ApidocsOpen", function(args)
     apidocs_open({
       follow_filter = not args.bang,
@@ -432,7 +453,11 @@ return {
   setup = setup,
   assign_language = assign_language,
   config = Config,
-  apidocs_install = install.apidocs_install,
+  -- Narrowed by the filter like the other two, so a caller gets the same
+  -- picker the command does; `follow_filter = false` opts out.
+  apidocs_install = function(opts)
+    install.apidocs_install(filter.narrow(opts))
+  end,
   apidocs_open = apidocs_open,
   apidocs_search = apidocs_search,
   apidocs_filter = apidocs_filter,

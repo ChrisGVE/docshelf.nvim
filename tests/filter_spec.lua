@@ -98,6 +98,20 @@ test("a language with nothing written in it brings nothing", function()
   eq(filter.widen({ "haskell~9" }, installed, links), { "haskell~9" })
 end)
 
+-- the languages a filter covers ----------------------------------------------
+
+test("the languages of a filter are the set its docsets name", function()
+  eq(filter.languages_of({ "numpy~2.5", "rust" }, links), { Python = true, Rust = true })
+end)
+
+test("a docset with no language contributes none", function()
+  eq(filter.languages_of({ "mystery" }, links), nil)
+end)
+
+test("no filter covers no particular language", function()
+  eq(filter.languages_of(nil, links), nil)
+end)
+
 -- resolving a filter into restrict_sources -----------------------------------
 
 test("with no filter set, options are left alone", function()
