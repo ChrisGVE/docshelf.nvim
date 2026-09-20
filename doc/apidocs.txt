@@ -132,6 +132,7 @@ Example, with lazy.nvim: >lua
 	    { "<leader>saf", "<cmd>ApidocsFilter<cr>", desc = "Filter" },
 	    { "<leader>saF", "<cmd>ApidocsFilter!<cr>", desc = "Unfilter" },
 	    { "<leader>sai", "<cmd>ApidocsInstall<cr>", desc = "Install" },
+	    { "<leader>saI", "<cmd>ApidocsInstall!<cr>", desc = "All" },
 	  },
 	  config = function()
 	    require("apidocs").setup({ picker = "snacks" })
@@ -142,8 +143,13 @@ Example, with lazy.nvim: >lua
 4. COMMANDS						*apidocs-commands*
 
                                                              *:ApidocsInstall*
-:ApidocsInstall		Fetch the list of documentation sources devdocs.io
+:ApidocsInstall[!]	Fetch the list of documentation sources devdocs.io
 			offers and ask which ones to install.
+
+			The picker follows the filter too, by language: with
+			a filter set, only sources of the languages in it are
+			offered. `!` offers every language this once, without
+			clearing the filter. See |apidocs-filter|.
 
 			With snacks.nvim, `<Tab>` marks a source and a mark
 			survives a change of search, so several can be picked
@@ -387,7 +393,9 @@ that a row already there is wrong.
 With a handful of sources installed, a picker can list all of them. With
 several dozen, a list of everything is no longer a list of what you need.
 |:ApidocsFilter| picks a few and keeps them, and |:ApidocsOpen| and
-|:ApidocsSearch| then look only inside them.
+|:ApidocsSearch| then look only inside them, and |:ApidocsInstall| offers
+only the languages they are written in — so a filtered session narrows what
+you read, what you search and what you are offered to add.
 
 The filter belongs to this Neovim session, so a Rust session and a Python
 session each keep their own, and neither has to be undone afterwards.
@@ -412,9 +420,9 @@ see |apidocs-options|.
                                                      *apidocs-filter-ignoring*
 Three ways past the filter, none of which clears it:
 
-	- `!` — |:ApidocsOpen| and |:ApidocsSearch| with a bang look at
-	  everything this once. A capital letter in a keymap is a good home
-	  for it.
+	- `!` — |:ApidocsOpen|, |:ApidocsSearch| and |:ApidocsInstall| with a
+	  bang look at everything this once. A capital letter in a keymap is
+	  a good home for it.
 	- naming sources — `:ApidocsOpen rust` overrides the filter for that
 	  call.
 	- `follow_filter = false` in the Lua options, which is what `!`
