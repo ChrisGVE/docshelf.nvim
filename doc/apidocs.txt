@@ -236,9 +236,10 @@ Example, with lazy.nvim: >lua
 
                                                               *:ApidocsUpdate*
 :ApidocsUpdate [{source} ...]
-			Install again whatever has gone out of date. Name
-			sources to limit the round to them — <Tab> completes
-			the installed ones — or give no argument to consider
+			Install again whatever has gone out of date, from
+			devdocs or from any other origin. Name sources to
+			limit the round to them — <Tab> completes the
+			installed ones — or give no argument to consider
 			everything installed. See |apidocs-updating|.
 
                                                            *:ApidocsUninstall*
@@ -305,18 +306,30 @@ devdocs.io ~
 ==============================================================================
 6. KEEPING DOCS CURRENT					*apidocs-updating*
 
-devdocs.io moves on: a source gets a new patch release (3.14.6 becomes
-3.14.7), or keeps its release and is rebuilt from newer upstream pages. Both
-are recorded at install time (see |apidocs-install-record|), so both can be
-noticed.
+Documentation moves on, and it does so differently depending on where it came
+from.
 
-|:ApidocsUpdate| installs again every source in either state. Two are left
-alone on purpose:
+A devdocs source gets a new patch release (3.14.6 becomes 3.14.7), or keeps
+its release and is rebuilt from newer upstream pages. Both are recorded at
+install time (see |apidocs-install-record|), so both can be noticed, and the
+source is refreshed in its existing folder.
+
+A source from anywhere else is asked what version its origin offers today.
+Since such a docset is usually named for the version it holds, updating it is
+an install under a new name: `text~2.1.2` becomes `text~2.1.3` and the old
+folder is removed once the new one is in place. The language you assigned it
+(see |apidocs-language-assignment|) and its place in the filter are carried
+across, so an update does not undo what you had arranged.
+
+|:ApidocsUpdate| installs again every source found in one of those states.
+Three are left alone on purpose:
 
 	- one installed before the plugin recorded anything, because there is
 	  nothing to compare it against;
 	- one devdocs no longer lists, because reinstalling it would be a
-	  guess about what replaced it.
+	  guess about what replaced it;
+	- one whose origin publishes no version at all, for the same reason —
+	  there is nothing to compare.
 
 An update is an ordinary install, so it uses the same queue and the same
 progress notification, and Neovim stays usable throughout.
