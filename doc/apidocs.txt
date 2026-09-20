@@ -352,6 +352,23 @@ pkg.go.dev ~
 	ones excepted. The standard library is reached the same way.
 
 	A docset's language is Go without being asked.
+DocC sites ~
+	Apple's frameworks, the Swift book, and anything else built with
+	DocC. Named by their address: paste a documentation URL — the
+	SwiftUI framework, say, or the Swift book: >
+https://developer.apple.com/documentation/swiftui
+https://docs.swift.org/swift-book/documentation/the-swift-programming-language
+<	— and the row shows the module and how many pages the install will
+	fetch.
+
+	A DocC site publishes one JSON document per page rather than a page,
+	so the install reads the site's navigator index once and then
+	fetches a document per symbol. SwiftUI is over seven thousand of
+	them, which is why the count is shown before you pick.
+
+	Such a site publishes no version, so the docset carries none and
+	|:ApidocsUpdate| leaves it alone rather than reinstalling it on a
+	guess.
 
 ==============================================================================
 6. KEEPING DOCS CURRENT					*apidocs-updating*
