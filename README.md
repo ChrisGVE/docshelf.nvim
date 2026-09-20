@@ -75,6 +75,19 @@ The built-in source, and the only one with a catalogue: one request lists every 
 with the release and the build time of each. That is also what makes an update check cheap --
 see `ApidocsUpdate`.
 
+### Hackage
+
+`hackage.haskell.org` documents a Haskell package: the Haddock archive a release
+ships (`/package/<name>-<version>/docs.tar`) becomes a page per module plus an entry
+per documented name, qualified by its module (`Data.Text.pack`). Haddock's own
+chrome -- header, contents, synopsis, footer, the Source and self links -- is
+dropped. A docset installs as `<name>~<version>~~hackage.haskell.org`, and its
+language is Haskell without being asked.
+
+It answers the install picker's search: type three letters of a package name and its
+Hackage matches join the list, and picking one asks Hackage which version has
+documentation built -- a package whose docs never built is not offered.
+
 ## Dependencies
 
 This plugin requires:

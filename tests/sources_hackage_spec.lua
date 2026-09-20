@@ -154,5 +154,54 @@ test("a name without a version is an error", function()
   assert(tostring(err):find("tiny", 1, true), err)
 end)
 
+-- Searching: the fake runner answers the search endpoint with a body of the
+-- test's choosing, so the shape Hackage returns is pinned without a network.
+local function search_runner(body, code)
+  return function(cmd)
+    local url = cmd[#cmd]
+    if url:find("/packages/search", 1, true) then
+      return { code = code or 0, stdout = body }
+    end
+    error("unexpected request: " .. url, 0)
+  end
+end
+
+test("a search returns the package names Hackage answered, in its order", function()
+  local system = search_runner('[{"name":"aeson"},{"name":"lens-aeson"}]')
+  eq(hackage.search("aeson", system), { { name = "aeson" }, { name = "lens-aeson" } })
+end)
+
+test("a search sends the query encoded for a URL", function()
+  local sent
+  local system = function(cmd)
+    sent = cmd[#cmd]
+    return { code = 0, stdout = "[]" }
+  end
+  hackage.search("text builder", system)
+  eq(sent, "https://hackage.haskell.org/packages/search?terms=text%20builder")
+end)
+
+test("a search that finds nothing returns no rows", function()
+  eq(hackage.search("nothinglikethis", search_runner("[]")), {})
+end)
+
+test("a search leaves the version out: it is resolved when a package is picked", function()
+  eq(hackage.search("aeson", search_runner('[{"name":"aeson"}]'))[1].version, nil)
+end)
+
+test("a failed request is an error, so the picker can report the source as silent", function()
+  local ok = pcall(hackage.search, "aeson", search_runner("", 22))
+  eq(ok, false)
+end)
+
+test("an answer that is not a list of packages is an error", function()
+  local ok = pcall(hackage.search, "aeson", search_runner('{"error":"nope"}'))
+  eq(ok, false)
+end)
+
+test("Hackage declares the one language it documents", function()
+  eq(hackage.language, "Haskell")
+end)
+
 print(failures == 0 and "all passed" or (failures .. " failed"))
 os.exit(failures == 0 and 0 or 1)

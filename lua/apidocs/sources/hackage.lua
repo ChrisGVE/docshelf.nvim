@@ -16,6 +16,10 @@ local M = {}
 
 M.origin = "hackage.haskell.org"
 
+-- Hackage documents one language, so a picker narrowed to Haskell can ask it
+-- and a picker narrowed to anything else can leave it alone.
+M.language = "Haskell"
+
 local base = "https://hackage.haskell.org"
 
 local function docs_url(package_version)
@@ -37,6 +41,37 @@ function M.resolve(name, system)
     end
   end
   error("no documentation on Hackage for " .. name, 0)
+end
+
+--- The packages whose name holds `query`, in Hackage's own order of
+--- relevance. Hackage's search returns names alone, so the version is left
+--- for `resolve` to answer when a package is picked -- it is one request per
+--- package, and a search returns dozens.
+---@param query string
+---@param system fun(cmd: string[]): vim.SystemCompleted
+---@return { name: string }[]
+function M.search(query, system)
+  local res = system({
+    "curl",
+    "-sfL",
+    "-H",
+    "Accept: application/json",
+    base .. "/packages/search?terms=" .. vim.uri_encode(query),
+  })
+  if res.code ~= 0 then
+    error("could not search Hackage (curl exit " .. tostring(res.code) .. ")", 0)
+  end
+  local found = vim.json.decode(res.stdout)
+  if not vim.islist(found) then
+    error("Hackage answered a search with something other than a list of packages", 0)
+  end
+  local rows = {}
+  for _, package in ipairs(found) do
+    if type(package) == "table" and type(package.name) == "string" then
+      rows[#rows + 1] = { name = package.name }
+    end
+  end
+  return rows
 end
 
 local function split_docset(docset)
