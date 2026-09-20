@@ -109,6 +109,14 @@ What makes it readable is the site's own `objects.inv`, the inventory Sphinx
 publishes for cross-project linking: every documented name, the page it is on and
 the anchor it sits at. A link therefore lands on the item it names rather than at
 the top of its page.
+### pkg.go.dev
+
+A Go package is named by its address rather than found by a search: pkg.go.dev's
+`robots.txt` disallows its search, so there is nothing to type a name into. Paste a
+pkg.go.dev URL and the row shows the package, its version and how many pages the
+install will fetch -- the package the address names plus every package under it,
+internal ones excepted. The standard library is reached the same way. A docset's
+language is Go without being asked.
 
 ## Dependencies
 
