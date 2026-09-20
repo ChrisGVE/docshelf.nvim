@@ -329,6 +329,20 @@ docs.rs ~
 
 	Installs as `<crate>~<version>~~docs.rs`; its language is Rust
 	without being asked.
+Sphinx sites ~
+	A Sphinx site — numpy, the Python documentation, most Read the Docs
+	pages. There is no registry to search, so a site is reached by its
+	address: paste the URL into the install picker and the row shows the
+	project, its version, and how many pages the install will fetch.
+
+	Read that number before you pick. Such a site ships no archive, so
+	the install is one request per page — numpy is 2673 of them.
+
+	What makes the pages readable is the site's own `objects.inv`, the
+	inventory Sphinx publishes for cross-project linking: every
+	documented name, the page it is on and the anchor it sits at. A link
+	therefore lands on the item it names rather than at the top of its
+	page.
 
 ==============================================================================
 6. KEEPING DOCS CURRENT					*apidocs-updating*
