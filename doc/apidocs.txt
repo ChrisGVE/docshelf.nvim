@@ -1,4 +1,4 @@
-*apidocs.txt*	Offline devdocs.io documentation, read inside Neovim
+*apidocs.txt*	Offline API documentation, read inside Neovim
 
 ==============================================================================
 CONTENTS						*apidocs-contents*
@@ -7,21 +7,23 @@ CONTENTS						*apidocs-contents*
 	2. Requirements .................... |apidocs-requirements|
 	3. Setup ........................... |apidocs-setup|
 	4. Commands ........................ |apidocs-commands|
-	5. Keeping docs current ............ |apidocs-updating|
-	6. Languages ....................... |apidocs-languages|
-	7. Narrowing to a few sources ...... |apidocs-filter|
-	8. Reading a page .................. |apidocs-reading|
-	9. Following links ................. |apidocs-links|
-	10. Lua API ........................ |apidocs-api|
-	11. Credits ........................ |apidocs-credits|
+	5. Documentation sources ........... |apidocs-sources|
+	6. Keeping docs current ............ |apidocs-updating|
+	7. Languages ....................... |apidocs-languages|
+	8. Narrowing to a few sources ...... |apidocs-filter|
+	9. Reading a page .................. |apidocs-reading|
+	10. Following links ................ |apidocs-links|
+	11. Lua API ........................ |apidocs-api|
+	12. Credits ........................ |apidocs-credits|
 
 ==============================================================================
 1. INTRODUCTION					    *apidocs-introduction*
 
-apidocs.nvim downloads documentation from https://devdocs.io and converts it,
-once, into plain text you read in a normal buffer. Nothing is fetched again
-while you read: a docset is a folder of files on disk, so opening a page and
-searching across every page you have installed are both local operations.
+apidocs.nvim downloads documentation — from https://devdocs.io and from the
+other sources in |apidocs-sources| — and converts it, once, into plain text
+you read in a normal buffer. Nothing is fetched again while you read: a
+docset is a folder of files on disk, so opening a page and searching across
+every page you have installed are both local operations.
 
 The conversion also splits a page into its individual entries, so `List.add()`
 is a page of its own rather than a heading somewhere inside the `List` page,
@@ -91,6 +93,17 @@ not fetch anything.
 		  tools = { add = { { "Kubernetes", aliases = { "k8s" } } } },
 		})
 <
+	`workers`		number		(default: `4`)
+		How many async jobs run at once — pages converted during an
+		install, registries asked during a search. Installs
+		themselves still run one at a time.
+
+	`sources`		table		(default: all on)
+		Switch a source off by its origin. See |apidocs-sources|: >lua
+		require("apidocs").setup({
+		  sources = { ["devdocs.io"] = false },
+		})
+<
 	`assign_key`		string|false	(default: `"<C-e>"`)
 		Inside the |:ApidocsFilter| picker, the key that sets the
 		language of the source under the cursor. `false` unbinds it.
@@ -138,7 +151,9 @@ Example, with lazy.nvim: >lua
 
 			A row also names, at its right edge, where the source
 			comes from — `devdocs.io` — so that a catalogue drawn
-			from more than one place stays readable.
+			from more than one place stays readable. Where the
+			rows come from, and how to narrow them, is
+			|apidocs-sources|.
 
 			Installing is slow — a large source is thousands of
 			pages, post-processed with tree-sitter — but it runs
@@ -229,7 +244,60 @@ Both pickers can be narrowed to a few sources, and given a layout, when called
 as Lua functions instead — see |apidocs-api|.
 
 ==============================================================================
-5. KEEPING DOCS CURRENT					*apidocs-updating*
+5. DOCUMENTATION SOURCES				  *apidocs-sources*
+
+Documentation comes from a source, and a source is named by its origin — the
+short address it is fetched from. devdocs.io is the one every install starts
+with; the rest are listed at the end of this section.
+
+Each source is an adapter that knows how to fetch and lay out its own pages.
+Everything after the fetch — the conversion, the links, the pickers, the
+filter, the update check — is the same whatever the origin, so a new source
+adds a way in and changes nothing else.
+
+                                                       *apidocs-source-folder*
+A docset from a source other than devdocs lives in a folder named
+`<docset>~~<origin>`, which is why two sources can each document a `text` and
+neither hides the other. What you read is the docset name; the origin shows
+dimmed at the right edge of a picker, and is kept in `.installed.json` (see
+|apidocs-install-record|).
+
+                                                    *apidocs-source-switching*
+Every source is on by default. Switching one off by its origin removes it
+from the install picker only: documentation already installed from it stays
+readable and keeps updating. >lua
+	require("apidocs").setup({ sources = { ["devdocs.io"] = false } })
+<
+                                                     *apidocs-source-registry*
+devdocs ships a catalogue of everything it has, and the install picker lists
+it. A package registry cannot ship one, so it is asked instead.
+
+With snacks.nvim, from the third letter on, every enabled source that can be
+searched is asked — at most `workers` of them at once — and the answers join
+the list as they land, the title naming whichever registry is still being
+waited on. What a registry answered is kept in `.registry_cache.json` in the
+data folder, so the same name typed again is offered before any request goes
+out. A row whose version the registry did not give is resolved when you pick
+it.
+
+Other pickers have no live input to drive this, and keep offering the
+catalogue alone.
+
+                                                    *apidocs-source-languages*
+The install picker can be narrowed to one or more languages — the devdocs
+rows and the registries alike, since a registry declares what language it
+documents: >lua
+	require("apidocs").apidocs_install({ languages = { Haskell = true } })
+<
+                                                         *apidocs-source-list*
+devdocs.io ~
+	The built-in source, and the only one with a catalogue: one request
+	lists every docset it has, with the release and the build time of
+	each. That is also what makes the update check cheap — see
+	|apidocs-updating|.
+
+==============================================================================
+6. KEEPING DOCS CURRENT					*apidocs-updating*
 
 devdocs.io moves on: a source gets a new patch release (3.14.6 becomes
 3.14.7), or keeps its release and is rebuilt from newer upstream pages. Both
@@ -259,7 +327,7 @@ To leave updating to |:ApidocsUpdate| alone, or to check less often: >lua
 	require("apidocs").setup({ update = { every_hours = 72 } })
 <
 ==============================================================================
-6. LANGUAGES					       *apidocs-languages*
+7. LANGUAGES					       *apidocs-languages*
 
 Every installed source is linked to a language, so that a set of sources can
 be talked about by what it is about rather than by slug. `python~3.14`,
@@ -314,7 +382,7 @@ sources devdocs no longer lists. It never edits the table, and it cannot tell
 that a row already there is wrong.
 
 ==============================================================================
-7. NARROWING TO A FEW SOURCES				  *apidocs-filter*
+8. NARROWING TO A FEW SOURCES				  *apidocs-filter*
 
 With a handful of sources installed, a picker can list all of them. With
 several dozen, a list of everything is no longer a list of what you need.
@@ -356,7 +424,7 @@ Three ways past the filter, none of which clears it:
 from it.
 
 ==============================================================================
-8. READING A PAGE					 *apidocs-reading*
+9. READING A PAGE					 *apidocs-reading*
 
 A documentation page is an ordinary buffer holding text, so every Neovim
 motion, search and mark works on it. The plugin sets 'conceallevel' and
@@ -364,7 +432,7 @@ motion, search and mark works on it. The plugin sets 'conceallevel' and
 fences read as text rather than as punctuation.
 
 ==============================================================================
-9. FOLLOWING LINKS					   *apidocs-links*
+10. FOLLOWING LINKS					   *apidocs-links*
 
 Links are numbered in the text — `[1]`, `[2]` — and the addresses themselves
 are collected in a footer at the end of the page. Following one is therefore
@@ -384,7 +452,7 @@ searching for the text it names, so you may need |n| to reach it — the first
 match is not always the one meant.
 
 ==============================================================================
-10. LUA API						     *apidocs-api*
+11. LUA API						     *apidocs-api*
 
                                                       *apidocs.apidocs_open()*
 `require("apidocs").apidocs_open(`{opts}`)`
@@ -470,7 +538,7 @@ match is not always the one meant.
 		standalone display.
 
 ==============================================================================
-11. CREDITS						 *apidocs-credits*
+12. CREDITS						 *apidocs-credits*
 
 apidocs.nvim	https://github.com/emmanueltouzery/apidocs.nvim
 
