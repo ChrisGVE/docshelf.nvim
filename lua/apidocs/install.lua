@@ -163,8 +163,15 @@ local function add_spaces_to_compensate_conceals_cols(lines)
   return lines
 end
 
+-- elinks percent-encodes everything outside the unreserved set, so a page
+-- whose name holds a non-ASCII character comes back as its UTF-8 bytes
+-- ("Why not%e2%80%a6"). Decoding only a handful of escapes left those links
+-- pointing at a file name that does not exist, and they stayed raw file://
+-- addresses; decoding every escape puts the name back byte for byte.
 local function urldecode(url)
-  return url:gsub("%%20", " "):gsub("%%3c", "<"):gsub("%%3e", ">"):gsub("%%23", "#")
+  return (url:gsub("%%(%x%x)", function(hex)
+    return string.char(tonumber(hex, 16))
+  end))
 end
 
 local function fix_file_links_resolve_fname(choice, path_to_name, file_guessed_subpath_str, link_target)

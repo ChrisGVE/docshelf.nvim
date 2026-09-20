@@ -223,7 +223,7 @@ end
 ---@param body string the inflated inventory
 ---@param header table { project = ..., version = ... }
 local function read_inventory(body, header)
-  local entries, pages, order, domains = {}, {}, {}, {}
+  local entries, pages, order, domains, anchors = {}, {}, {}, {}, {}
   for line in vim.gsplit(body, "\n", { plain = true }) do
     if vim.trim(line) ~= "" then
       local item = parse_line(line)
@@ -238,10 +238,15 @@ local function read_inventory(body, header)
           if anchor then
             anchor = anchor:gsub("%$", item.name)
           end
+          local shown = (item.dispname ~= "-" and item.dispname ~= "") and item.dispname or item.name
+          if anchor then
+            anchors[key] = anchors[key] or {}
+            anchors[key][anchor] = shown
+          end
           local domain = item.role:match("^([^:]+)")
           domains[domain] = (domains[domain] or 0) + 1
           entries[#entries + 1] = {
-            name = (item.dispname ~= "-" and item.dispname ~= "") and item.dispname or item.name,
+            name = shown,
             path = anchor and (key .. "#" .. anchor) or key,
             type = role_labels[item.role] or item.role,
           }
@@ -262,6 +267,7 @@ local function read_inventory(body, header)
     entries = entries,
     pages = pages,
     order = order,
+    anchors = anchors,
     language = domain_languages[top],
   }
 end
@@ -541,8 +547,45 @@ local function rewrite_href(href, dir, base, known)
   return base .. resolved .. anchor
 end
 
-local function clean_page(html, key, base, known)
-  local body = main_content(html)
+--- Sphinx hangs a documented item's id on the <dt> that carries its
+--- signature: <dt class="sig" id="attrs.field"><span>…</span>…</dt>. The
+--- installer finds the text an id names by looking at what follows the tag
+--- holding it, and after such a <dt> comes another tag, never text -- so
+--- every link to an item resolved to the top of its page instead of to the
+--- item (measured on attrs: 683 of 870 links).
+---
+--- The name is already known, from the inventory, so the id moves onto a
+--- heading of its own carrying it, and the signature keeps everything else,
+--- including the links inside it. The page reads better for it: the item's
+--- name becomes a heading rather than part of a run-on signature.
+local function name_the_anchors(html, names)
+  if not names then
+    return html
+  end
+  -- A module marker, or a label written before a section rather than on it, is
+  -- an empty <span> carrying only the id. Nothing follows it either, so the
+  -- same treatment applies: the inventory's display name becomes the heading
+  -- the link lands on.
+  html = html:gsub('<span%s+id="([^"]*)"%s*></span>', function(id)
+    if not names[id] then
+      return nil
+    end
+    return '<h4 id="' .. id .. '">' .. names[id] .. "</h4>"
+  end)
+  return (
+    html:gsub("<dt([^>]*)>", function(attributes)
+      local id = attributes:match('id="([^"]*)"')
+      if not id or not names[id] then
+        return nil
+      end
+      local rest = attributes:gsub('%s*id="[^"]*"', "")
+      return '<h4 id="' .. id .. '">' .. names[id] .. "</h4><dt" .. rest .. ">"
+    end)
+  )
+end
+
+local function clean_page(html, key, base, known, names)
+  local body = name_the_anchors(main_content(html), names)
   body = body
     :gsub("<script.-</script>", "")
     :gsub("<style.-</style>", "")
@@ -554,9 +597,15 @@ local function clean_page(html, key, base, known)
     )
     :gsub('<a[^>]*class="headerlink"[^>]*>.-</a>', "")
   local dir = key:match("^(.*)/[^/]*$") or ""
+  -- `src` as well as `href`: a Sphinx theme's images (the +/- beside a
+  -- collapsible list) are addressed the same way, and one left relative is a
+  -- link to a file the docset does not hold.
   return (
-    body:gsub(' ?href="([^"]*)"', function(href)
-      return ' href="' .. rewrite_href(href, dir, base, known) .. '"'
+    body:gsub(' ?(%a+)="([^"]*)"', function(attribute, value)
+      if attribute ~= "href" and attribute ~= "src" then
+        return nil
+      end
+      return " " .. attribute .. '="' .. rewrite_href(value, dir, base, known) .. '"'
     end)
   )
 end
@@ -577,7 +626,7 @@ function M.db(docset, _, system, report)
     if file then
       local html = file:read("*a")
       file:close()
-      db[key] = clean_page(html, key, held.base, known)
+      db[key] = clean_page(html, key, held.base, known, held.inventory.anchors[key])
     end
   end
   return db
@@ -591,6 +640,7 @@ M._internal = {
   read_inventory = read_inventory,
   docset_name = docset_name,
   main_content = main_content,
+  name_the_anchors = name_the_anchors,
   clean_page = clean_page,
   rewrite_href = rewrite_href,
   page_of = page_of,
