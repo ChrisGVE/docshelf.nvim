@@ -41,8 +41,36 @@ end
 ---@param slug string
 ---@param origin string
 ---@param declared? string the language its source declares
+-- The origin a folder was installed from. The folder name carries it
+-- ("aeson~2.3.2.0~~hackage.haskell.org"), which makes it the one place that
+-- cannot be wrong: a record written before origins were recorded, or by an
+-- installer that did not pass one, says devdocs.io for everything.
+local function origin_of(slug, record)
+  if slug then
+    local _, origin = require("apidocs.folders").split(slug)
+    return origin
+  end
+  return M.installed_origin(record)
+end
+
+-- A source outside devdocs documents one language and declares it (a Hackage
+-- package is Haskell). The install passes that declaration through, but a
+-- record written without one is repaired here rather than needing a reinstall:
+-- the origin names the adapter, and the adapter still knows its language.
+local function declared_language(origin, declared)
+  if declared or origin == nil or origin == M.devdocs_origin then
+    return declared
+  end
+  local ok, sources = pcall(require, "apidocs.sources")
+  local adapter = ok and sources.get(origin)
+  return adapter and adapter.language or nil
+end
+
 local function resolve_language(slug, origin, declared)
-  return require("apidocs.languages").resolve(slug, { devdocs = origin == M.devdocs_origin, declared = declared })
+  return require("apidocs.languages").resolve(slug, {
+    devdocs = origin == M.devdocs_origin,
+    declared = declared_language(origin, declared),
+  })
 end
 
 local function with_language(record, link, assigned)
@@ -60,7 +88,7 @@ function M.record(entry, now, slug)
     release = present(entry.release),
     mtime = present(entry.mtime),
     installed_at = now,
-    origin = M.origin(entry),
+    origin = origin_of(slug, entry),
   }
   if slug then
     with_language(record, resolve_language(slug, record.origin, present(entry.language)))
@@ -76,7 +104,7 @@ function M.language_link(slug, record)
   if record and record.language then
     return require("apidocs.languages").link(slug, record.language)
   end
-  return resolve_language(slug, M.installed_origin(record))
+  return resolve_language(slug, origin_of(slug, record))
 end
 
 function M.status(record, entry)

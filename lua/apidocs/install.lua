@@ -649,7 +649,7 @@ local function apidoc_install(choice, slugs_to_mtimes, cont, on_fail)
       -- what the source offers later.
       local entry = catalogue[choice]
       if not entry then
-        entry = { mtime = mtime }
+        entry = { mtime = mtime, origin = origin, language = adapter and adapter.language }
         if adapter and adapter.release then
           entry.release = adapter.release(slug)
         end

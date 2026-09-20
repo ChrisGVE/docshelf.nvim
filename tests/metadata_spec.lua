@@ -266,6 +266,43 @@ test("a source that is not installed cannot be assigned", function()
   eq({ metadata.assign_language("nowhere", "Python") }, { false, "nowhere is not installed" })
 end)
 
+-- A source outside devdocs documents one language and declares it. The folder
+-- name says which source a docset came from, so a record that lost the origin
+-- -- or never carried one -- is repaired rather than needing a reinstall.
+test("a docset from another source takes that source's declared language", function()
+  local sources = require("apidocs.sources")
+  sources.register({
+    origin = "declaring.example",
+    language = "Haskellish",
+    index = function() end,
+    db = function() end,
+  })
+  local link = metadata.language_link("aeson~2.3~~declaring.example", { origin = "declaring.example" })
+  eq(link.language, "Haskellish")
+end)
+
+test("the folder name outranks an origin the record got wrong", function()
+  local sources = require("apidocs.sources")
+  sources.register({
+    origin = "declaring.example",
+    language = "Haskellish",
+    index = function() end,
+    db = function() end,
+  })
+  -- What an installer that passed no origin wrote: devdocs.io for everything.
+  local link = metadata.language_link("aeson~2.3~~declaring.example", { origin = metadata.devdocs_origin })
+  eq(link.language, "Haskellish")
+end)
+
+test("a record is written with the origin its folder names", function()
+  local record = metadata.record({ mtime = "" }, 1, "aeson~2.3~~declaring.example")
+  eq(record.origin, "declaring.example")
+end)
+
+test("a devdocs record still says devdocs", function()
+  eq(metadata.record({ mtime = "" }, 1, "python~3.14").origin, metadata.devdocs_origin)
+end)
+
 test("installed_languages leaves Unknown sources out", function()
   vim.fn.delete(scratch .. metadata.manifest_name)
   local links = metadata.installed_languages({ "pycairo", "python~3.14" })
