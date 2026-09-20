@@ -8,10 +8,11 @@ CONTENTS						*apidocs-contents*
 	3. Setup ........................... |apidocs-setup|
 	4. Commands ........................ |apidocs-commands|
 	5. Keeping docs current ............ |apidocs-updating|
-	6. Reading a page .................. |apidocs-reading|
-	7. Following links ................. |apidocs-links|
-	8. Lua API ......................... |apidocs-api|
-	9. Credits ......................... |apidocs-credits|
+	6. Languages ....................... |apidocs-languages|
+	7. Reading a page .................. |apidocs-reading|
+	8. Following links ................. |apidocs-links|
+	9. Lua API ......................... |apidocs-api|
+	10. Credits ........................ |apidocs-credits|
 
 ==============================================================================
 1. INTRODUCTION					    *apidocs-introduction*
@@ -77,6 +78,18 @@ not fetch anything.
 			`every_hours`	number	(default: `24`)
 				How long a check waits before the next one.
 
+	`languages`		table
+	`formats`		table
+	`tools`			table
+		The names a source can be linked to — see
+		|apidocs-languages|. Each takes `add` to extend the built-in
+		list, or `only` to replace it. An entry is a name, or a table
+		naming aliases that match it too: >lua
+		require("apidocs").setup({
+		  languages = { add = { "Fortran", "Prolog" } },
+		  tools = { add = { { "Kubernetes", aliases = { "k8s" } } } },
+		})
+<
 	`follow_link_keymap`	string		(default: `"<C-]>"`)
 		The key that follows a `local://` link from a documentation
 		buffer. See |apidocs-links|.
@@ -198,7 +211,7 @@ alone on purpose:
 An update is an ordinary install, so it uses the same queue and the same
 progress notification, and Neovim stays usable throughout.
 
-							*apidocs-update-auto*
+                                                         *apidocs-update-auto*
 The same check also runs on its own: the first time you pause after opening
 Neovim, and then at most once every `every_hours`. It is armed by `setup()`,
 so a plugin loaded lazily on its commands first checks once you have opened
@@ -210,7 +223,62 @@ To leave updating to |:ApidocsUpdate| alone, or to check less often: >lua
 	require("apidocs").setup({ update = { every_hours = 72 } })
 <
 ==============================================================================
-6. READING A PAGE					 *apidocs-reading*
+6. LANGUAGES					       *apidocs-languages*
+
+Every installed source is linked to a language, so that a set of sources can
+be talked about by what it is about rather than by slug. `python~3.14`,
+`numpy~2.5` and `scikit_learn` are all Python; `git` is Git and `docker` is
+Docker, because "language" here is one flat field covering a programming
+language, a file format or a tool alike.
+
+                                                  *apidocs-language-reference*
+Within a language, one source is its reference: the one whose name before `~`
+is the language's own name or one of its aliases — `python~3.15` for Python,
+`openjdk~21` for Java. The others belong to the language. That distinction is
+what lets a selection widen itself: choosing Python's reference brings in the
+Python libraries with it, while choosing `numpy~2.5` on its own brings in
+nothing, and a different version of the reference (`python~3.13`) is not
+pulled in either.
+
+                                                        *apidocs-language-set*
+The names come from three lists — `languages`, `formats` and `tools` — which
+are joined into one. They ship with sensible contents (Python, Rust, Go,
+Haskell, Odin, Zig … Markdown, JSON, YAML, TOML, Typst … Git, Docker, tmux,
+Neovim, jq, ripgrep …), each SQL engine is a name of its own rather than a
+flavour of SQL, and LaTeX, TeX and BibTeX are kept apart. Extend or replace
+them through `setup()`; see |apidocs-options|.
+
+                                                 *apidocs-language-assignment*
+A source's language is decided once, when it is installed, and kept in
+`.installed.json` (see |apidocs-install-record|). In order:
+
+	1. a source that declares its own language is believed — a Hackage
+	   package is Haskell;
+	2. a devdocs source listed in `lua/apidocs/source_languages.lua`, a
+	   table kept by hand, takes that table's answer;
+	3. otherwise, a source whose name before `~` is a name or an alias
+	   from your lists gets that name;
+	4. anything left is Unknown.
+
+|apidocs.assign_language()| gives any installed source a name, replacing
+whatever it had, and the choice survives a refresh, an update and a
+reinstall. Its picker lists your names plus every language already recorded
+on an installed source, narrowing as you type; when what you type names none
+of them, the first row offers it as a new name, so a language you need once
+costs no configuration.
+
+                                                      *apidocs-language-drift*
+Because `source_languages.lua` is kept by hand, it drifts as devdocs adds and
+retires sources. To compare it with the live catalogue: >
+	nvim --headless -l scripts/check_source_languages.lua
+<
+It lists the sources the table lacks — each with a proposed row seeded from
+that project's GitHub language, for a person to check — and the rows for
+sources devdocs no longer lists. It never edits the table, and it cannot tell
+that a row already there is wrong.
+
+==============================================================================
+7. READING A PAGE					 *apidocs-reading*
 
 A documentation page is an ordinary buffer holding text, so every Neovim
 motion, search and mark works on it. The plugin sets 'conceallevel' and
@@ -218,7 +286,7 @@ motion, search and mark works on it. The plugin sets 'conceallevel' and
 fences read as text rather than as punctuation.
 
 ==============================================================================
-7. FOLLOWING LINKS					   *apidocs-links*
+8. FOLLOWING LINKS					   *apidocs-links*
 
 Links are numbered in the text — `[1]`, `[2]` — and the addresses themselves
 are collected in a footer at the end of the page. Following one is therefore
@@ -238,7 +306,7 @@ searching for the text it names, so you may need |n| to reach it — the first
 match is not always the one meant.
 
 ==============================================================================
-8. LUA API						     *apidocs-api*
+9. LUA API						     *apidocs-api*
 
                                                       *apidocs.apidocs_open()*
 `require("apidocs").apidocs_open(`{opts}`)`
@@ -265,7 +333,22 @@ match is not always the one meant.
 		its own docsets: >lua
 		require("apidocs").ensure_install({ "lua~5.4", "rust" })
 <
-                                        *apidocs.metadata.installed_origins()*
+                                                   *apidocs.assign_language()*
+`require("apidocs").assign_language(`{slug}`)`
+		Open a picker and link {slug} to the language chosen there.
+		See |apidocs-language-assignment|.
+
+*apidocs.languages.pulled_in()*
+`require("apidocs.languages").pulled_in(`{selected}`, `{installed}`)`
+		For every language reference in {selected}, the other
+		installed sources of that language — what a selection widens
+		to. See |apidocs-language-reference|.
+
+*apidocs.languages.unknown()*
+`require("apidocs.languages").unknown(`{installed}`)`
+		The installed sources whose language could not be decided.
+
+*apidocs.metadata.installed_origins()*
 `require("apidocs.metadata").installed_origins(`{slugs}`)`
 		Where each of {slugs} came from, as a table keyed by slug.
 		For a picker of its own over the installed sources, so it can
@@ -293,7 +376,7 @@ match is not always the one meant.
 		standalone display.
 
 ==============================================================================
-9. CREDITS						 *apidocs-credits*
+10. CREDITS						 *apidocs-credits*
 
 apidocs.nvim	https://github.com/emmanueltouzery/apidocs.nvim
 
