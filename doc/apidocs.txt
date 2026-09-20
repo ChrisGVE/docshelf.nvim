@@ -303,6 +303,22 @@ devdocs.io ~
 	each. That is also what makes the update check cheap — see
 	|apidocs-updating|.
 
+hackage.haskell.org ~
+	A Haskell package. A release ships a Haddock archive
+	(`/package/<name>-<version>/docs.tar`), so an install is one
+	request; it becomes a page per module, plus an entry per documented
+	name qualified by its module (`Data.Text.pack`). Haddock's own
+	chrome — header, contents, synopsis, footer, the Source and self
+	links — is dropped.
+
+	It answers the install picker's search: three letters of a package
+	name and its Hackage matches join the list. Picking one asks Hackage
+	which version has documentation built, so a package whose docs never
+	built is not offered.
+
+	Installs as `<name>~<version>~~hackage.haskell.org`; its language is
+	Haskell without being asked.
+
 ==============================================================================
 6. KEEPING DOCS CURRENT					*apidocs-updating*
 
