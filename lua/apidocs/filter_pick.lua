@@ -20,12 +20,7 @@ local M = {}
 ---@return { name: string, text: string, language: string, pad: string, active?: integer, via?: string }[]
 function M.rows(installed, links, selected)
   local languages = require("apidocs.languages")
-  -- folders.lua belongs to the multi-origin work further up the stack;
-  -- without it a docset's folder is its name.
-  local ok_folders, folders = pcall(require, "apidocs.folders")
-  local display = ok_folders and folders.display or function(name)
-    return name
-  end
+  local display = require("apidocs.folders").display
 
   local active, via = {}, {}
   for _, name in ipairs(selected or {}) do

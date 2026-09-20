@@ -185,12 +185,7 @@ end
 -- a binding nobody can see is a binding nobody uses.
 ---@param opts { title: string, selected: string[]?, on_choice: fun(names: string[]), assign_key: string|false, layout?: table }
 local function pick_sources(opts)
-  -- folders.lua belongs to the multi-origin work further up the stack;
-  -- without it a docset's folder is its name.
-  local ok_folders, folders = pcall(require, "apidocs.folders")
-  if not ok_folders then
-    folders = { display = function(name) return name end }
-  end
+  local folders = require("apidocs.folders")
   local metadata = require("apidocs.metadata")
   local filter = require("apidocs.filter")
 

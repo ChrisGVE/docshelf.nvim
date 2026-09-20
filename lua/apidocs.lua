@@ -185,12 +185,7 @@ local filter = require("apidocs.filter")
 local assign_language
 local apidocs_filter
 
--- folders.lua belongs to the multi-origin work further up the stack; without
--- it a docset's folder is its name.
-local function docset_display(name)
-  local ok, folders = pcall(require, "apidocs.folders")
-  return ok and folders.display(name) or name
-end
+local docset_display = require("apidocs.folders").display
 
 --- Set the filter and say what it now covers, naming the docsets a language
 --- pulled in as well: they are searched too, and a filter that silently held
@@ -390,10 +385,7 @@ function assign_language(slug, on_done)
   local metadata = require("apidocs.metadata")
   local current = languages.label(metadata.installed_languages({ slug })[slug])
   local names = languages.available()
-  -- folders.lua belongs to the multi-origin work; without it a docset's folder
-  -- name is what a person reads.
-  local ok_folders, folders = pcall(require, "apidocs.folders")
-  local display = ok_folders and folders.display(slug) or slug
+  local display = require("apidocs.folders").display(slug)
 
   local function chosen(name)
     local ok, why = metadata.assign_language(slug, name)
