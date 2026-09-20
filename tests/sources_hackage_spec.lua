@@ -72,6 +72,11 @@ test("resolve fails when no version has docs", function()
   assert(tostring(err):find("no documentation on Hackage for tiny", 1, true), err)
 end)
 
+test("latest asks about the package a docset names, not the docset", function()
+  local system = hackage_runner({ "1.2", "1.1", "1.0" }, { "1.1", "1.0" })
+  eq(hackage.latest("tiny~1.0", system), "tiny~1.1")
+end)
+
 test("index lists each module and each documented name", function()
   local system = hackage_runner({ "1.0" }, { "1.0" })
   local index = hackage.index("tiny~1.0", "", system)

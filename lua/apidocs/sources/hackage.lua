@@ -91,6 +91,16 @@ function M.release(docset)
   return version
 end
 
+--- The docset Hackage offers for this package today, which is what `resolve`
+--- already answers: the newest version with documentation built. Comparing it
+--- with the docset's own name is how an update is noticed.
+---@param docset string e.g. "text~2.1.2"
+---@param system fun(cmd: string[]): vim.SystemCompleted
+---@return string docset
+function M.latest(docset, system)
+  return M.resolve((split_docset(docset)), system)
+end
+
 local function read_file(path)
   local file = assert(io.open(path, "r"))
   local contents = file:read("*a")
