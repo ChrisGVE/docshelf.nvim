@@ -916,7 +916,8 @@ local function apidocs_install(opts)
     -- only catalogue there is; with it off, a registry search is all that is
     -- left, and with no searchable source either there is nothing to show.
     local devdocs_on = sources.is_enabled(metadata.devdocs_origin)
-    if not devdocs_on and #registry.searchable({ languages = opts.languages }) == 0 then
+    local askable = #registry.searchable({ languages = opts.languages }) + #registry.searchable({ method = "from_url" })
+    if not devdocs_on and askable == 0 then
       vim.notify("apidocs: " .. metadata.devdocs_origin .. " is switched off in setup(), so the install picker has nothing to list",
         vim.log.levels.WARN, { title = "apidocs" })
       return
