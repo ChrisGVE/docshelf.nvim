@@ -98,6 +98,16 @@ function M.release(docset)
   return version
 end
 
+--- The docset crates.io offers for this crate today, which is what `resolve`
+--- already answers: its newest stable release. Comparing it with the docset's
+--- own name is how an update is noticed.
+---@param docset string e.g. "serde~1.0.229"
+---@param system fun(cmd: string[]): vim.SystemCompleted
+---@return string docset
+function M.latest(docset, system)
+  return M.resolve((split_docset(docset)), system)
+end
+
 -- The rustdoc file-name prefixes, and what the installer should call them.
 -- A page whose prefix is not here is still offered, under its own prefix.
 local kinds = {

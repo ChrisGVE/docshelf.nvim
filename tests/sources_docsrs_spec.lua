@@ -244,5 +244,10 @@ test("resolving a crate that does not exist is an error naming it", function()
   assert(tostring(err):find("nosuchcrate", 1, true), err)
 end)
 
+test("latest asks about the crate a docset names, not the docset", function()
+  local system = search_runner('{"crate":{"name":"serde","max_stable_version":"1.0.230"}}')
+  eq(docsrs.latest("serde~1.0.229", system), "serde~1.0.230")
+end)
+
 print(failures == 0 and "all passed" or (failures .. " failed"))
 os.exit(failures == 0 and 0 or 1)
