@@ -438,6 +438,11 @@ end
 
 --- The release a docset holds. A DocC site publishes no version of its own, so
 --- there is none unless the docset name carries one.
+---
+--- For the same reason this adapter declares no `latest`: with no version on
+--- either side there is nothing an update check could compare, and a DocC
+--- docset is never reported as out of date. Reinstalling it is how it is
+--- refreshed.
 ---@param docset string
 function M.release(docset)
   local _, version = docset:match("^(.-)~([^~]*)$")
