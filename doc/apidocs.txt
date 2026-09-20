@@ -9,10 +9,11 @@ CONTENTS						*apidocs-contents*
 	4. Commands ........................ |apidocs-commands|
 	5. Keeping docs current ............ |apidocs-updating|
 	6. Languages ....................... |apidocs-languages|
-	7. Reading a page .................. |apidocs-reading|
-	8. Following links ................. |apidocs-links|
-	9. Lua API ......................... |apidocs-api|
-	10. Credits ........................ |apidocs-credits|
+	7. Narrowing to a few sources ...... |apidocs-filter|
+	8. Reading a page .................. |apidocs-reading|
+	9. Following links ................. |apidocs-links|
+	10. Lua API ........................ |apidocs-api|
+	11. Credits ........................ |apidocs-credits|
 
 ==============================================================================
 1. INTRODUCTION					    *apidocs-introduction*
@@ -90,6 +91,10 @@ not fetch anything.
 		  tools = { add = { { "Kubernetes", aliases = { "k8s" } } } },
 		})
 <
+	`assign_key`		string|false	(default: `"<C-e>"`)
+		Inside the |:ApidocsFilter| picker, the key that sets the
+		language of the source under the cursor. `false` unbinds it.
+
 	`follow_link_keymap`	string		(default: `"<C-]>"`)
 		The key that follows a `local://` link from a documentation
 		buffer. See |apidocs-links|.
@@ -102,9 +107,18 @@ Example, with lazy.nvim: >lua
 	    "folke/snacks.nvim", -- or nvim-telescope/telescope.nvim
 	  },
 	  cmd = { "ApidocsInstall", "ApidocsOpen", "ApidocsSearch",
+	          "ApidocsFilter", "ApidocsAssignLanguage",
 	          "ApidocsUpdate", "ApidocsUninstall" },
+	  -- A capital letter is the same thing over every source, ignoring
+	  -- the filter without clearing it.
 	  keys = {
-	    { "<leader>sad", "<cmd>ApidocsOpen<cr>", desc = "Api docs" },
+	    { "<leader>sad", "<cmd>ApidocsOpen<cr>", desc = "Docs" },
+	    { "<leader>saD", "<cmd>ApidocsOpen!<cr>", desc = "Docs (all)" },
+	    { "<leader>sas", "<cmd>ApidocsSearch<cr>", desc = "Grep docs" },
+	    { "<leader>saS", "<cmd>ApidocsSearch!<cr>", desc = "Grep (all)" },
+	    { "<leader>saf", "<cmd>ApidocsFilter<cr>", desc = "Filter" },
+	    { "<leader>saF", "<cmd>ApidocsFilter!<cr>", desc = "Unfilter" },
+	    { "<leader>sai", "<cmd>ApidocsInstall<cr>", desc = "Install" },
 	  },
 	  config = function()
 	    require("apidocs").setup({ picker = "snacks" })
@@ -169,13 +183,35 @@ Example, with lazy.nvim: >lua
 			it could have come from.
 
                                                                 *:ApidocsOpen*
-:ApidocsOpen		Open a picker over every page of every installed
-			source. Requires telescope.nvim or snacks.nvim for a
+:ApidocsOpen[!] [{source} ...]
+			Open a picker over the pages of the installed
+			sources. Requires telescope.nvim or snacks.nvim for a
 			preview.
 
+			The picker follows the filter (|apidocs-filter|). `!`
+			looks at every source this once, without clearing the
+			filter; naming sources overrides it for this call.
+
                                                               *:ApidocsSearch*
-:ApidocsSearch		Open a picker that greps the text of every installed
-			page as you type. Requires ripgrep.
+:ApidocsSearch[!] [{source} ...]
+			Open a picker that greps the text of the installed
+			pages as you type. Requires ripgrep. Takes the filter,
+			the `!` and the arguments the same way
+			|:ApidocsOpen| does.
+
+                                                              *:ApidocsFilter*
+:ApidocsFilter[!] [{source} ...]
+			Narrow every apidocs picker to a few sources, until
+			you say otherwise. With no argument, a picker over
+			the installed sources; with arguments, those sources
+			directly (<Tab> completes them); with `!`, the filter
+			is cleared. See |apidocs-filter|.
+
+                                                      *:ApidocsAssignLanguage*
+:ApidocsAssignLanguage {source}
+			Set which language {source} documents, chosen from a
+			picker. Useful for one that came out Unknown. See
+			|apidocs-language-assignment|.
 
                                                               *:ApidocsUpdate*
 :ApidocsUpdate [{source} ...]
@@ -187,7 +223,7 @@ Example, with lazy.nvim: >lua
                                                            *:ApidocsUninstall*
 :ApidocsUninstall {source}
 			Remove an installed source. <Tab> completes the
-			installed ones.
+			installed ones. It also leaves the filter.
 
 Both pickers can be narrowed to a few sources, and given a layout, when called
 as Lua functions instead — see |apidocs-api|.
@@ -278,7 +314,49 @@ sources devdocs no longer lists. It never edits the table, and it cannot tell
 that a row already there is wrong.
 
 ==============================================================================
-7. READING A PAGE					 *apidocs-reading*
+7. NARROWING TO A FEW SOURCES				  *apidocs-filter*
+
+With a handful of sources installed, a picker can list all of them. With
+several dozen, a list of everything is no longer a list of what you need.
+|:ApidocsFilter| picks a few and keeps them, and |:ApidocsOpen| and
+|:ApidocsSearch| then look only inside them.
+
+The filter belongs to this Neovim session, so a Rust session and a Python
+session each keep their own, and neither has to be undone afterwards.
+
+Narrowing is not only about reading a shorter list. A grep is one ripgrep run
+over the sources in play, so the filter is also what keeps |:ApidocsSearch|
+fast as the collection grows.
+
+                                                       *apidocs-filter-picker*
+Run |:ApidocsFilter| with no argument for a picker over the installed
+sources; with snacks.nvim, `<Tab>` ticks several. Rows read
+`language | source`, so typing a language narrows to it — `Unknown`
+included. A filled dot marks a source you picked, a hollow one a source a
+language brought along (see |apidocs-language-reference|): picking
+`python~3.14` brings `numpy~2.5` and `scikit_learn` with it, while
+`numpy~2.5` picked on its own stays on its own.
+
+`<C-e>` on a row sets that source's language and redraws the list, which is
+the quick way to deal with an `Unknown`. The key is the `assign_key` option;
+see |apidocs-options|.
+
+                                                     *apidocs-filter-ignoring*
+Three ways past the filter, none of which clears it:
+
+	- `!` — |:ApidocsOpen| and |:ApidocsSearch| with a bang look at
+	  everything this once. A capital letter in a keymap is a good home
+	  for it.
+	- naming sources — `:ApidocsOpen rust` overrides the filter for that
+	  call.
+	- `follow_filter = false` in the Lua options, which is what `!`
+	  passes.
+
+|:ApidocsFilter| with a bang clears it, and uninstalling a source drops it
+from it.
+
+==============================================================================
+8. READING A PAGE					 *apidocs-reading*
 
 A documentation page is an ordinary buffer holding text, so every Neovim
 motion, search and mark works on it. The plugin sets 'conceallevel' and
@@ -286,7 +364,7 @@ motion, search and mark works on it. The plugin sets 'conceallevel' and
 fences read as text rather than as punctuation.
 
 ==============================================================================
-8. FOLLOWING LINKS					   *apidocs-links*
+9. FOLLOWING LINKS					   *apidocs-links*
 
 Links are numbered in the text — `[1]`, `[2]` — and the addresses themselves
 are collected in a footer at the end of the page. Following one is therefore
@@ -306,7 +384,7 @@ searching for the text it names, so you may need |n| to reach it — the first
 match is not always the one meant.
 
 ==============================================================================
-9. LUA API						     *apidocs-api*
+10. LUA API						     *apidocs-api*
 
                                                       *apidocs.apidocs_open()*
 `require("apidocs").apidocs_open(`{opts}`)`
@@ -333,7 +411,23 @@ match is not always the one meant.
 		its own docsets: >lua
 		require("apidocs").ensure_install({ "lua~5.4", "rust" })
 <
-                                                   *apidocs.assign_language()*
+                                                    *apidocs.apidocs_filter()*
+`require("apidocs").apidocs_filter()`
+		|:ApidocsFilter| as a function — open the filter picker.
+
+*apidocs.filter*
+`require("apidocs").filter`
+		The filter itself:
+			`set(`{names}`)`	narrow to these sources
+			`clear()`	drop the filter
+			`active()`	the sources picked, or nil
+			`languages()`	what those are written in
+			`installed()`	every installed source
+
+		Every picker call takes `follow_filter = false` to ignore the
+		filter once, which is what the `!` commands pass.
+
+*apidocs.assign_language()*
 `require("apidocs").assign_language(`{slug}`)`
 		Open a picker and link {slug} to the language chosen there.
 		See |apidocs-language-assignment|.
@@ -376,7 +470,7 @@ match is not always the one meant.
 		standalone display.
 
 ==============================================================================
-10. CREDITS						 *apidocs-credits*
+11. CREDITS						 *apidocs-credits*
 
 apidocs.nvim	https://github.com/emmanueltouzery/apidocs.nvim
 
