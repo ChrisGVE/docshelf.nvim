@@ -99,6 +99,30 @@ Example, with lazy.nvim: >lua
 			pages are post-processed with tree-sitter. It happens
 			once per source, never again while you read.
 
+			Every row carries the release devdocs offers today.
+			An installed source also says how what you have
+			compares with it:
+
+			`[installed]`
+				the release and the build you have are the
+				ones devdocs offers today.
+			`[installed · rebuilt 2026-09-14]`
+				the same release, but devdocs regenerated
+				the source on that date.
+			`[installed 3.14.6 · new release 3.14.7]`
+				devdocs has moved on a patch release.
+			`[installed · may be outdated]`
+				installed before the plugin recorded
+				anything, so nothing can be compared.
+
+                                                      *apidocs-install-record*
+			What you installed is recorded in `.installed.json`
+			in the data folder (see |apidocs.data_folder()|): the
+			release, the time devdocs built it, and the time you
+			installed it. It is a dotfile, so the |:ApidocsSearch|
+			grep passes over it. Uninstalling a source drops its
+			record.
+
                                                                 *:ApidocsOpen*
 :ApidocsOpen		Open a picker over every page of every installed
 			source. Requires telescope.nvim or snacks.nvim for a
