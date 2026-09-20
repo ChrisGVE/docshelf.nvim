@@ -15,7 +15,7 @@ Call `require("apidocs").setup()` when installing the plugin to register the com
 
 The plugin exports the following commands:
 
-- `ApidocsInstall` - will fetch the list of supported documentation sources (lua, openjdk, rust...) from devdocs.io and ask you which ones you wish to install. Each source shows its release and install state, with where it comes from (`devdocs.io`) at the right edge. Each install records its origin in the data folder's `.installed.json`, so pickers over installed sources can show it too (`require("apidocs.metadata").installed_origins(slugs)`); sources installed before origins were recorded count as `devdocs.io`. With snacks.nvim, `<Tab>` marks several sources, and marks are kept when you change the search. With snacks the picker also searches as you type: devdocs ships a catalogue, but a package registry cannot, so from three letters on every enabled source that can be searched is asked as well (at most `workers` of them at once), and the answers join the list as they land, with the title naming whichever registry is still being waited on. What a registry answered is kept in the data folder's `.registry_cache.json`, so the same name typed again is offered before any request goes out. A row whose version the registry did not give is resolved when you pick it. Narrow the picker to one or more languages -- both the devdocs rows and the registries, which declare the language they document -- with `:lua require("apidocs").apidocs_install({languages = {Haskell = true}})`. Pickers other than snacks have no live input to drive this and keep offering the catalogue alone. Sources install one at a time, in the background, with their place in the queue and their progress shown in a notification; picking more while an install runs adds them to the queue, and a source that fails to install is reported and skipped. A large source can take a minute or more, since the plugin uses Neovim's tree-sitter to post-process the files, but Neovim stays usable meanwhile.
+- `ApidocsInstall` - ask which documentation to install, and install it. Each row shows a source's release and install state, with where it comes from at the right edge. With snacks.nvim, `<Tab>` marks several sources, and marks are kept when you change the search. Sources install one at a time, in the background, with their place in the queue and their progress shown in a notification; picking more while an install runs adds them to the queue, and a source that fails to install is reported and skipped. A large source can take a minute or more, since the plugin uses Neovim's tree-sitter to post-process the files, but Neovim stays usable meanwhile. Where the rows come from, and how to narrow them, is in [Documentation sources](#documentation-sources).
 - `ApidocsOpen` (requires telescope.nvim or snacks.nvim) - open a picker listing all apidocs. If you want to display only a subset of sources, call the lua function: `:lua require("apidocs").apidocs_open({restrict_sources={"rust"}})`. With snacks you can also pick the picker layout: `:lua require("apidocs").apidocs_open({layout="ivy_split"})`
 - `ApidocsSearch` (requires telescope.nvim or snacks.nvim) - open a picker to grep for text in all apidocs. If you want to display only a subset of sources, call the lua function: `:lua require("apidocs").apidocs_search({restrict_sources={"rust"}})`. The `layout` option works here too. Each match is shown once: the install writes a `.rgignore` in each source folder listing the per-entry section files, which repeat text from their page (the open picker still lists them), and matches inside a page's footer of links are left out. Sources installed before this change show repeats until they are reinstalled.
 
@@ -30,6 +30,50 @@ The plugin exports the following commands:
 It is possible to follow links in docs. The links are numbered, `[1]`, `[2]` and so on. To follow links, you must open the document, viewing it in the picker is not enough. Once the doc is opened, position the cursor over the link, and press `*`. That will take you to the link text in the footer. If the link is a URL, open it as you would normally in neovim (probably `gx`). If it's another locally installed doc, the link will be `local://` and you can follow it using `<C-]>`.
 
 When a link takes you to a specific part of a document, you may have to press `n` to get to the right spot, as we jump to the part based on text contents, doing a search in the file.
+
+## Documentation sources
+
+Documentation comes from a **source**, and a source is named by its **origin** -- the short
+address it is fetched from. devdocs.io is the one every install starts with; the others are
+listed below, and each is an adapter that knows how to fetch and lay out its own pages, so
+everything after the fetch (the conversion, the links, the pickers, the filter, the update
+check) is the same whatever the origin.
+
+A docset from a source other than devdocs lives in a folder named `<docset>~~<origin>`, which
+is why two sources can each document a `text` and neither hides the other. What a person reads
+is the docset name; the origin shows dimmed at the right edge of a picker. Each install records
+its origin in the data folder's `.installed.json`, so pickers over installed sources can show it
+too (`require("apidocs.metadata").installed_origins(slugs)`); sources installed before origins
+were recorded count as `devdocs.io`.
+
+Every source is on by default. Switching one off by its origin only removes it from the install
+picker; docs already installed from it stay readable and keep updating:
+
+```lua
+require('apidocs').setup({sources = {["devdocs.io"] = false}})
+```
+
+**Searching the registries.** devdocs ships a catalogue of everything it has, and the install
+picker lists it; a package registry cannot ship one, so it is asked instead. With snacks, from
+three letters on, every enabled source that can be searched is asked as well (at most `workers`
+of them at once), and the answers join the list as they land, with the title naming whichever
+registry is still being waited on. What a registry answered is kept in the data folder's
+`.registry_cache.json`, so the same name typed again is offered before any request goes out. A
+row whose version the registry did not give is resolved when you pick it. Pickers other than
+snacks have no live input to drive this and keep offering the catalogue alone.
+
+Narrow the picker to one or more languages -- both the devdocs rows and the registries, which
+declare the language they document -- with:
+
+```lua
+:lua require("apidocs").apidocs_install({languages = {Haskell = true}})
+```
+
+### devdocs.io
+
+The built-in source, and the only one with a catalogue: one request lists every docset it has,
+with the release and the build time of each. That is also what makes an update check cheap --
+see `ApidocsUpdate`.
 
 ## Dependencies
 
