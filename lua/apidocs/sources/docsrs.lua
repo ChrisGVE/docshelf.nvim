@@ -11,10 +11,12 @@
 -- sources/devdocs.lua):
 --   * a docset is "<crate>~<version>" (serde~1.0.229);
 --   * every page is an entry named by its Rust path (serde::de::Error), typed
---     from the file name's own prefix (trait., struct., fn.);
---   * pages keep only <section id="main-content">, links between pages become
---     page keys, and links to rustdoc's static files or to another crate
---     become absolute addresses on docs.rs.
+--     from the file name's own prefix (trait., struct., fn.); a redirect stub
+--     is not a page;
+--   * pages keep only <section id="main-content">, a link between two pages
+--     keeps the relative shape rustdoc gave it (the installer resolves it
+--     against the page holding it), and a link to rustdoc's static files or to
+--     another crate becomes an absolute address on docs.rs.
 --
 -- Versions come from crates.io, not from docs.rs: its API answers a search
 -- with each crate's newest stable release, so a row picked in the install
@@ -124,6 +126,20 @@ local not_documentation = {
 -- calls of one install.
 local downloaded = {}
 
+--- rustdoc writes a redirect stub where an item is re-exported, or where a
+--- macro has a second name (macro.name!.html): a head, a refresh and a link to
+--- the page that holds the documentation. Offering it would list the item
+--- twice and leave a link pointing outside the docset, so it is not a page.
+local function is_redirect(path)
+  local file = io.open(path, "r")
+  if not file then
+    return false
+  end
+  local head = file:read(1024) or ""
+  file:close()
+  return head:find('http%-equiv="refresh"') ~= nil
+end
+
 local function read_file(path)
   local file = assert(io.open(path, "r"))
   local contents = file:read("*a")
@@ -180,7 +196,7 @@ local function pages(docs)
     for entry, kind in vim.fs.dir(dir) do
       if kind == "directory" then
         walk(dir .. "/" .. entry, prefix .. entry .. "/")
-      elseif entry:match("%.html$") and not not_documentation[entry] then
+      elseif entry:match("%.html$") and not not_documentation[entry] and not is_redirect(dir .. "/" .. entry) then
         local segments = vim.split(docs.root .. "/" .. prefix, "/", { trimempty = true })
         local item, label
         if entry == "index.html" then
@@ -234,6 +250,26 @@ local function resolve_path(dir, href)
   return table.concat(segments, "/")
 end
 
+--- `path` written from `dir`, going up no further than it has to: rustdoc
+--- sometimes climbs to the crate root and comes back down, and the installer
+--- reads a link against a page key, which cannot climb above the crate.
+local function relative_to(dir, path)
+  local from = vim.split(dir, "/", { trimempty = true })
+  local to = vim.split(path, "/", { trimempty = true })
+  local shared = 0
+  while from[shared + 1] and from[shared + 1] == to[shared + 1] do
+    shared = shared + 1
+  end
+  local out = {}
+  for _ = shared + 1, #from do
+    out[#out + 1] = ".."
+  end
+  for i = shared + 1, #to do
+    out[#out + 1] = to[i]
+  end
+  return table.concat(out, "/")
+end
+
 --- Where a link should point once the page is a buffer. A link to another page
 --- of this crate becomes that page's key; anything else -- rustdoc's static
 --- files, the source listings, another crate -- becomes an address on docs.rs.
@@ -249,8 +285,10 @@ local function rewrite_href(href, dir, docs, known)
   local resolved = resolve_path(dir, target)
   local page = resolved:match("^(.*)%.html$")
   if page and known[page] then
-    -- Page keys are relative to the crate folder, a resolved link is not.
-    return page:sub(#docs.root + 2) .. anchor
+    -- The installer reads a link the way a browser would, against the page key
+    -- of the page holding it, so the link stays relative -- a whole key would
+    -- send a link from de/trait.Error to de/de/trait.Visitor.
+    return relative_to(dir, page) .. anchor
   end
   -- The build's own root is what docs.rs serves under /<crate>/<version>/, so
   -- a resolved path is already the rest of the address.

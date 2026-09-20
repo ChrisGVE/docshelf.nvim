@@ -87,6 +87,16 @@ language is Haskell without being asked.
 It answers the install picker's search: type three letters of a package name and its
 Hackage matches join the list, and picking one asks Hackage which version has
 documentation built -- a package whose docs never built is not offered.
+### docs.rs
+
+`docs.rs` documents a Rust crate. docs.rs builds every crates.io release and ships
+each build as one zip, so an install is a single request (it needs the `unzip`
+program). A docset installs as `<crate>~<version>~~docs.rs`, and its language is Rust
+without being asked.
+
+It answers the install picker's search: type three letters of a crate name and its
+crates.io matches join the list, each already carrying the version that will be
+installed.
 
 ## Dependencies
 

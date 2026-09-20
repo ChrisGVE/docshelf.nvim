@@ -77,13 +77,21 @@ end)
 test("index names every documented page, typed by its file name", function()
   local index = docsrs.index("tiny~1.0.0", "", docsrs_runner({ "1.0.0" }))
   eq(index.entries, {
+    { name = "tiny::de::ignored::Any", path = "de/ignored/struct.Any", type = "Structs" },
     { name = "tiny::de", path = "de/index", type = "Modules" },
     { name = "tiny::de::Error", path = "de/trait.Error", type = "Traits" },
     { name = "tiny", path = "index", type = "Modules" },
     { name = "tiny::shout", path = "macro.shout", type = "Macros" },
-    { name = "tiny::shout!", path = "macro.shout!", type = "Macros" },
     { name = "tiny::Thing", path = "struct.Thing", type = "Structs" },
   })
+end)
+
+test("a redirect stub is not offered as a page of its own", function()
+  -- rustdoc writes one where an item is re-exported or a macro has a second
+  -- name; it documents nothing and points at the page that does.
+  local db = docsrs.db("tiny~1.0.0", "", docsrs_runner({ "1.0.0" }))
+  eq(db["macro.shout!"], nil)
+  assert(db["macro.shout"], "the page the stub redirects to is still there")
 end)
 
 test("rustdoc's own machinery is not offered as documentation", function()
@@ -99,7 +107,14 @@ test("db has a page per index entry and nothing else", function()
   local db = docsrs.db("tiny~1.0.0", "", system)
   local pages = vim.tbl_keys(db)
   table.sort(pages)
-  eq(pages, { "de/index", "de/trait.Error", "index", "macro.shout", "macro.shout!", "struct.Thing" })
+  eq(pages, {
+    "de/ignored/struct.Any",
+    "de/index",
+    "de/trait.Error",
+    "index",
+    "macro.shout",
+    "struct.Thing",
+  })
 end)
 
 test("db keeps the item's text and drops the page chrome", function()
@@ -111,17 +126,28 @@ test("db keeps the item's text and drops the page chrome", function()
   end
 end)
 
-test("a link to another page of the crate becomes that page's key", function()
+test("a link to another page of the crate keeps its relative shape, without the .html", function()
+  -- the installer resolves a link against the page key of the page holding it,
+  -- so a whole key here would be read as a key below that page's own folder.
   local db = docsrs.db("tiny~1.0.0", "", docsrs_runner({ "1.0.0" }))
   assert(db["index"]:find('href="struct.Thing"', 1, true), db["index"])
   assert(db["index"]:find('href="de/index"', 1, true), db["index"])
-  assert(db["de/trait.Error"]:find('href="struct.Thing"', 1, true), db["de/trait.Error"])
-  assert(db["de/index"]:find('href="index"', 1, true), db["de/index"])
+  assert(db["de/trait.Error"]:find('href="../struct.Thing"', 1, true), db["de/trait.Error"])
+  assert(db["de/index"]:find('href="../index"', 1, true), db["de/index"])
+  assert(db["de/index"]:find('href="trait.Error"', 1, true), db["de/index"])
+end)
+
+test("a link that climbs to the crate root and back is written the short way", function()
+  -- the page keys the installer resolves a link against cannot climb above the
+  -- crate, so a link that does lands outside the docset and stays unread.
+  local page = docsrs.db("tiny~1.0.0", "", docsrs_runner({ "1.0.0" }))["de/ignored/struct.Any"]
+  assert(page:find('href="../trait.Error"', 1, true), page)
+  assert(page:find('href="../../index"', 1, true), page)
 end)
 
 test("an anchor on a link to another page is kept", function()
   local page = docsrs.db("tiny~1.0.0", "", docsrs_runner({ "1.0.0" }))["de/trait.Error"]
-  assert(page:find('href="struct.Thing#method.size"', 1, true), page)
+  assert(page:find('href="../struct.Thing#method.size"', 1, true), page)
 end)
 
 test("a link to another crate or to the standard library is left alone", function()
