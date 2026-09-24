@@ -9,6 +9,8 @@
 -- these two tables (splitting, conversion, link fixing) is source-agnostic.
 local M = {}
 
+local links = require("docshelf.links")
+
 M.origin = require("docshelf.metadata").devdocs_origin
 
 local base = "https://documents.devdocs.io/"
@@ -26,8 +28,27 @@ function M.index(slug, mtime, system)
   return fetch_json(base .. slug .. "/index.json?" .. mtime, system)
 end
 
+-- Where a page of a docset is read on the web.
+local site = "https://devdocs.io/"
+
+-- devdocs leaves some pages of a site out (python's genindex), and a link to
+-- one, left relative, became elinks' absolute file:// path to nothing. Every
+-- link goes through docshelf.links: one to a page the docset holds stays
+-- relative, one to a page it does not goes to that page on devdocs.io.
 function M.db(slug, mtime, system)
-  return fetch_json(base .. slug .. "/db.json?" .. mtime, system)
+  local db = fetch_json(base .. slug .. "/db.json?" .. mtime, system)
+  local known = {}
+  for key in pairs(db) do
+    known[key] = true
+  end
+  for key, html in pairs(db) do
+    db[key] = links.rewrite_html(html, {
+      dir = key:match("^(.*)/[^/]*$") or "",
+      known = known,
+      base = site .. slug .. "/",
+    })
+  end
+  return db
 end
 
 return M

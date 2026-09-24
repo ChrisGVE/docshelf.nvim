@@ -546,6 +546,10 @@ enough.
 	   - anything else is a URL: open it as you normally would, for
 	     instance with |gx|.
 
+A link to a page the docset does not hold becomes that page's address on
+the web: devdocs.io for a devdocs source, the documentation's own site for
+every other source.
+
 When a link points at one spot inside a long page, the jump is done by
 searching for the text it names, so you may need |n| to reach it — the first
 match is not always the one meant.

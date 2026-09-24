@@ -48,6 +48,34 @@ test("db downloads the source's db.json", function()
   eq(db["library/functions"], "<h1>Functions</h1>")
 end)
 
+test("a link to a page the docset does not ship goes to devdocs.io", function()
+  -- devdocs leaves pages out (python's genindex); left relative, the link
+  -- became elinks' absolute file:// path to nothing (docshelf#1)
+  local system = runner(vim.json.encode({
+    ["index"] = '<a href="genindex">Index</a>',
+    ["library/functions"] = '<a href="../genindex#A">A</a>',
+  }))
+  local db = devdocs.db("python~3.14", 123, system)
+  eq(db["index"], '<a href="https://devdocs.io/python~3.14/genindex">Index</a>')
+  eq(db["library/functions"], '<a href="https://devdocs.io/python~3.14/genindex#A">A</a>')
+end)
+
+test("a link between pages of the docset stays relative", function()
+  local system = runner(vim.json.encode({
+    ["index"] = '<a href="library/functions#print">print</a>',
+    ["library/functions"] = '<a href="stdtypes#str">str</a> <a href="#abs">abs</a> <a href="../index">up</a>',
+    ["library/stdtypes"] = "<h1>Types</h1>",
+  }))
+  local db = devdocs.db("python~3.14", 123, system)
+  eq(db["index"], '<a href="library/functions#print">print</a>')
+  eq(db["library/functions"], '<a href="stdtypes#str">str</a> <a href="#abs">abs</a> <a href="../index">up</a>')
+end)
+
+test("an outside address is left alone", function()
+  local system = runner(vim.json.encode({ ["index"] = '<a href="https://www.python.org/">Python</a>' }))
+  eq(devdocs.db("python~3.14", 123, system)["index"], '<a href="https://www.python.org/">Python</a>')
+end)
+
 test("a failed download is an error naming the address", function()
   local system = runner("", 22)
   local ok, err = pcall(devdocs.index, "nosuch~1", "", system)
