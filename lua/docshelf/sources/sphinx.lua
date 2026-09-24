@@ -18,6 +18,8 @@
 -- URL. That file is what lets an installed docset be installed again later.
 local M = {}
 
+local links = require("docshelf.links")
+
 M.origin = "sphinx"
 
 -- Sphinx's default domain is Python and most Sphinx sites are Python
@@ -507,66 +509,6 @@ local function main_content(html)
   return html
 end
 
---- Resolve `href` against the directory of the page holding it, the way a
---- browser would.
-local function resolve_path(dir, href)
-  local segments = vim.split(dir, "/", { trimempty = true })
-  for _, part in ipairs(vim.split(href, "/", { trimempty = true })) do
-    if part == ".." then
-      table.remove(segments)
-    elseif part ~= "." then
-      segments[#segments + 1] = part
-    end
-  end
-  return table.concat(segments, "/")
-end
-
---- `path` written from `dir`, climbing no further than it has to: the
---- installer reads a link against the page key of the page holding it, which
---- cannot climb above the docset.
-local function relative_to(dir, path)
-  local from = vim.split(dir, "/", { trimempty = true })
-  local to = vim.split(path, "/", { trimempty = true })
-  local shared = 0
-  while from[shared + 1] and from[shared + 1] == to[shared + 1] do
-    shared = shared + 1
-  end
-  local out = {}
-  for _ = shared + 1, #from do
-    out[#out + 1] = ".."
-  end
-  for i = shared + 1, #to do
-    out[#out + 1] = to[i]
-  end
-  return table.concat(out, "/")
-end
-
---- Where a link should point once the page is a buffer. A link to another page
---- of this docset becomes that page's key; anything else -- the theme's static
---- files, a genindex, another site -- becomes an address back on the site.
-local function rewrite_href(href, dir, base, known)
-  if href:match("^%a[%w+.-]*:") or href:match("^#") or href == "" then
-    return href
-  end
-  if href:match("^//") then
-    return "https:" .. href
-  end
-  if href:match("^/") then
-    local root = base:match("^(%a+://[^/]+)") or base
-    return root .. href
-  end
-  local target, anchor = href:match("^([^#]*)(#?.*)$")
-  if target == "" then
-    return href
-  end
-  local resolved = resolve_path(dir, target)
-  local key = resolved:gsub("%.html$", ""):gsub("/$", "")
-  if known[key] then
-    return relative_to(dir, key) .. anchor
-  end
-  return base .. resolved .. anchor
-end
-
 --- Sphinx hangs a documented item's id on the <dt> that carries its
 --- signature: <dt class="sig" id="attrs.field"><span>…</span>…</dt>. The
 --- installer finds the text an id names by looking at what follows the tag
@@ -616,18 +558,10 @@ local function clean_page(html, key, base, known, names)
       ""
     )
     :gsub('<a[^>]*class="headerlink"[^>]*>.-</a>', "")
-  local dir = key:match("^(.*)/[^/]*$") or ""
-  -- `src` as well as `href`: a Sphinx theme's images (the +/- beside a
-  -- collapsible list) are addressed the same way, and one left relative is a
-  -- link to a file the docset does not hold.
-  return (
-    body:gsub(' ?(%a+)="([^"]*)"', function(attribute, value)
-      if attribute ~= "href" and attribute ~= "src" then
-        return nil
-      end
-      return " " .. attribute .. '="' .. rewrite_href(value, dir, base, known) .. '"'
-    end)
-  )
+  -- A link to another page of this docset becomes that page's key; anything
+  -- else -- the theme's static files and images, a genindex, another site --
+  -- becomes an address back on the site.
+  return links.rewrite_html(body, { dir = key:match("^(.*)/[^/]*$") or "", known = known, base = base })
 end
 
 function M.db(docset, _, system, report)
@@ -662,7 +596,6 @@ M._internal = {
   main_content = main_content,
   name_the_anchors = name_the_anchors,
   clean_page = clean_page,
-  rewrite_href = rewrite_href,
   page_of = page_of,
 }
 

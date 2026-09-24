@@ -309,6 +309,14 @@ test("a link to something the docset does not hold goes back to the site", funct
   has(db["guide/intro"], 'href="' .. site .. 'missing.html"')
 end)
 
+test("a link to the page's own parent names that page", function()
+  -- From guide/intro, the page "guide" is "../guide". Written as the empty
+  -- string, the installer reads it as the docset folder.
+  local known = { ["guide"] = true, ["guide/intro"] = true }
+  local html = internal.clean_page('<a href="../guide.html">up</a>', "guide/intro", site, known)
+  has(html, 'href="../guide"')
+end)
+
 test("an address that is already absolute is left alone", function()
   local db = db_of()
   has(db["index"], 'href="https://example.com/"')
