@@ -9,9 +9,10 @@ have installed are local operations: nothing is fetched while you read.
 
 Documentation comes from several places: the whole [devdocs.io](https://devdocs.io/)
 catalogue, Haskell packages from Hackage, Rust crates from docs.rs, any Sphinx site (Python
-and much of the scientific stack), Go modules from pkg.go.dev, and any DocC site, Apple's
-own developer documentation included. Every source knows its language, so a Rust session
-and a Python session can each narrow the pickers to what they need.
+and much of the scientific stack), Go modules from pkg.go.dev, any DocC site, Apple's own
+developer documentation included, and Dash docsets, Kapeli's own and the user-contributed
+ones. Every docset knows its language, so a Rust session and a Python session can each
+narrow the pickers to what they need.
 
 docshelf.nvim began as a fork of Emmanuel Touzery's
 [apidocs.nvim](https://github.com/emmanueltouzery/apidocs.nvim) and grew well past what that
@@ -71,11 +72,13 @@ three letters on, every enabled source that can be searched is asked as well (at
 of them at once), and the answers join the list as they land, with the title naming whichever
 registry is still being waited on. What a registry answered is kept in the data folder's
 `.registry_cache.json`, so the same name typed again is offered before any request goes out. A
-row whose version the registry did not give is resolved when you pick it. Pickers other than
-snacks have no live input to drive this and keep offering the catalogue alone.
+row whose version the registry did not give is resolved when you pick it. The Dash sources
+filter a list they fetched once rather than asking a registry, so they are asked from the
+first letter. Pickers other than snacks have no live input to drive this and keep offering
+the catalogue alone.
 
 Narrow the picker to one or more languages -- both the devdocs rows and the registries, which
-declare the language they document -- with:
+declare the language they document; Dash, which spans every language, is left out -- with:
 
 ```lua
 :lua require("docshelf").docshelf_install({languages = {Haskell = true}})
@@ -143,6 +146,27 @@ seven thousand of them, which is why the count is shown before you pick.
 A DocC site publishes no version, so such a docset carries none, and the update check
 leaves it alone rather than reinstalling it on a guess.
 
+### Dash docsets
+
+Dash's docsets come from two sources, both searched by name in the install picker:
+`kapeli.com`, Kapeli's own feeds (about 180: Lua, Bash, C++, Django, ...), and
+`contrib.kapeli.com`, the user-contributed ones (about 630: HAProxy Lua, Jest, ...). They are
+two origins because the two catalogues share names -- each has a Swift -- and the origin
+keeps them apart. Each source fetches its list once per session and is asked from the first
+letter typed, since `C`, `Go`, `Qt` and `R` have no longer name.
+
+A docset installs as `<name>~<version>~~kapeli.com` (`Lua~5.5~~kapeli.com`). Picking a
+Kapeli feed asks the feed for its current version; a user-contributed row already carries
+it. Where Kapeli has no better number the version is its own (Bash installs as `Bash~9`). An
+install is one `.tgz` archive and needs `tar` and the `sqlite3` program, which reads the
+docset's index. Sizes vary a lot -- Lua is a few hundred kilobytes, C++ 173 MB -- and the
+picker does not show the size before you pick.
+
+Dash covers every language, so a docset's language comes from its name: `Lua~5.5` is Lua,
+and a Lua filter pulls it in. A name that is no language (`HAProxy_Lua`) is Unknown until you
+give it one. An archive has no website behind it, so a link to a page the docset does not
+hold keeps its text and loses the link.
+
 ## Dependencies
 
 This plugin requires:
@@ -152,6 +176,7 @@ This plugin requires:
 - the <https://github.com/rkd77/elinks> elinks TUI browser, to convert HTML
 - ripgrep
 - curl
+- tar and sqlite3, for Dash docsets
 - linux and probably OSX. Windows will not work, except maybe using WSL
 - treesitter for html and markdown_inline, easiest way to get them is via [treesitter.nvim](https://github.com/nvim-treesitter/nvim-treesitter) plugin
 

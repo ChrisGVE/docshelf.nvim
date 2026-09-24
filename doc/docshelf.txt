@@ -38,6 +38,9 @@ Required:
 	- curl		to fetch the docsets
 	- tree-sitter parsers for `html` and `markdown_inline`
 
+For Dash docsets only (|docshelf-source-list|):
+	- tar and sqlite3
+
 One picker, either one:
 	- telescope.nvim
 	  https://github.com/nvim-telescope/telescope.nvim
@@ -294,7 +297,8 @@ the list as they land, the title naming whichever registry is still being
 waited on. What a registry answered is kept in `.registry_cache.json` in the
 data folder, so the same name typed again is offered before any request goes
 out. A row whose version the registry did not give is resolved when you pick
-it.
+it. The Dash sources filter a list they fetched once rather than asking a
+registry, so they are asked from the first letter.
 
 Other pickers have no live input to drive this, and keep offering the
 catalogue alone.
@@ -302,7 +306,7 @@ catalogue alone.
                                                    *docshelf-source-languages*
 The install picker can be narrowed to one or more languages — the devdocs
 rows and the registries alike, since a registry declares what language it
-documents: >lua
+documents. Dash, which spans every language, is left out: >lua
 	require("docshelf").docshelf_install({
 	  languages = { Haskell = true },
 	})
@@ -380,6 +384,27 @@ https://docs.swift.org/swift-book/documentation/the-swift-programming-language
 	Such a site publishes no version, so the docset carries none and
 	|:DocshelfUpdate| leaves it alone rather than reinstalling it on a
 	guess.
+kapeli.com, contrib.kapeli.com ~
+	Dash docsets: Kapeli's own feeds (about 180 — Lua, Bash, C++,
+	Django, …) and the user-contributed ones (about 630 — HAProxy Lua,
+	Jest, …). Two origins, because the catalogues share names — each has
+	a Swift. Both are searched by name, from the first letter, since
+	`C`, `Go`, `Qt` and `R` have no longer name.
+
+	Picking a Kapeli feed asks it for its current version; a
+	user-contributed row already carries it. Where Kapeli has no better
+	number the version is its own (Bash installs as `Bash~9`). An install
+	is one `.tgz` archive, read with `tar` and `sqlite3`. Sizes vary a
+	lot — Lua is a few hundred kilobytes, C++ 173 MB — and the picker
+	does not show the size before you pick.
+
+	Dash covers every language, so a docset's language comes from its
+	name: `Lua~5.5` is Lua. A name that is no language (`HAProxy_Lua`)
+	is Unknown until you give it one. An archive has no website behind
+	it, so a link to a page it does not hold keeps its text only.
+
+	Installs as `<name>~<version>~~kapeli.com` or
+	`~~contrib.kapeli.com`.
 
 ==============================================================================
 6. KEEPING DOCS CURRENT					*docshelf-updating*
