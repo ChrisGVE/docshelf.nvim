@@ -57,6 +57,15 @@ not fetch anything.
 >lua
 	require("docshelf").setup()
 <
+                                                       *docshelf-from-apidocs*
+Coming from apidocs.nvim: docshelf keeps its documentation in a folder of its
+own, `docshelf-data` under |stdpath()| "data". To keep what apidocs.nvim
+installed, move its folder before the first install: >sh
+	mv ~/.local/share/nvim/apidocs-data ~/.local/share/nvim/docshelf-data
+<
+Everything else is renamed the same way: `:ApidocsOpen` is |:DocshelfOpen|,
+`require("apidocs")` is `require("docshelf")`, and so on.
+
                                                             *docshelf-options*
 `setup()` accepts a table:
 

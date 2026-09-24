@@ -214,6 +214,19 @@ vim.schedule(function()
 end)
 ```
 
+### Coming from apidocs.nvim
+
+docshelf keeps its documentation in a folder of its own, `docshelf-data` under Neovim's
+data directory. To keep what apidocs.nvim installed, move its folder before the first
+install:
+
+```sh
+mv ~/.local/share/nvim/apidocs-data ~/.local/share/nvim/docshelf-data
+```
+
+Everything else is renamed the same way: `:ApidocsOpen` is `:DocshelfOpen`,
+`require("apidocs")` is `require("docshelf")`, and so on.
+
 ## Extra screenshots
 
 ![basic screenshot](https://raw.githubusercontent.com/wiki/emmanueltouzery/apidocs.nvim/shot2.png)
