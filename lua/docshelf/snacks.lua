@@ -1,4 +1,4 @@
-local common = require("apidocs.common")
+local common = require("docshelf.common")
 local Snacks = require("snacks")
 
 local common_layout_options = {
@@ -51,7 +51,7 @@ local function format_entries(item, picker)
   -- take the last part and set it as the text
   local folder = parts[#parts - 1]
   local filename = parts[#parts]
-  local docset, origin = require("apidocs.folders").split(folder)
+  local docset, origin = require("docshelf.folders").split(folder)
   local filetype = vim.split(docset, "~")[1]
   local icon, hl = Snacks.util.icon(filetype, "filetype", {
     fallback = picker.opts.icons.files,
@@ -96,20 +96,20 @@ local function drop_link_footer_matches(item)
   end
 end
 
-local function apidocs_open(opts)
+local function docshelf_open(opts)
   Snacks.picker.files({
     layout = get_layout(opts),
     win = common_win_options,
     dirs = get_data_dirs(opts),
     ft = { "markdown", "md" },
     confirm = function(picker, item)
-      require("apidocs").open_doc_in_new_window(item.file)
+      require("docshelf").open_doc_in_new_window(item.file)
     end,
     format = format_entries,
   })
 end
 
-local function apidocs_search(opts)
+local function docshelf_search(opts)
   Snacks.picker.grep({
     layout = get_layout(opts),
     win = common_win_options,
@@ -117,7 +117,7 @@ local function apidocs_search(opts)
     ft = { "markdown", "md" },
     transform = drop_link_footer_matches,
     confirm = function(picker, item)
-      require("apidocs").open_doc_in_new_window(item.file)
+      require("docshelf").open_doc_in_new_window(item.file)
     end,
     format = format_entries,
   })
@@ -129,7 +129,7 @@ end
 ---@param opts { folder: string, display: string, current: string, names: string[], on_choice: fun(name: string) }
 local function pick_language(opts)
   Snacks.picker.pick({
-    source = "apidocs_language",
+    source = "docshelf_language",
     title = "Language of " .. opts.display .. " (now " .. opts.current .. ")",
     -- A list of names, not of documents: the "select" preset (prompt on top,
     -- no preview pane), never the layout chosen for reading pages, which puts
@@ -141,7 +141,7 @@ local function pick_language(opts)
       if typed == "" then
         typed = ctx.filter.pattern
       end
-      local rows = require("apidocs.language_pick").rows(opts.names, typed)
+      local rows = require("docshelf.language_pick").rows(opts.names, typed)
       return vim.tbl_map(function(row)
         return { text = row.name, name = row.name, add = row.add }
       end, rows)
@@ -185,9 +185,9 @@ end
 -- a binding nobody can see is a binding nobody uses.
 ---@param opts { title: string, selected: string[]?, on_choice: fun(names: string[]), assign_key: string|false, layout?: table }
 local function pick_sources(opts)
-  local folders = require("apidocs.folders")
-  local metadata = require("apidocs.metadata")
-  local filter = require("apidocs.filter")
+  local folders = require("docshelf.folders")
+  local metadata = require("docshelf.metadata")
+  local filter = require("docshelf.filter")
 
   local title = opts.title
   local keys = {}
@@ -200,11 +200,11 @@ local function pick_sources(opts)
   -- at once -- including the docsets it now pulls in.
   local function build()
     local installed = filter.installed()
-    return require("apidocs.filter_pick").rows(installed, metadata.installed_languages(installed), opts.selected)
+    return require("docshelf.filter_pick").rows(installed, metadata.installed_languages(installed), opts.selected)
   end
 
   Snacks.picker.pick({
-    source = "apidocs_sources",
+    source = "docshelf_sources",
     title = title,
     -- A list of names, not of documents: prompt on top, no preview of nothing.
     layout = opts.layout or { preset = "select" },
@@ -234,7 +234,7 @@ local function pick_sources(opts)
         if not item then
           return
         end
-        require("apidocs").assign_language(item.name, function(ok)
+        require("docshelf").assign_language(item.name, function(ok)
           if ok then
             picker:find({ refresh = true })
           end
@@ -256,7 +256,7 @@ end
 return {
   pick_language = pick_language,
   pick_sources = pick_sources,
-  apidocs_open = apidocs_open,
-  apidocs_search = apidocs_search,
+  docshelf_open = docshelf_open,
+  docshelf_search = docshelf_search,
   drop_link_footer_matches = drop_link_footer_matches,
 }

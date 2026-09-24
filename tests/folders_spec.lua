@@ -1,8 +1,8 @@
--- Tests for lua/apidocs/folders.lua.
+-- Tests for lua/docshelf/folders.lua.
 -- Run from the repository root: nvim --headless -l tests/folders_spec.lua
 package.path = "lua/?.lua;lua/?/init.lua;" .. package.path
 
-local folders = require("apidocs.folders")
+local folders = require("docshelf.folders")
 
 local failures = 0
 local function test(name, fn)

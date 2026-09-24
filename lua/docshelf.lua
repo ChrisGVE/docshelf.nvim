@@ -1,5 +1,5 @@
-local common = require("apidocs.common")
-local install = require("apidocs.install")
+local common = require("docshelf.common")
+local install = require("docshelf.install")
 
 Config = {}
 
@@ -28,7 +28,7 @@ local function install_treesitter(lang)
   else
     vim.api.nvim_echo({
       { "treesitter parser for " .. lang .. "is not installed" },
-      { "ApidocsInstall will not work properly until it is" },
+      { "DocshelfInstall will not work properly until it is" },
     }, true, { err = true })
   end
 end
@@ -69,7 +69,7 @@ local function get_installed_docs(opts)
 end
 
 -- Missing sources go through the install queue, so they never install in
--- parallel with each other or with sources picked in :ApidocsInstall.
+-- parallel with each other or with sources picked in :DocshelfInstall.
 local function ensure_install_and_then(languages, slugs_to_mtimes, cont)
   local installed_docs = get_installed_docs()
   local missing = vim.tbl_filter(function(source)
@@ -93,19 +93,19 @@ end
 
 local function ensure_install(languages)
   ensure_install_and_then(languages, nil, function()
-    vim.notify("Apidocs ensure_install complete!")
+    vim.notify("Docshelf ensure_install complete!")
   end)
 end
 
--- ignore the ensure_installed option, that's handled by apidocs_open
-local function apidocs_open_only(opts)
+-- ignore the ensure_installed option, that's handled by docshelf_open
+local function docshelf_open_only(opts)
   local picker = Config.picker
   if opts and opts.picker then
     picker = opts.picker
   end
 
   if picker == "snacks" then
-    require("apidocs.snacks").apidocs_open(opts)
+    require("docshelf.snacks").docshelf_open(opts)
     return
   end
 
@@ -123,7 +123,7 @@ local function apidocs_open_only(opts)
       if type2 == "file" and vim.endswith(name2, ".html.md") then
         local name_no_txt = common.filename_to_display(name2)
         table.insert(candidates, {
-          display = require("apidocs.folders").display(name) .. "/" .. name_no_txt,
+          display = require("docshelf.folders").display(name) .. "/" .. name_no_txt,
           path = name .. "/" .. name2,
         })
       end
@@ -143,47 +143,47 @@ local function apidocs_open_only(opts)
       end
     end)
   else
-    require("apidocs.telescope").apidocs_open(opts, slugs_to_mtimes, candidates)
+    require("docshelf.telescope").docshelf_open(opts, slugs_to_mtimes, candidates)
   end
 end
 
-local function apidocs_open(opts)
-  opts = require("apidocs.filter").restrict(opts)
+local function docshelf_open(opts)
+  opts = require("docshelf.filter").restrict(opts)
   if opts and opts.ensure_installed then
     ensure_install_and_then(opts.ensure_installed, nil, function()
-      apidocs_open_only(opts)
+      docshelf_open_only(opts)
     end)
   else
-    apidocs_open_only(opts)
+    docshelf_open_only(opts)
   end
 end
 
-local function apidocs_search(opts)
-  opts = require("apidocs.filter").restrict(opts)
+local function docshelf_search(opts)
+  opts = require("docshelf.filter").restrict(opts)
   local picker = Config.picker
   if opts and opts.picker then
     picker = opts.picker
   end
   if picker == "ui_select" then
-    vim.notify("Apidocs: ui_select picker does not support search", vim.log.levels.ERROR)
+    vim.notify("Docshelf: ui_select picker does not support search", vim.log.levels.ERROR)
     return
   end
   if picker == "snacks" then
-    require("apidocs.snacks").apidocs_search(opts)
+    require("docshelf.snacks").docshelf_search(opts)
     return
   end
   if picker == "telescope" then
-    require("apidocs.telescope").apidocs_search(opts)
+    require("docshelf.telescope").docshelf_search(opts)
     return
   end
 end
 
-local filter = require("apidocs.filter")
+local filter = require("docshelf.filter")
 
 -- Defined below, after setup(), but the command registered inside setup() calls
 -- it at runtime -- so the local has to exist by then.
 local assign_language
-local apidocs_filter
+local docshelf_filter
 
 --- The languages named on a command line, as the set the pickers take.
 ---@param names string[]
@@ -196,7 +196,7 @@ local function to_set(names)
   return set
 end
 
-local docset_display = require("apidocs.folders").display
+local docset_display = require("docshelf.folders").display
 
 --- Set the filter and say what it now covers, naming the docsets a language
 --- pulled in as well: they are searched too, and a filter that silently held
@@ -207,7 +207,7 @@ local function set_filter(names)
   local display = docset_display
   local active = filter.active()
   if not active then
-    vim.notify("apidocs: filter cleared, every source again", vim.log.levels.INFO, { title = "apidocs" })
+    vim.notify("docshelf: filter cleared, every source again", vim.log.levels.INFO, { title = "docshelf" })
     return
   end
   local text = table.concat(vim.tbl_map(display, active), ", ")
@@ -215,23 +215,23 @@ local function set_filter(names)
   if #pulled > 0 then
     text = text .. " + " .. table.concat(vim.tbl_map(display, pulled), ", ")
   end
-  vim.notify("apidocs filter: " .. text, vim.log.levels.INFO, { title = "apidocs" })
+  vim.notify("docshelf filter: " .. text, vim.log.levels.INFO, { title = "docshelf" })
 end
 
 --- Open the picker that sets the filter. With snacks the docsets are ticked
 --- with tab; the other pickers have no multi-select, so they narrow to one
 --- docset at a time, which is still the common case.
 ---@param opts? { layout?: table }
-function apidocs_filter(opts)
+function docshelf_filter(opts)
   local installed = filter.installed()
   if #installed == 0 then
-    vim.notify("apidocs: nothing installed to filter", vim.log.levels.WARN, { title = "apidocs" })
+    vim.notify("docshelf: nothing installed to filter", vim.log.levels.WARN, { title = "docshelf" })
     return
   end
 
   if Config.picker == "snacks" then
-    return require("apidocs.snacks").pick_sources({
-      title = "apidocs filter (tab to select several)",
+    return require("docshelf.snacks").pick_sources({
+      title = "docshelf filter (tab to select several)",
       selected = filter.active(),
       assign_key = Config.assign_key,
       layout = opts and opts.layout,
@@ -241,7 +241,7 @@ function apidocs_filter(opts)
 
   local display = docset_display
   vim.ui.select(installed, {
-    prompt = "Filter apidocs to",
+    prompt = "Filter docshelf to",
     format_item = display,
   }, function(name)
     if name then
@@ -255,7 +255,7 @@ local function set_config(opts)
   Config = vim.tbl_extend("force", {
     follow_link_keymap = "<C-]>",
     -- Keeping installed documentation current. `auto = false` leaves it to
-    -- :ApidocsUpdate; `every_hours` is how long the automatic check waits
+    -- :DocshelfUpdate; `every_hours` is how long the automatic check waits
     -- between rounds.
     update = { auto = true, every_hours = 24 },
     -- In the filter picker, gives the docset under the cursor a language.
@@ -269,24 +269,24 @@ local function setup(conf)
   set_config(conf)
   conf = conf or {}
   local ok, err = pcall(
-    require("apidocs.languages").configure,
+    require("docshelf.languages").configure,
     { languages = conf.languages, formats = conf.formats, tools = conf.tools }
   )
   if not ok then
-    vim.notify(err .. "; using the default lists", vim.log.levels.ERROR, { title = "apidocs" })
-    require("apidocs.languages").configure({})
+    vim.notify(err .. "; using the default lists", vim.log.levels.ERROR, { title = "docshelf" })
+    require("docshelf.languages").configure({})
   end
-  local sources = require("apidocs.sources")
+  local sources = require("docshelf.sources")
   local sources_ok, sources_err = pcall(sources.configure, conf or {})
   if not sources_ok then
     sources.configure({})
-    vim.notify(sources_err .. "; using the defaults", vim.log.levels.ERROR, { title = "apidocs" })
+    vim.notify(sources_err .. "; using the defaults", vim.log.levels.ERROR, { title = "docshelf" })
   end
 
   ensure_treesitter_dependency()
 
   -- Every command that reads the collection takes a bang meaning "all of it
-  -- this once": `:ApidocsOpen!` looks outside the filter without clearing it,
+  -- this once": `:DocshelfOpen!` looks outside the filter without clearing it,
   -- the way `:Explore!` and friends read. Arguments name sources (or, for
   -- install, languages) explicitly, which wins over the filter.
   local function sources_completion(lead)
@@ -295,8 +295,8 @@ local function setup(conf)
     end, get_installed_docs())
   end
 
-  vim.api.nvim_create_user_command("ApidocsInstall", function(args)
-    install.apidocs_install(filter.narrow({
+  vim.api.nvim_create_user_command("DocshelfInstall", function(args)
+    install.docshelf_install(filter.narrow({
       follow_filter = not args.bang,
       languages = #args.fargs > 0 and to_set(args.fargs) or nil,
     }))
@@ -306,12 +306,12 @@ local function setup(conf)
     complete = function(lead)
       return vim.tbl_filter(function(name)
         return vim.startswith(name:lower(), lead:lower())
-      end, require("apidocs.languages").available())
+      end, require("docshelf.languages").available())
     end,
     desc = "Install documentation (bang: offer every language)",
   })
-  vim.api.nvim_create_user_command("ApidocsOpen", function(args)
-    apidocs_open({
+  vim.api.nvim_create_user_command("DocshelfOpen", function(args)
+    docshelf_open({
       follow_filter = not args.bang,
       restrict_sources = #args.fargs > 0 and args.fargs or nil,
     })
@@ -321,8 +321,8 @@ local function setup(conf)
     complete = sources_completion,
     desc = "Open a documentation page (bang: every source)",
   })
-  vim.api.nvim_create_user_command("ApidocsSearch", function(args)
-    apidocs_search({
+  vim.api.nvim_create_user_command("DocshelfSearch", function(args)
+    docshelf_search({
       follow_filter = not args.bang,
       restrict_sources = #args.fargs > 0 and args.fargs or nil,
     })
@@ -332,22 +332,22 @@ local function setup(conf)
     complete = sources_completion,
     desc = "Grep the documentation (bang: every source)",
   })
-  vim.api.nvim_create_user_command("ApidocsFilter", function(args)
+  vim.api.nvim_create_user_command("DocshelfFilter", function(args)
     if args.bang then
       filter.clear()
-      vim.notify("apidocs: filter cleared, every source again", vim.log.levels.INFO, { title = "apidocs" })
+      vim.notify("docshelf: filter cleared, every source again", vim.log.levels.INFO, { title = "docshelf" })
     elseif #args.fargs > 0 then
       set_filter(args.fargs)
     else
-      apidocs_filter()
+      docshelf_filter()
     end
   end, {
     nargs = "*",
     bang = true,
     complete = sources_completion,
-    desc = "Narrow every apidocs picker to some sources (bang: clear it)",
+    desc = "Narrow every docshelf picker to some sources (bang: clear it)",
   })
-  vim.api.nvim_create_user_command("ApidocsAssignLanguage", function(args)
+  vim.api.nvim_create_user_command("DocshelfAssignLanguage", function(args)
     assign_language(args.fargs[1])
   end, {
     nargs = 1,
@@ -357,24 +357,24 @@ local function setup(conf)
   -- With no argument every installed docset is considered; naming some
   -- limits the round to them, which is what a big collection wants when only
   -- one thing needs refreshing.
-  vim.api.nvim_create_user_command("ApidocsUpdate", function(args)
-    require("apidocs.update").run({ only = #args.fargs > 0 and args.fargs or nil })
+  vim.api.nvim_create_user_command("DocshelfUpdate", function(args)
+    require("docshelf.update").run({ only = #args.fargs > 0 and args.fargs or nil })
   end, {
     nargs = "*",
     complete = sources_completion,
     desc = "Install again whatever documentation has gone out of date",
   })
-  require("apidocs.update").arm(Config.update)
-  vim.api.nvim_create_user_command("ApidocsUninstall", function(args)
+  require("docshelf.update").arm(Config.update)
+  vim.api.nvim_create_user_command("DocshelfUninstall", function(args)
     vim.system(
       { "rm", "-Rf", common.data_folder() .. args.fargs[1] },
       { text = true },
       vim.schedule_wrap(function()
-        require("apidocs.metadata").forget(args.fargs[1])
+        require("docshelf.metadata").forget(args.fargs[1])
         -- A removed docset leaves the filter too, which would otherwise point
         -- at a folder that is no longer there.
         filter.forget({ args.fargs[1] })
-        vim.notify("Apidocs: removed source " .. require("apidocs.folders").display(args.fargs[1]))
+        vim.notify("Docshelf: removed source " .. require("docshelf.folders").display(args.fargs[1]))
       end)
     )
   end, {
@@ -402,18 +402,18 @@ end
 ---@param slug string the installed folder name
 ---@param on_done? fun(ok: boolean)
 function assign_language(slug, on_done)
-  local languages = require("apidocs.languages")
-  local metadata = require("apidocs.metadata")
+  local languages = require("docshelf.languages")
+  local metadata = require("docshelf.metadata")
   local current = languages.label(metadata.installed_languages({ slug })[slug])
   local names = languages.available()
-  local display = require("apidocs.folders").display(slug)
+  local display = require("docshelf.folders").display(slug)
 
   local function chosen(name)
     local ok, why = metadata.assign_language(slug, name)
     vim.notify(
-      ok and ("apidocs: " .. display .. " is now " .. name) or ("apidocs: " .. why),
+      ok and ("docshelf: " .. display .. " is now " .. name) or ("docshelf: " .. why),
       ok and vim.log.levels.INFO or vim.log.levels.WARN,
-      { title = "apidocs" }
+      { title = "docshelf" }
     )
     if on_done then
       on_done(ok)
@@ -421,7 +421,7 @@ function assign_language(slug, on_done)
   end
 
   if Config.picker == "snacks" then
-    return require("apidocs.snacks").pick_language({
+    return require("docshelf.snacks").pick_language({
       folder = slug,
       display = display,
       current = current,
@@ -455,12 +455,12 @@ return {
   config = Config,
   -- Narrowed by the filter like the other two, so a caller gets the same
   -- picker the command does; `follow_filter = false` opts out.
-  apidocs_install = function(opts)
-    install.apidocs_install(filter.narrow(opts))
+  docshelf_install = function(opts)
+    install.docshelf_install(filter.narrow(opts))
   end,
-  apidocs_open = apidocs_open,
-  apidocs_search = apidocs_search,
-  apidocs_filter = apidocs_filter,
+  docshelf_open = docshelf_open,
+  docshelf_search = docshelf_search,
+  docshelf_filter = docshelf_filter,
   filter = filter,
   ensure_install = ensure_install,
   data_folder = common.data_folder,

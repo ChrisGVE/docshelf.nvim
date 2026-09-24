@@ -1,8 +1,8 @@
--- Tests for lua/apidocs/metadata.lua.
+-- Tests for lua/docshelf/metadata.lua.
 -- Run from the repository root: nvim --headless -l tests/metadata_spec.lua
 package.path = "lua/?.lua;lua/?/init.lua;" .. package.path
 
-local metadata = require("apidocs.metadata")
+local metadata = require("docshelf.metadata")
 
 local failures = 0
 local function test(name, fn)
@@ -155,7 +155,7 @@ end)
 test("installed_origins reads each installed source's origin from the manifest", function()
   local dir = vim.fn.tempname() .. "/"
   vim.fn.mkdir(dir, "p")
-  local common = require("apidocs.common")
+  local common = require("docshelf.common")
   local data_folder = common.data_folder
   common.data_folder = function()
     return dir
@@ -222,7 +222,7 @@ local scratch = vim.fn.tempname() .. "/"
 for _, dir in ipairs({ "mystery", "python~3.14", "pycairo" }) do
   vim.fn.mkdir(scratch .. dir, "p")
 end
-require("apidocs.common").data_folder = function()
+require("docshelf.common").data_folder = function()
   return scratch
 end
 
@@ -244,7 +244,7 @@ test("a name no list knows can be given, and is then offered for the next docset
   eq({ metadata.assign_language("mystery", "Prolog") }, { true })
   eq(metadata.installed_languages({ "mystery" })["mystery"], { kind = "package", language = "Prolog" })
   eq(vim.tbl_contains(metadata.recorded_languages(), "Prolog"), true)
-  eq(vim.tbl_contains(require("apidocs.languages").available(), "Prolog"), true)
+  eq(vim.tbl_contains(require("docshelf.languages").available(), "Prolog"), true)
 end)
 
 test("a user's choice survives a refresh and a reinstall", function()
@@ -270,7 +270,7 @@ end)
 -- name says which source a docset came from, so a record that lost the origin
 -- -- or never carried one -- is repaired rather than needing a reinstall.
 test("a docset from another source takes that source's declared language", function()
-  local sources = require("apidocs.sources")
+  local sources = require("docshelf.sources")
   sources.register({
     origin = "declaring.example",
     language = "Haskellish",
@@ -282,7 +282,7 @@ test("a docset from another source takes that source's declared language", funct
 end)
 
 test("the folder name outranks an origin the record got wrong", function()
-  local sources = require("apidocs.sources")
+  local sources = require("docshelf.sources")
   sources.register({
     origin = "declaring.example",
     language = "Haskellish",

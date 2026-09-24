@@ -1,8 +1,8 @@
--- Tests for lua/apidocs/links.lua.
+-- Tests for lua/docshelf/links.lua.
 -- Run from the repository root: nvim --headless -l tests/links_spec.lua
 package.path = "lua/?.lua;lua/?/init.lua;" .. package.path
 
-local links = require("apidocs.links")
+local links = require("docshelf.links")
 
 local failures = 0
 local function test(name, fn)

@@ -1,5 +1,5 @@
-local common = require("apidocs.common")
-local install = require("apidocs.install")
+local common = require("docshelf.common")
+local install = require("docshelf.install")
 
 local function telescope_attach_mappings(prompt_bufnr, map)
   local actions = require('telescope.actions')
@@ -15,7 +15,7 @@ local function telescope_attach_mappings(prompt_bufnr, map)
   return true
 end
 
-local function apidocs_open(params, slugs_to_mtimes, candidates)
+local function docshelf_open(params, slugs_to_mtimes, candidates)
   local docs_path = common.data_folder()
   local pickers = require "telescope.pickers"
   local finders = require "telescope.finders"
@@ -44,7 +44,7 @@ local function apidocs_open(params, slugs_to_mtimes, candidates)
           local winid = self.state.winid
           vim.wo[winid].conceallevel = 2
           vim.wo[winid].concealcursor = "n"
-          local augroup = vim.api.nvim_create_augroup('TelescopeApiDocsResumeConceal', { clear = true })
+          local augroup = vim.api.nvim_create_augroup('TelescopeDocshelfResumeConceal', { clear = true })
           vim.api.nvim_create_autocmd({"User"}, {
             group = augroup,
             pattern = "TelescopeResumePost",
@@ -70,7 +70,7 @@ local function apidocs_open(params, slugs_to_mtimes, candidates)
   }):find()
 end
 
-local function apidocs_search(opts)
+local function docshelf_search(opts)
   local previewers = require("telescope.previewers")
   local make_entry = require "telescope.make_entry"
   local folder = common.data_folder()
@@ -91,7 +91,7 @@ local function apidocs_search(opts)
       return nil
     end
     r.display = function(entry)
-      local display = require("apidocs.folders").display_path(common.filename_to_display(entry.filename:sub(#folder+1)))
+      local display = require("docshelf.folders").display_path(common.filename_to_display(entry.filename:sub(#folder+1)))
       local source_length = display:find("/")
       local hl_group = {
         { {0, source_length}, "TelescopeResultsTitle"},
@@ -115,7 +115,7 @@ local function apidocs_search(opts)
           local winid = self.state.winid
           vim.wo[winid].conceallevel = 2
           vim.wo[winid].concealcursor = "n"
-          local augroup = vim.api.nvim_create_augroup('TelescopeApiDocsResumeConceal', { clear = true })
+          local augroup = vim.api.nvim_create_augroup('TelescopeDocshelfResumeConceal', { clear = true })
           vim.api.nvim_create_autocmd({"User"}, {
             group = augroup,
             pattern = "TelescopeResumePost",
@@ -154,6 +154,6 @@ local function apidocs_search(opts)
 end
 
 return {
-  apidocs_open = apidocs_open,
-  apidocs_search = apidocs_search,
+  docshelf_open = docshelf_open,
+  docshelf_search = docshelf_search,
 }

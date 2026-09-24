@@ -2,8 +2,8 @@
 -- Run from the repository root: nvim --headless -l tests/search_spec.lua
 package.path = "lua/?.lua;lua/?/init.lua;" .. package.path
 
-local common = require("apidocs.common")
-local sections = require("apidocs.sections")
+local common = require("docshelf.common")
+local sections = require("docshelf.sections")
 
 local failures = 0
 local function test(name, fn)

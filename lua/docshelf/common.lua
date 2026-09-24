@@ -1,5 +1,5 @@
 local function data_folder()
-  return vim.fn.stdpath("data") .. "/apidocs-data/"
+  return vim.fn.stdpath("data") .. "/docshelf-data/"
 end
 
 -- https://stackoverflow.com/a/34953646/516188

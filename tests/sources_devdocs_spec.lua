@@ -1,8 +1,8 @@
--- Tests for lua/apidocs/sources/devdocs.lua.
+-- Tests for lua/docshelf/sources/devdocs.lua.
 -- Run from the repository root: nvim --headless -l tests/sources_devdocs_spec.lua
 package.path = "lua/?.lua;lua/?/init.lua;" .. package.path
 
-local devdocs = require("apidocs.sources.devdocs")
+local devdocs = require("docshelf.sources.devdocs")
 
 local failures = 0
 local function test(name, fn)

@@ -1,15 +1,15 @@
-local common = require("apidocs.common")
-local sections = require("apidocs.sections")
-local install_queue = require("apidocs.install_queue")
-local folders = require("apidocs.folders")
+local common = require("docshelf.common")
+local sections = require("docshelf.sections")
+local install_queue = require("docshelf.install_queue")
+local folders = require("docshelf.folders")
 -- Source adapters by origin, and the settings that govern them.
-local sources = require("apidocs.sources")
-local metadata = require("apidocs.metadata")
+local sources = require("docshelf.sources")
+local metadata = require("docshelf.metadata")
 -- Coroutine helpers: long work that keeps the editor responsive.
-local async = require("apidocs.async")
+local async = require("docshelf.async")
 -- Searching the registries behind the sources, and the rows that come back.
-local registry = require("apidocs.registry")
-local install_pick = require("apidocs.install_pick")
+local registry = require("docshelf.registry")
+local install_pick = require("docshelf.install_pick")
 
 -- docs.json entries by slug, filled by fetch_slugs_and_mtimes_and_then
 local catalogue = {}
@@ -22,8 +22,8 @@ local queue -- set below, once apidoc_install exists
 
 local function progress(choice, text)
   local position = queue and queue:position(choice)
-  local prefix = position and ("apidocs " .. position .. " ") or "apidocs "
-  vim.notify(prefix .. folders.display(choice) .. ": " .. text, vim.log.levels.INFO, { id = "apidocs_install_" .. choice, title = "apidocs" })
+  local prefix = position and ("docshelf " .. position .. " ") or "docshelf "
+  vim.notify(prefix .. folders.display(choice) .. ": " .. text, vim.log.levels.INFO, { id = "docshelf_install_" .. choice, title = "docshelf" })
 end
 
 local run = async.run
@@ -752,9 +752,9 @@ local function pick_and_queue(keys, format_item, origin_of, language_of, slugs_t
   local function enqueue(choices)
     local added = queue_install(choices, slugs_to_mtimes)
     if #added < #choices then
-      vim.notify("apidocs: already queued: " .. table.concat(vim.tbl_filter(function(c)
+      vim.notify("docshelf: already queued: " .. table.concat(vim.tbl_filter(function(c)
         return not vim.tbl_contains(added, c)
-      end, choices), ", "), vim.log.levels.INFO, { title = "apidocs" })
+      end, choices), ", "), vim.log.levels.INFO, { title = "docshelf" })
     end
   end
   -- A registry row whose version is not known yet: ask the source which
@@ -763,12 +763,12 @@ local function pick_and_queue(keys, format_item, origin_of, language_of, slugs_t
   local function resolve_then_enqueue(item)
     local adapter = sources.get(item.origin)
     if not (adapter and adapter.resolve) then
-      vim.notify("apidocs: " .. item.origin .. " cannot say which version of " .. item.name
-        .. " to install", vim.log.levels.ERROR, { title = "apidocs" })
+      vim.notify("docshelf: " .. item.origin .. " cannot say which version of " .. item.name
+        .. " to install", vim.log.levels.ERROR, { title = "docshelf" })
       return
     end
-    vim.notify("apidocs: asking " .. item.origin .. " about " .. item.name, vim.log.levels.INFO,
-      { id = "apidocs_resolve_" .. item.name, title = "apidocs" })
+    vim.notify("docshelf: asking " .. item.origin .. " about " .. item.name, vim.log.levels.INFO,
+      { id = "docshelf_resolve_" .. item.name, title = "docshelf" })
     run(function()
       local docset = adapter.resolve(item.name, function(cmd)
         return system_async(cmd, { text = true })
@@ -907,7 +907,7 @@ end
 --- languages, and to the registries that document one of them, so a filtered
 --- reading list can be extended without wading through everything else.
 ---@param opts? { languages?: table<string, boolean> }
-local function apidocs_install(opts)
+local function docshelf_install(opts)
   opts = opts or {}
   if vim.fn.executable("elinks") ~= 1 or vim.fn.executable("rg") ~= 1 or vim.fn.executable("find") ~= 1 then
     print("The 'elinks', 'rg' and 'find' programs must be installed to proceed, refusing to run.")
@@ -918,13 +918,13 @@ local function apidocs_install(opts)
     local devdocs_on = sources.is_enabled(metadata.devdocs_origin)
     local askable = #registry.searchable({ languages = opts.languages }) + #registry.searchable({ method = "from_url" })
     if not devdocs_on and askable == 0 then
-      vim.notify("apidocs: " .. metadata.devdocs_origin .. " is switched off in setup(), so the install picker has nothing to list",
-        vim.log.levels.WARN, { title = "apidocs" })
+      vim.notify("docshelf: " .. metadata.devdocs_origin .. " is switched off in setup(), so the install picker has nothing to list",
+        vim.log.levels.WARN, { title = "docshelf" })
       return
     end
     fetch_slugs_and_mtimes_and_then(function (slugs_to_mtimes)
       local manifest = metadata.refresh(catalogue)
-      local languages = require("apidocs.languages")
+      local languages = require("docshelf.languages")
       local function language_of(slug)
         -- An installed source shows the language it was installed with, which
         -- the user may have changed; anything else, the one it would get.
@@ -968,5 +968,5 @@ return {
   -- "<docset>~~<adapter.origin>".
   register_source = sources.register,
   queue_install = queue_install,
-  apidocs_install = apidocs_install,
+  docshelf_install = docshelf_install,
 }

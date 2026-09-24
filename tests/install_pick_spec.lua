@@ -1,8 +1,8 @@
--- Tests for lua/apidocs/install_pick.lua.
+-- Tests for lua/docshelf/install_pick.lua.
 -- Run from the repository root: nvim --headless -l tests/install_pick_spec.lua
 package.path = "lua/?.lua;lua/?/init.lua;" .. package.path
 
-local pick = require("apidocs.install_pick")
+local pick = require("docshelf.install_pick")
 
 local failures = 0
 local function test(name, fn)

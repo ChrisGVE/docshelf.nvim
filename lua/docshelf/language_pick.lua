@@ -22,7 +22,7 @@ function M.rows(names, pattern)
   local rows = vim.tbl_map(function(name)
     return { name = name }
   end, matches)
-  if pattern ~= "" and not require("apidocs.languages").named(pattern, names) then
+  if pattern ~= "" and not require("docshelf.languages").named(pattern, names) then
     table.insert(rows, 1, { name = pattern, add = true })
   end
   return rows

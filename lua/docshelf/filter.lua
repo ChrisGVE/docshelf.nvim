@@ -32,7 +32,7 @@ local active = nil
 ---@return string[]
 function M.installed()
   local names = {}
-  local ok, iter = pcall(vim.fs.dir, require("apidocs.common").data_folder())
+  local ok, iter = pcall(vim.fs.dir, require("docshelf.common").data_folder())
   if not ok then
     return names
   end
@@ -49,7 +49,7 @@ end
 ---@param installed string[]
 ---@return table<string, { language?: string, kind?: string }>
 local function language_links(installed)
-  return require("apidocs.metadata").installed_languages(installed)
+  return require("docshelf.metadata").installed_languages(installed)
 end
 
 --- The filter as it was picked, or nil when none is set. The docsets a
@@ -98,7 +98,7 @@ end
 ---@param links? table<string, table>
 ---@return string[]
 function M.widen(sources, installed, links)
-  local pulled = require("apidocs.languages").pulled_in(sources, installed, links)
+  local pulled = require("docshelf.languages").pulled_in(sources, installed, links)
   local all = vim.list_extend(vim.deepcopy(sources), pulled)
   table.sort(all)
   return all
@@ -112,7 +112,7 @@ end
 ---@param links? table<string, table>
 ---@return string[]
 function M.pulled_in(sources, installed, links)
-  return require("apidocs.languages").pulled_in(sources, installed, links)
+  return require("docshelf.languages").pulled_in(sources, installed, links)
 end
 
 --- The languages a selection covers, as a set, or nil when it covers none.

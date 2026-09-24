@@ -29,7 +29,7 @@ M.language = "Python"
 local sites_file = ".sphinx_sites.json"
 
 local function data_folder()
-  return require("apidocs.common").data_folder()
+  return require("docshelf.common").data_folder()
 end
 
 --- The remembered sites, { [docset] = { url = ..., language = ... } }.
@@ -66,7 +66,7 @@ local function site_or_error(docset)
   local site = M.site(docset)
   if not site or type(site.url) ~= "string" then
     error(
-      "apidocs does not know which site "
+      "docshelf does not know which site "
         .. docset
         .. " came from;"
         .. " install it again by typing its documentation URL in the install picker",
@@ -155,7 +155,7 @@ local function parse_line(line)
 end
 
 -- What each domain role is called in the reading list. A role that is not here
--- is offered under its own name, so a domain apidocs has never seen still
+-- is offered under its own name, so a domain docshelf has never seen still
 -- shows up.
 local role_labels = {
   ["std:doc"] = "Pages",
@@ -436,7 +436,7 @@ local function fetch_pages(held, keys, dir, system, report)
     local cmd = { "curl", "-sfL", "--max-time", "120" }
     if parallel then
       -- required here, not at the top: sources/init.lua loads this adapter.
-      local workers = require("apidocs.sources").workers()
+      local workers = require("docshelf.sources").workers()
       vim.list_extend(cmd, { "--parallel", "--parallel-max", tostring(workers) })
     end
     vim.list_extend(cmd, { "-K", config_path })

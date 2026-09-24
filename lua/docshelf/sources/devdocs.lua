@@ -9,7 +9,7 @@
 -- these two tables (splitting, conversion, link fixing) is source-agnostic.
 local M = {}
 
-M.origin = require("apidocs.metadata").devdocs_origin
+M.origin = require("docshelf.metadata").devdocs_origin
 
 local base = "https://documents.devdocs.io/"
 

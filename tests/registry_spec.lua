@@ -1,9 +1,9 @@
--- Tests for lua/apidocs/registry.lua.
+-- Tests for lua/docshelf/registry.lua.
 -- Run from the repository root: nvim --headless -l tests/registry_spec.lua
 package.path = "lua/?.lua;lua/?/init.lua;" .. package.path
 
-local registry = require("apidocs.registry")
-local sources = require("apidocs.sources")
+local registry = require("docshelf.registry")
+local sources = require("docshelf.sources")
 
 local failures = 0
 local tmp = vim.fn.tempname()

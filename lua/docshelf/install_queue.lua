@@ -16,7 +16,7 @@ local M = {}
 function M.new(install, report)
   report = report
     or function(message)
-      vim.notify("apidocs install failed: " .. message, vim.log.levels.ERROR, { title = "apidocs" })
+      vim.notify("docshelf install failed: " .. message, vim.log.levels.ERROR, { title = "docshelf" })
     end
 
   local queue = {

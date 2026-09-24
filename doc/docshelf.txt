@@ -1,26 +1,26 @@
-*apidocs.txt*	Offline API documentation, read inside Neovim
+*docshelf.txt*	Offline API documentation, read inside Neovim
 
 ==============================================================================
-CONTENTS						*apidocs-contents*
+CONTENTS						*docshelf-contents*
 
-	1. Introduction .................... |apidocs-introduction|
-	2. Requirements .................... |apidocs-requirements|
-	3. Setup ........................... |apidocs-setup|
-	4. Commands ........................ |apidocs-commands|
-	5. Documentation sources ........... |apidocs-sources|
-	6. Keeping docs current ............ |apidocs-updating|
-	7. Languages ....................... |apidocs-languages|
-	8. Narrowing to a few sources ...... |apidocs-filter|
-	9. Reading a page .................. |apidocs-reading|
-	10. Following links ................ |apidocs-links|
-	11. Lua API ........................ |apidocs-api|
-	12. Credits ........................ |apidocs-credits|
+	1. Introduction .................... |docshelf-introduction|
+	2. Requirements .................... |docshelf-requirements|
+	3. Setup ........................... |docshelf-setup|
+	4. Commands ........................ |docshelf-commands|
+	5. Documentation sources ........... |docshelf-sources|
+	6. Keeping docs current ............ |docshelf-updating|
+	7. Languages ....................... |docshelf-languages|
+	8. Narrowing to a few sources ...... |docshelf-filter|
+	9. Reading a page .................. |docshelf-reading|
+	10. Following links ................ |docshelf-links|
+	11. Lua API ........................ |docshelf-api|
+	12. Credits ........................ |docshelf-credits|
 
 ==============================================================================
-1. INTRODUCTION					    *apidocs-introduction*
+1. INTRODUCTION					    *docshelf-introduction*
 
-apidocs.nvim downloads documentation — from https://devdocs.io and from the
-other sources in |apidocs-sources| — and converts it, once, into plain text
+docshelf.nvim downloads documentation — from https://devdocs.io and from the
+other sources in |docshelf-sources| — and converts it, once, into plain text
 you read in a normal buffer. Nothing is fetched again while you read: a
 docset is a folder of files on disk, so opening a page and searching across
 every page you have installed are both local operations.
@@ -30,11 +30,11 @@ is a page of its own rather than a heading somewhere inside the `List` page,
 and the pickers list it as such.
 
 ==============================================================================
-2. REQUIREMENTS					    *apidocs-requirements*
+2. REQUIREMENTS					    *docshelf-requirements*
 
 Required:
 	- elinks	https://github.com/rkd77/elinks, to render HTML
-	- ripgrep	for |:ApidocsSearch|
+	- ripgrep	for |:DocshelfSearch|
 	- curl		to fetch the docsets
 	- tree-sitter parsers for `html` and `markdown_inline`
 
@@ -50,14 +50,14 @@ preview and no search.
 Linux and macOS. Windows is not supported; WSL may work.
 
 ==============================================================================
-3. SETUP						   *apidocs-setup*
+3. SETUP						   *docshelf-setup*
 
 Call `setup()` once when the plugin loads. It registers the commands; it does
 not fetch anything.
 >lua
-	require("apidocs").setup()
+	require("docshelf").setup()
 <
-                                                             *apidocs-options*
+                                                            *docshelf-options*
 `setup()` accepts a table:
 
 	`picker`		string		(default: auto-detected)
@@ -73,7 +73,7 @@ not fetch anything.
 
 	`update`		table
 		Keeping installed documentation current — see
-		|apidocs-updating|.
+		|docshelf-updating|.
 
 			`auto`		boolean	(default: `true`)
 				Check once after Neovim settles, and
@@ -85,10 +85,10 @@ not fetch anything.
 	`formats`		table
 	`tools`			table
 		The names a source can be linked to — see
-		|apidocs-languages|. Each takes `add` to extend the built-in
+		|docshelf-languages|. Each takes `add` to extend the built-in
 		list, or `only` to replace it. An entry is a name, or a table
 		naming aliases that match it too: >lua
-		require("apidocs").setup({
+		require("docshelf").setup({
 		  languages = { add = { "Fortran", "Prolog" } },
 		  tools = { add = { { "Kubernetes", aliases = { "k8s" } } } },
 		})
@@ -99,57 +99,57 @@ not fetch anything.
 		themselves still run one at a time.
 
 	`sources`		table		(default: all on)
-		Switch a source off by its origin. See |apidocs-sources|: >lua
-		require("apidocs").setup({
+		Switch a source off by its origin (|docshelf-sources|): >lua
+		require("docshelf").setup({
 		  sources = { ["devdocs.io"] = false },
 		})
 <
 	`assign_key`		string|false	(default: `"<C-e>"`)
-		Inside the |:ApidocsFilter| picker, the key that sets the
+		Inside the |:DocshelfFilter| picker, the key that sets the
 		language of the source under the cursor. `false` unbinds it.
 
 	`follow_link_keymap`	string		(default: `"<C-]>"`)
 		The key that follows a `local://` link from a documentation
-		buffer. See |apidocs-links|.
+		buffer. See |docshelf-links|.
 
 Example, with lazy.nvim: >lua
 	{
-	  "emmanueltouzery/apidocs.nvim",
+	  "ChrisGVE/docshelf.nvim",
 	  dependencies = {
 	    "nvim-treesitter/nvim-treesitter",
 	    "folke/snacks.nvim", -- or nvim-telescope/telescope.nvim
 	  },
-	  cmd = { "ApidocsInstall", "ApidocsOpen", "ApidocsSearch",
-	          "ApidocsFilter", "ApidocsAssignLanguage",
-	          "ApidocsUpdate", "ApidocsUninstall" },
+	  cmd = { "DocshelfInstall", "DocshelfOpen", "DocshelfSearch",
+	          "DocshelfFilter", "DocshelfAssignLanguage",
+	          "DocshelfUpdate", "DocshelfUninstall" },
 	  -- A capital letter is the same thing over every source, ignoring
 	  -- the filter without clearing it.
 	  keys = {
-	    { "<leader>sad", "<cmd>ApidocsOpen<cr>", desc = "Docs" },
-	    { "<leader>saD", "<cmd>ApidocsOpen!<cr>", desc = "Docs (all)" },
-	    { "<leader>sas", "<cmd>ApidocsSearch<cr>", desc = "Grep docs" },
-	    { "<leader>saS", "<cmd>ApidocsSearch!<cr>", desc = "Grep (all)" },
-	    { "<leader>saf", "<cmd>ApidocsFilter<cr>", desc = "Filter" },
-	    { "<leader>saF", "<cmd>ApidocsFilter!<cr>", desc = "Unfilter" },
-	    { "<leader>sai", "<cmd>ApidocsInstall<cr>", desc = "Install" },
-	    { "<leader>saI", "<cmd>ApidocsInstall!<cr>", desc = "All" },
+	    { "<leader>sad", "<cmd>DocshelfOpen<cr>", desc = "Docs" },
+	    { "<leader>saD", "<cmd>DocshelfOpen!<cr>", desc = "Docs (all)" },
+	    { "<leader>sas", "<cmd>DocshelfSearch<cr>", desc = "Grep docs" },
+	    { "<leader>saS", "<cmd>DocshelfSearch!<cr>", desc = "Grep all" },
+	    { "<leader>saf", "<cmd>DocshelfFilter<cr>", desc = "Filter" },
+	    { "<leader>saF", "<cmd>DocshelfFilter!<cr>", desc = "Unfilter" },
+	    { "<leader>sai", "<cmd>DocshelfInstall<cr>", desc = "Install" },
+	    { "<leader>saI", "<cmd>DocshelfInstall!<cr>", desc = "All" },
 	  },
 	  config = function()
-	    require("apidocs").setup({ picker = "snacks" })
+	    require("docshelf").setup({ picker = "snacks" })
 	  end,
 	}
 <
 ==============================================================================
-4. COMMANDS						*apidocs-commands*
+4. COMMANDS						*docshelf-commands*
 
-                                                             *:ApidocsInstall*
-:ApidocsInstall[!]	Fetch the list of documentation sources devdocs.io
+                                                            *:DocshelfInstall*
+:DocshelfInstall[!]	Fetch the list of documentation sources devdocs.io
 			offers and ask which ones to install.
 
 			The picker follows the filter too, by language: with
 			a filter set, only sources of the languages in it are
 			offered. `!` offers every language this once, without
-			clearing the filter. See |apidocs-filter|.
+			clearing the filter. See |docshelf-filter|.
 
 			With snacks.nvim, `<Tab>` marks a source and a mark
 			survives a change of search, so several can be picked
@@ -159,7 +159,7 @@ Example, with lazy.nvim: >lua
 			comes from — `devdocs.io` — so that a catalogue drawn
 			from more than one place stays readable. Where the
 			rows come from, and how to narrow them, is
-			|apidocs-sources|.
+			|docshelf-sources|.
 
 			Installing is slow — a large source is thousands of
 			pages, post-processed with tree-sitter — but it runs
@@ -191,67 +191,67 @@ Example, with lazy.nvim: >lua
 				installed before the plugin recorded
 				anything, so nothing can be compared.
 
-                                                      *apidocs-install-record*
+                                                     *docshelf-install-record*
 			What you installed is recorded in `.installed.json`
-			in the data folder (see |apidocs.data_folder()|): the
+			in the data folder (see |docshelf.data_folder()|): the
 			release, the time devdocs built it, the time you
 			installed it, and where it came from. It is a
-			dotfile, so the |:ApidocsSearch| grep passes over it.
+			dotfile, so the |:DocshelfSearch| grep passes over it.
 			Uninstalling a source drops its record.
 
 			A source installed before origins were recorded
 			counts as `devdocs.io`, since that is the only place
 			it could have come from.
 
-                                                                *:ApidocsOpen*
-:ApidocsOpen[!] [{source} ...]
+                                                               *:DocshelfOpen*
+:DocshelfOpen[!] [{source} ...]
 			Open a picker over the pages of the installed
 			sources. Requires telescope.nvim or snacks.nvim for a
 			preview.
 
-			The picker follows the filter (|apidocs-filter|). `!`
+			The picker follows the filter (|docshelf-filter|). `!`
 			looks at every source this once, without clearing the
 			filter; naming sources overrides it for this call.
 
-                                                              *:ApidocsSearch*
-:ApidocsSearch[!] [{source} ...]
+                                                             *:DocshelfSearch*
+:DocshelfSearch[!] [{source} ...]
 			Open a picker that greps the text of the installed
 			pages as you type. Requires ripgrep. Takes the filter,
 			the `!` and the arguments the same way
-			|:ApidocsOpen| does.
+			|:DocshelfOpen| does.
 
-                                                              *:ApidocsFilter*
-:ApidocsFilter[!] [{source} ...]
-			Narrow every apidocs picker to a few sources, until
+                                                             *:DocshelfFilter*
+:DocshelfFilter[!] [{source} ...]
+			Narrow every docshelf picker to a few sources, until
 			you say otherwise. With no argument, a picker over
 			the installed sources; with arguments, those sources
 			directly (<Tab> completes them); with `!`, the filter
-			is cleared. See |apidocs-filter|.
+			is cleared. See |docshelf-filter|.
 
-                                                      *:ApidocsAssignLanguage*
-:ApidocsAssignLanguage {source}
+                                                     *:DocshelfAssignLanguage*
+:DocshelfAssignLanguage {source}
 			Set which language {source} documents, chosen from a
 			picker. Useful for one that came out Unknown. See
-			|apidocs-language-assignment|.
+			|docshelf-language-assignment|.
 
-                                                              *:ApidocsUpdate*
-:ApidocsUpdate [{source} ...]
+                                                             *:DocshelfUpdate*
+:DocshelfUpdate [{source} ...]
 			Install again whatever has gone out of date, from
 			devdocs or from any other origin. Name sources to
 			limit the round to them — <Tab> completes the
 			installed ones — or give no argument to consider
-			everything installed. See |apidocs-updating|.
+			everything installed. See |docshelf-updating|.
 
-                                                           *:ApidocsUninstall*
-:ApidocsUninstall {source}
+                                                          *:DocshelfUninstall*
+:DocshelfUninstall {source}
 			Remove an installed source. <Tab> completes the
 			installed ones. It also leaves the filter.
 
 Both pickers can be narrowed to a few sources, and given a layout, when called
-as Lua functions instead — see |apidocs-api|.
+as Lua functions instead — see |docshelf-api|.
 
 ==============================================================================
-5. DOCUMENTATION SOURCES				  *apidocs-sources*
+5. DOCUMENTATION SOURCES				  *docshelf-sources*
 
 Documentation comes from a source, and a source is named by its origin — the
 short address it is fetched from. devdocs.io is the one every install starts
@@ -262,20 +262,20 @@ Everything after the fetch — the conversion, the links, the pickers, the
 filter, the update check — is the same whatever the origin, so a new source
 adds a way in and changes nothing else.
 
-                                                       *apidocs-source-folder*
+                                                      *docshelf-source-folder*
 A docset from a source other than devdocs lives in a folder named
 `<docset>~~<origin>`, which is why two sources can each document a `text` and
 neither hides the other. What you read is the docset name; the origin shows
 dimmed at the right edge of a picker, and is kept in `.installed.json` (see
-|apidocs-install-record|).
+|docshelf-install-record|).
 
-                                                    *apidocs-source-switching*
+                                                   *docshelf-source-switching*
 Every source is on by default. Switching one off by its origin removes it
 from the install picker only: documentation already installed from it stays
 readable and keeps updating. >lua
-	require("apidocs").setup({ sources = { ["devdocs.io"] = false } })
+	require("docshelf").setup({ sources = { ["devdocs.io"] = false } })
 <
-                                                     *apidocs-source-registry*
+                                                    *docshelf-source-registry*
 devdocs ships a catalogue of everything it has, and the install picker lists
 it. A package registry cannot ship one, so it is asked instead.
 
@@ -290,18 +290,20 @@ it.
 Other pickers have no live input to drive this, and keep offering the
 catalogue alone.
 
-                                                    *apidocs-source-languages*
+                                                   *docshelf-source-languages*
 The install picker can be narrowed to one or more languages — the devdocs
 rows and the registries alike, since a registry declares what language it
 documents: >lua
-	require("apidocs").apidocs_install({ languages = { Haskell = true } })
+	require("docshelf").docshelf_install({
+	  languages = { Haskell = true },
+	})
 <
-                                                         *apidocs-source-list*
+                                                        *docshelf-source-list*
 devdocs.io ~
 	The built-in source, and the only one with a catalogue: one request
 	lists every docset it has, with the release and the build time of
 	each. That is also what makes the update check cheap — see
-	|apidocs-updating|.
+	|docshelf-updating|.
 
 hackage.haskell.org ~
 	A Haskell package. A release ships a Haddock archive
@@ -367,28 +369,28 @@ https://docs.swift.org/swift-book/documentation/the-swift-programming-language
 	them, which is why the count is shown before you pick.
 
 	Such a site publishes no version, so the docset carries none and
-	|:ApidocsUpdate| leaves it alone rather than reinstalling it on a
+	|:DocshelfUpdate| leaves it alone rather than reinstalling it on a
 	guess.
 
 ==============================================================================
-6. KEEPING DOCS CURRENT					*apidocs-updating*
+6. KEEPING DOCS CURRENT					*docshelf-updating*
 
 Documentation moves on, and it does so differently depending on where it came
 from.
 
 A devdocs source gets a new patch release (3.14.6 becomes 3.14.7), or keeps
 its release and is rebuilt from newer upstream pages. Both are recorded at
-install time (see |apidocs-install-record|), so both can be noticed, and the
+install time (see |docshelf-install-record|), so both can be noticed, and the
 source is refreshed in its existing folder.
 
 A source from anywhere else is asked what version its origin offers today.
 Since such a docset is usually named for the version it holds, updating it is
 an install under a new name: `text~2.1.2` becomes `text~2.1.3` and the old
 folder is removed once the new one is in place. The language you assigned it
-(see |apidocs-language-assignment|) and its place in the filter are carried
+(see |docshelf-language-assignment|) and its place in the filter are carried
 across, so an update does not undo what you had arranged.
 
-|:ApidocsUpdate| installs again every source found in one of those states.
+|:DocshelfUpdate| installs again every source found in one of those states.
 Three are left alone on purpose:
 
 	- one installed before the plugin recorded anything, because there is
@@ -401,19 +403,19 @@ Three are left alone on purpose:
 An update is an ordinary install, so it uses the same queue and the same
 progress notification, and Neovim stays usable throughout.
 
-                                                         *apidocs-update-auto*
+                                                        *docshelf-update-auto*
 The same check also runs on its own: the first time you pause after opening
 Neovim, and then at most once every `every_hours`. It is armed by `setup()`,
 so a plugin loaded lazily on its commands first checks once you have opened
 the docs, not at startup. The time of the last check is kept in `.update.json`
 in the data folder.
 
-To leave updating to |:ApidocsUpdate| alone, or to check less often: >lua
-	require("apidocs").setup({ update = { auto = false } })
-	require("apidocs").setup({ update = { every_hours = 72 } })
+To leave updating to |:DocshelfUpdate| alone, or to check less often: >lua
+	require("docshelf").setup({ update = { auto = false } })
+	require("docshelf").setup({ update = { every_hours = 72 } })
 <
 ==============================================================================
-7. LANGUAGES					       *apidocs-languages*
+7. LANGUAGES					       *docshelf-languages*
 
 Every installed source is linked to a language, so that a set of sources can
 be talked about by what it is about rather than by slug. `python~3.14`,
@@ -421,7 +423,7 @@ be talked about by what it is about rather than by slug. `python~3.14`,
 Docker, because "language" here is one flat field covering a programming
 language, a file format or a tool alike.
 
-                                                  *apidocs-language-reference*
+                                                 *docshelf-language-reference*
 Within a language, one source is its reference: the one whose name before `~`
 is the language's own name or one of its aliases — `python~3.15` for Python,
 `openjdk~21` for Java. The others belong to the language. That distinction is
@@ -430,34 +432,34 @@ Python libraries with it, while choosing `numpy~2.5` on its own brings in
 nothing, and a different version of the reference (`python~3.13`) is not
 pulled in either.
 
-                                                        *apidocs-language-set*
+                                                       *docshelf-language-set*
 The names come from three lists — `languages`, `formats` and `tools` — which
 are joined into one. They ship with sensible contents (Python, Rust, Go,
 Haskell, Odin, Zig … Markdown, JSON, YAML, TOML, Typst … Git, Docker, tmux,
 Neovim, jq, ripgrep …), each SQL engine is a name of its own rather than a
 flavour of SQL, and LaTeX, TeX and BibTeX are kept apart. Extend or replace
-them through `setup()`; see |apidocs-options|.
+them through `setup()`; see |docshelf-options|.
 
-                                                 *apidocs-language-assignment*
+                                                *docshelf-language-assignment*
 A source's language is decided once, when it is installed, and kept in
-`.installed.json` (see |apidocs-install-record|). In order:
+`.installed.json` (see |docshelf-install-record|). In order:
 
 	1. a source that declares its own language is believed — a Hackage
 	   package is Haskell;
-	2. a devdocs source listed in `lua/apidocs/source_languages.lua`, a
+	2. a devdocs source listed in `lua/docshelf/source_languages.lua`, a
 	   table kept by hand, takes that table's answer;
 	3. otherwise, a source whose name before `~` is a name or an alias
 	   from your lists gets that name;
 	4. anything left is Unknown.
 
-|apidocs.assign_language()| gives any installed source a name, replacing
+|docshelf.assign_language()| gives any installed source a name, replacing
 whatever it had, and the choice survives a refresh, an update and a
 reinstall. Its picker lists your names plus every language already recorded
 on an installed source, narrowing as you type; when what you type names none
 of them, the first row offers it as a new name, so a language you need once
 costs no configuration.
 
-                                                      *apidocs-language-drift*
+                                                     *docshelf-language-drift*
 Because `source_languages.lua` is kept by hand, it drifts as devdocs adds and
 retires sources. To compare it with the live catalogue: >
 	nvim --headless -l scripts/check_source_languages.lua
@@ -468,12 +470,12 @@ sources devdocs no longer lists. It never edits the table, and it cannot tell
 that a row already there is wrong.
 
 ==============================================================================
-8. NARROWING TO A FEW SOURCES				  *apidocs-filter*
+8. NARROWING TO A FEW SOURCES				  *docshelf-filter*
 
 With a handful of sources installed, a picker can list all of them. With
 several dozen, a list of everything is no longer a list of what you need.
-|:ApidocsFilter| picks a few and keeps them, and |:ApidocsOpen| and
-|:ApidocsSearch| then look only inside them, and |:ApidocsInstall| offers
+|:DocshelfFilter| picks a few and keeps them, and |:DocshelfOpen| and
+|:DocshelfSearch| then look only inside them, and |:DocshelfInstall| offers
 only the languages they are written in — so a filtered session narrows what
 you read, what you search and what you are offered to add.
 
@@ -481,38 +483,38 @@ The filter belongs to this Neovim session, so a Rust session and a Python
 session each keep their own, and neither has to be undone afterwards.
 
 Narrowing is not only about reading a shorter list. A grep is one ripgrep run
-over the sources in play, so the filter is also what keeps |:ApidocsSearch|
+over the sources in play, so the filter is also what keeps |:DocshelfSearch|
 fast as the collection grows.
 
-                                                       *apidocs-filter-picker*
-Run |:ApidocsFilter| with no argument for a picker over the installed
+                                                      *docshelf-filter-picker*
+Run |:DocshelfFilter| with no argument for a picker over the installed
 sources; with snacks.nvim, `<Tab>` ticks several. Rows read
 `language | source`, so typing a language narrows to it — `Unknown`
 included. A filled dot marks a source you picked, a hollow one a source a
-language brought along (see |apidocs-language-reference|): picking
+language brought along (see |docshelf-language-reference|): picking
 `python~3.14` brings `numpy~2.5` and `scikit_learn` with it, while
 `numpy~2.5` picked on its own stays on its own.
 
 `<C-e>` on a row sets that source's language and redraws the list, which is
 the quick way to deal with an `Unknown`. The key is the `assign_key` option;
-see |apidocs-options|.
+see |docshelf-options|.
 
-                                                     *apidocs-filter-ignoring*
+                                                    *docshelf-filter-ignoring*
 Three ways past the filter, none of which clears it:
 
-	- `!` — |:ApidocsOpen|, |:ApidocsSearch| and |:ApidocsInstall| with a
-	  bang look at everything this once. A capital letter in a keymap is
-	  a good home for it.
-	- naming sources — `:ApidocsOpen rust` overrides the filter for that
+	- `!` — |:DocshelfOpen|, |:DocshelfSearch| and |:DocshelfInstall|
+	  with a bang look at everything this once. A capital letter in a
+	  keymap is a good home for it.
+	- naming sources — `:DocshelfOpen rust` overrides the filter for that
 	  call.
 	- `follow_filter = false` in the Lua options, which is what `!`
 	  passes.
 
-|:ApidocsFilter| with a bang clears it, and uninstalling a source drops it
+|:DocshelfFilter| with a bang clears it, and uninstalling a source drops it
 from it.
 
 ==============================================================================
-9. READING A PAGE					 *apidocs-reading*
+9. READING A PAGE					 *docshelf-reading*
 
 A documentation page is an ordinary buffer holding text, so every Neovim
 motion, search and mark works on it. The plugin sets 'conceallevel' and
@@ -520,7 +522,7 @@ motion, search and mark works on it. The plugin sets 'conceallevel' and
 fences read as text rather than as punctuation.
 
 ==============================================================================
-10. FOLLOWING LINKS					   *apidocs-links*
+10. FOLLOWING LINKS					   *docshelf-links*
 
 Links are numbered in the text — `[1]`, `[2]` — and the addresses themselves
 are collected in a footer at the end of the page. Following one is therefore
@@ -540,39 +542,39 @@ searching for the text it names, so you may need |n| to reach it — the first
 match is not always the one meant.
 
 ==============================================================================
-11. LUA API						     *apidocs-api*
+11. LUA API						     *docshelf-api*
 
-                                                      *apidocs.apidocs_open()*
-`require("apidocs").apidocs_open(`{opts}`)`
-		|:ApidocsOpen| as a function. {opts} may carry:
+                                                    *docshelf.docshelf_open()*
+`require("docshelf").docshelf_open(`{opts}`)`
+		|:DocshelfOpen| as a function. {opts} may carry:
 			`restrict_sources`	list of source names to list
 			`layout`		snacks layout, as in `setup()`
 >lua
-		require("apidocs").apidocs_open({
+		require("docshelf").docshelf_open({
 		  restrict_sources = { "rust" },
 		  layout = "ivy_split",
 		})
 <
-                                                    *apidocs.apidocs_search()*
-`require("apidocs").apidocs_search(`{opts}`)`
-		|:ApidocsSearch| as a function. Takes the same {opts}.
+                                                  *docshelf.docshelf_search()*
+`require("docshelf").docshelf_search(`{opts}`)`
+		|:DocshelfSearch| as a function. Takes the same {opts}.
 
-                                                    *apidocs.ensure_install()*
-`require("apidocs").ensure_install(`{sources}`)`
+                                                   *docshelf.ensure_install()*
+`require("docshelf").ensure_install(`{sources}`)`
 		Install every source in the list that is not installed yet,
 		and do nothing for the ones that are. The missing ones join
-		the same queue |:ApidocsInstall| uses, so they never install
+		the same queue |:DocshelfInstall| uses, so they never install
 		alongside each other or alongside a source picked there.
 		Meant to be called after `setup()` so a configuration carries
 		its own docsets: >lua
-		require("apidocs").ensure_install({ "lua~5.4", "rust" })
+		require("docshelf").ensure_install({ "lua~5.4", "rust" })
 <
-                                                    *apidocs.apidocs_filter()*
-`require("apidocs").apidocs_filter()`
-		|:ApidocsFilter| as a function — open the filter picker.
+                                                  *docshelf.docshelf_filter()*
+`require("docshelf").docshelf_filter()`
+		|:DocshelfFilter| as a function — open the filter picker.
 
-*apidocs.filter*
-`require("apidocs").filter`
+*docshelf.filter*
+`require("docshelf").filter`
 		The filter itself:
 			`set(`{names}`)`	narrow to these sources
 			`clear()`	drop the filter
@@ -583,42 +585,42 @@ match is not always the one meant.
 		Every picker call takes `follow_filter = false` to ignore the
 		filter once, which is what the `!` commands pass.
 
-*apidocs.assign_language()*
-`require("apidocs").assign_language(`{slug}`)`
+*docshelf.assign_language()*
+`require("docshelf").assign_language(`{slug}`)`
 		Open a picker and link {slug} to the language chosen there.
-		See |apidocs-language-assignment|.
+		See |docshelf-language-assignment|.
 
-*apidocs.languages.pulled_in()*
-`require("apidocs.languages").pulled_in(`{selected}`, `{installed}`)`
+*docshelf.languages.pulled_in()*
+`require("docshelf.languages").pulled_in(`{selected}`, `{installed}`)`
 		For every language reference in {selected}, the other
 		installed sources of that language — what a selection widens
-		to. See |apidocs-language-reference|.
+		to. See |docshelf-language-reference|.
 
-*apidocs.languages.unknown()*
-`require("apidocs.languages").unknown(`{installed}`)`
+*docshelf.languages.unknown()*
+`require("docshelf.languages").unknown(`{installed}`)`
 		The installed sources whose language could not be decided.
 
-*apidocs.metadata.installed_origins()*
-`require("apidocs.metadata").installed_origins(`{slugs}`)`
+*docshelf.metadata.installed_origins()*
+`require("docshelf.metadata").installed_origins(`{slugs}`)`
 		Where each of {slugs} came from, as a table keyed by slug.
 		For a picker of its own over the installed sources, so it can
 		show the same origin the install picker does.
 
-                                                       *apidocs.data_folder()*
-`require("apidocs").data_folder()`
+                                                      *docshelf.data_folder()*
+`require("docshelf").data_folder()`
 		The folder the converted pages live in.
 
-                                            *apidocs.open_doc_in_new_window()*
-`require("apidocs").open_doc_in_new_window(`{path}`)`
+                                           *docshelf.open_doc_in_new_window()*
+`require("docshelf").open_doc_in_new_window(`{path}`)`
 		Open one page in a new window, with conceal and link
 		following set up. 'winfixbuf' is set.
 
-                                            *apidocs.open_doc_in_cur_window()*
-`require("apidocs").open_doc_in_cur_window(`{path}`)`
+                                           *docshelf.open_doc_in_cur_window()*
+`require("docshelf").open_doc_in_cur_window(`{path}`)`
 		The same, in the current window, without 'winfixbuf'.
 
-                                                *apidocs.load_doc_in_buffer()*
-`require("apidocs").load_doc_in_buffer(`{buf}`, `{path}`)`
+                                               *docshelf.load_doc_in_buffer()*
+`require("docshelf").load_doc_in_buffer(`{buf}`, `{path}`)`
 		Load one page into an existing buffer. Nothing is set up for
 		you: set 'conceallevel' to 2 and 'concealcursor' to `"n"`
 		on the window yourself, and link following is not wired.
@@ -626,7 +628,7 @@ match is not always the one meant.
 		standalone display.
 
 ==============================================================================
-12. CREDITS						 *apidocs-credits*
+12. CREDITS						 *docshelf-credits*
 
 apidocs.nvim	https://github.com/emmanueltouzery/apidocs.nvim
 

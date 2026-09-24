@@ -1,8 +1,8 @@
--- Tests for lua/apidocs/install_queue.lua.
+-- Tests for lua/docshelf/install_queue.lua.
 -- Run from the repository root: nvim --headless -l tests/install_queue_spec.lua
 package.path = "lua/?.lua;lua/?/init.lua;" .. package.path
 
-local install_queue = require("apidocs.install_queue")
+local install_queue = require("docshelf.install_queue")
 
 local failures = 0
 local function test(name, fn)

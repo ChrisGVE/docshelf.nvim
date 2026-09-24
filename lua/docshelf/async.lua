@@ -12,7 +12,7 @@ local on_failure = setmetatable({}, { __mode = "k" })
 local function resume(co, ...)
   local ok, err = coroutine.resume(co, ...)
   if not ok then
-    vim.notify("apidocs install failed: " .. debug.traceback(co, err), vim.log.levels.ERROR)
+    vim.notify("docshelf install failed: " .. debug.traceback(co, err), vim.log.levels.ERROR)
     if on_failure[co] then
       on_failure[co]()
     end

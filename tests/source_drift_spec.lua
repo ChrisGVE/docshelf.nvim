@@ -1,9 +1,9 @@
--- Tests for lua/apidocs/source_drift.lua, and for the shape of the real
+-- Tests for lua/docshelf/source_drift.lua, and for the shape of the real
 -- source_languages.lua table.
 -- Run from the repository root: nvim --headless -l tests/source_drift_spec.lua
 package.path = "lua/?.lua;lua/?/init.lua;" .. package.path
 
-local drift = require("apidocs.source_drift")
+local drift = require("docshelf.source_drift")
 
 local failures = 0
 local function test(name, fn)
@@ -131,7 +131,7 @@ end)
 -- the real table ---------------------------------------------------------------
 
 test("every row of source_languages.lua is well formed", function()
-  eq(drift.row_errors(require("apidocs.source_languages")), {})
+  eq(drift.row_errors(require("docshelf.source_languages")), {})
 end)
 
 print(failures == 0 and "all passed" or (failures .. " failed"))

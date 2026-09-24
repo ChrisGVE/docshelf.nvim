@@ -19,8 +19,8 @@ local M = {}
 ---@param selected string[]? the filter as picked, or nil for none
 ---@return { name: string, text: string, language: string, pad: string, active?: integer, via?: string }[]
 function M.rows(installed, links, selected)
-  local languages = require("apidocs.languages")
-  local display = require("apidocs.folders").display
+  local languages = require("docshelf.languages")
+  local display = require("docshelf.folders").display
 
   local active, via = {}, {}
   for _, name in ipairs(selected or {}) do

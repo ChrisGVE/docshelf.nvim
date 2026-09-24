@@ -1,4 +1,4 @@
-# Apidocs.nvim
+# Docshelf.nvim
 
 This is an integration of <https://devdocs.io/> in neovim.
 
@@ -9,21 +9,21 @@ It will also extract the documentation for individual methods (`List.add()`...) 
 
 ## How to use
 
-Everything below is also in the helpfile, `:help apidocs`.
+Everything below is also in the helpfile, `:help docshelf`.
 
-Call `require("apidocs").setup()` when installing the plugin to register the commands.
+Call `require("docshelf").setup()` when installing the plugin to register the commands.
 
 The plugin exports the following commands:
 
-- `ApidocsInstall` - ask which documentation to install, and install it. Each row shows a source's release and install state, with where it comes from at the right edge. With snacks.nvim, `<Tab>` marks several sources, and marks are kept when you change the search. Sources install one at a time, in the background, with their place in the queue and their progress shown in a notification; picking more while an install runs adds them to the queue, and a source that fails to install is reported and skipped. A large source can take a minute or more, since the plugin uses Neovim's tree-sitter to post-process the files, but Neovim stays usable meanwhile. Where the rows come from, and how to narrow them, is in [Documentation sources](#documentation-sources).
-- `ApidocsOpen` (requires telescope.nvim or snacks.nvim) - open a picker listing all apidocs. If you want to display only a subset of sources, call the lua function: `:lua require("apidocs").apidocs_open({restrict_sources={"rust"}})`. With snacks you can also pick the picker layout: `:lua require("apidocs").apidocs_open({layout="ivy_split"})`
-- `ApidocsSearch` (requires telescope.nvim or snacks.nvim) - open a picker to grep for text in all apidocs. If you want to display only a subset of sources, call the lua function: `:lua require("apidocs").apidocs_search({restrict_sources={"rust"}})`. The `layout` option works here too. Each match is shown once: the install writes a `.rgignore` in each source folder listing the per-entry section files, which repeat text from their page (the open picker still lists them), and matches inside a page's footer of links are left out. Sources installed before this change show repeats until they are reinstalled.
+- `DocshelfInstall` - ask which documentation to install, and install it. Each row shows a source's release and install state, with where it comes from at the right edge. With snacks.nvim, `<Tab>` marks several sources, and marks are kept when you change the search. Sources install one at a time, in the background, with their place in the queue and their progress shown in a notification; picking more while an install runs adds them to the queue, and a source that fails to install is reported and skipped. A large source can take a minute or more, since the plugin uses Neovim's tree-sitter to post-process the files, but Neovim stays usable meanwhile. Where the rows come from, and how to narrow them, is in [Documentation sources](#documentation-sources).
+- `DocshelfOpen` (requires telescope.nvim or snacks.nvim) - open a picker listing all docshelf. If you want to display only a subset of sources, call the lua function: `:lua require("docshelf").docshelf_open({restrict_sources={"rust"}})`. With snacks you can also pick the picker layout: `:lua require("docshelf").docshelf_open({layout="ivy_split"})`
+- `DocshelfSearch` (requires telescope.nvim or snacks.nvim) - open a picker to grep for text in all docshelf. If you want to display only a subset of sources, call the lua function: `:lua require("docshelf").docshelf_search({restrict_sources={"rust"}})`. The `layout` option works here too. Each match is shown once: the install writes a `.rgignore` in each source folder listing the per-entry section files, which repeat text from their page (the open picker still lists them), and matches inside a page's footer of links are left out. Sources installed before this change show repeats until they are reinstalled.
 
-  Sources know their language, so a filter can widen itself: `require("apidocs.languages").pulled_in(selected, installed)` returns, for every selected language reference, the other installed sources of that language (selecting `python~3.14` pulls in `numpy~2.5` and `scikit_learn`, but not `python~3.13`; selecting `numpy~2.5` alone pulls in nothing). "Language" is one flat field: a programming language, a file format or a tool (`git` is Git, `docker` is Docker). Each name has aliases that match it too (`ts`, `gh`, `rg`); a source is its language's reference when its name before `~` is the language's name or an alias (`python~3.15`, `openjdk~21` for Java), otherwise it belongs to the language. A source's language is decided at install and kept in `.installed.json`: a source that declares its language (a Hackage package is Haskell) uses it; a devdocs source found in `lua/apidocs/source_languages.lua` (a hand-maintained table) takes that table's answer; otherwise a source whose name before `~` is a name or alias from your lists gets that name. Anything else is Unknown, and `require("apidocs.languages").unknown(installed)` lists those. `require("apidocs").assign_language(slug)` gives any installed source a name, replacing what it had; that choice is kept when the source is refreshed, updated or reinstalled. It opens a picker over your lists plus every language already recorded on an installed source, narrowed as you type; when what you typed names none of them, the first row takes it as a new name, so a language you need once needs no config change. Your lists are the `languages`, `formats` and `tools` setup options (see below). Because the table is kept by hand, `nvim --headless -l scripts/check_source_languages.lua` compares it with the live devdocs catalogue: it lists sources the table lacks (each with a proposed row seeded from its repository's GitHub language, to be checked by a person) and rows for sources devdocs no longer lists. It never edits the table, and it cannot tell that an existing row is wrong.
-- `ApidocsFilter` - narrow every apidocs picker to a few sources, until you say otherwise. With a handful of sources installed a picker can list all of them; with several dozen, a list of everything is no longer a list of what you need. Run it with no argument for a picker over the installed sources (with snacks.nvim, tab ticks several), name them directly (`:ApidocsFilter python~3.14 numpy~2.5`, with completion), or clear it with `:ApidocsFilter!`. From then on `ApidocsOpen`, `ApidocsSearch` and `ApidocsInstall` only look inside the filter; each of them takes a `!` to look at everything just this once without clearing it, and naming sources as arguments (`:ApidocsOpen rust`) overrides it for that call. The filter lives for this Neovim session, so a Rust session and a Python session each keep their own. Selecting a language's own source also brings in the other installed sources of that language -- `python~3.14` adds `numpy~2.5` and `scikit_learn`, while `numpy~2.5` selected alone stays alone, and `python~3.13` is a different reference rather than something written in 3.14. In the picker a filled dot marks what you picked and a hollow one what a language brought along; rows read `language | source`, and typing a language narrows to it, "Unknown" included. Narrowing is not only about reading a shorter list: a grep is one ripgrep over the sources in play, so a filter is also what keeps searching fast as the collection grows.
-- `ApidocsAssignLanguage <source>` - set which language a source documents, picked from your lists (see `languages` below) plus every language already recorded on an installed source. Useful for a source that came out "Unknown". The same thing is bound to `<c-e>` inside the `ApidocsFilter` picker, where the source under the cursor is relabelled and the list redraws; `require('apidocs').setup({assign_key = "<c-x>"})` moves that key and `false` unbinds it.
-- `ApidocsUpdate` - install again whatever has gone out of date: a devdocs source whose release has moved on (3.14.6 to 3.14.7) or that devdocs has rebuilt since, and a source from anywhere else whose origin now offers a newer version. Name sources to limit the round to them, with tab completion; with no argument everything installed is considered. A devdocs source is refreshed in place; a source named for the version it holds (`text~2.1.2`) is installed as `text~2.1.3` and the old folder is removed, carrying over the language you assigned it. A source whose origin publishes no version at all is left alone, as there is nothing to compare, and so is one installed before this release, which recorded nothing to compare with. This also runs on its own: the first time you pause after opening Neovim, and at most once a day, apidocs checks and updates in the background, using the same queue and the same progress notification as any other install. Switch that off with `update = { auto = false }` in `setup()`, or change how long it waits with `update = { every_hours = 24 }`. The automatic check is armed by `setup()`, so if you load the plugin lazily on its commands it first runs once you have opened the docs, not at startup.
-- `ApidocsUninstall` - allows to uninstall sources. Press tab to get a completion on the available ones. An uninstalled source also leaves the filter.
+  Sources know their language, so a filter can widen itself: `require("docshelf.languages").pulled_in(selected, installed)` returns, for every selected language reference, the other installed sources of that language (selecting `python~3.14` pulls in `numpy~2.5` and `scikit_learn`, but not `python~3.13`; selecting `numpy~2.5` alone pulls in nothing). "Language" is one flat field: a programming language, a file format or a tool (`git` is Git, `docker` is Docker). Each name has aliases that match it too (`ts`, `gh`, `rg`); a source is its language's reference when its name before `~` is the language's name or an alias (`python~3.15`, `openjdk~21` for Java), otherwise it belongs to the language. A source's language is decided at install and kept in `.installed.json`: a source that declares its language (a Hackage package is Haskell) uses it; a devdocs source found in `lua/docshelf/source_languages.lua` (a hand-maintained table) takes that table's answer; otherwise a source whose name before `~` is a name or alias from your lists gets that name. Anything else is Unknown, and `require("docshelf.languages").unknown(installed)` lists those. `require("docshelf").assign_language(slug)` gives any installed source a name, replacing what it had; that choice is kept when the source is refreshed, updated or reinstalled. It opens a picker over your lists plus every language already recorded on an installed source, narrowed as you type; when what you typed names none of them, the first row takes it as a new name, so a language you need once needs no config change. Your lists are the `languages`, `formats` and `tools` setup options (see below). Because the table is kept by hand, `nvim --headless -l scripts/check_source_languages.lua` compares it with the live devdocs catalogue: it lists sources the table lacks (each with a proposed row seeded from its repository's GitHub language, to be checked by a person) and rows for sources devdocs no longer lists. It never edits the table, and it cannot tell that an existing row is wrong.
+- `DocshelfFilter` - narrow every docshelf picker to a few sources, until you say otherwise. With a handful of sources installed a picker can list all of them; with several dozen, a list of everything is no longer a list of what you need. Run it with no argument for a picker over the installed sources (with snacks.nvim, tab ticks several), name them directly (`:DocshelfFilter python~3.14 numpy~2.5`, with completion), or clear it with `:DocshelfFilter!`. From then on `DocshelfOpen`, `DocshelfSearch` and `DocshelfInstall` only look inside the filter; each of them takes a `!` to look at everything just this once without clearing it, and naming sources as arguments (`:DocshelfOpen rust`) overrides it for that call. The filter lives for this Neovim session, so a Rust session and a Python session each keep their own. Selecting a language's own source also brings in the other installed sources of that language -- `python~3.14` adds `numpy~2.5` and `scikit_learn`, while `numpy~2.5` selected alone stays alone, and `python~3.13` is a different reference rather than something written in 3.14. In the picker a filled dot marks what you picked and a hollow one what a language brought along; rows read `language | source`, and typing a language narrows to it, "Unknown" included. Narrowing is not only about reading a shorter list: a grep is one ripgrep over the sources in play, so a filter is also what keeps searching fast as the collection grows.
+- `DocshelfAssignLanguage <source>` - set which language a source documents, picked from your lists (see `languages` below) plus every language already recorded on an installed source. Useful for a source that came out "Unknown". The same thing is bound to `<c-e>` inside the `DocshelfFilter` picker, where the source under the cursor is relabelled and the list redraws; `require('docshelf').setup({assign_key = "<c-x>"})` moves that key and `false` unbinds it.
+- `DocshelfUpdate` - install again whatever has gone out of date: a devdocs source whose release has moved on (3.14.6 to 3.14.7) or that devdocs has rebuilt since, and a source from anywhere else whose origin now offers a newer version. Name sources to limit the round to them, with tab completion; with no argument everything installed is considered. A devdocs source is refreshed in place; a source named for the version it holds (`text~2.1.2`) is installed as `text~2.1.3` and the old folder is removed, carrying over the language you assigned it. A source whose origin publishes no version at all is left alone, as there is nothing to compare, and so is one installed before this release, which recorded nothing to compare with. This also runs on its own: the first time you pause after opening Neovim, and at most once a day, docshelf checks and updates in the background, using the same queue and the same progress notification as any other install. Switch that off with `update = { auto = false }` in `setup()`, or change how long it waits with `update = { every_hours = 24 }`. The automatic check is armed by `setup()`, so if you load the plugin lazily on its commands it first runs once you have opened the docs, not at startup.
+- `DocshelfUninstall` - allows to uninstall sources. Press tab to get a completion on the available ones. An uninstalled source also leaves the filter.
 
 ## Advanced usage
 
@@ -43,14 +43,14 @@ A docset from a source other than devdocs lives in a folder named `<docset>~~<or
 is why two sources can each document a `text` and neither hides the other. What a person reads
 is the docset name; the origin shows dimmed at the right edge of a picker. Each install records
 its origin in the data folder's `.installed.json`, so pickers over installed sources can show it
-too (`require("apidocs.metadata").installed_origins(slugs)`); sources installed before origins
+too (`require("docshelf.metadata").installed_origins(slugs)`); sources installed before origins
 were recorded count as `devdocs.io`.
 
 Every source is on by default. Switching one off by its origin only removes it from the install
 picker; docs already installed from it stay readable and keep updating:
 
 ```lua
-require('apidocs').setup({sources = {["devdocs.io"] = false}})
+require('docshelf').setup({sources = {["devdocs.io"] = false}})
 ```
 
 **Searching the registries.** devdocs ships a catalogue of everything it has, and the install
@@ -66,14 +66,14 @@ Narrow the picker to one or more languages -- both the devdocs rows and the regi
 declare the language they document -- with:
 
 ```lua
-:lua require("apidocs").apidocs_install({languages = {Haskell = true}})
+:lua require("docshelf").docshelf_install({languages = {Haskell = true}})
 ```
 
 ### devdocs.io
 
 The built-in source, and the only one with a catalogue: one request lists every docset it has,
 with the release and the build time of each. That is also what makes an update check cheap --
-see `ApidocsUpdate`.
+see `DocshelfUpdate`.
 
 ### Hackage
 
@@ -149,21 +149,21 @@ This plugin requires:
 
 ```lua
 return {
-  'emmanueltouzery/apidocs.nvim',
+  'ChrisGVE/docshelf.nvim',
   dependencies = {
     'nvim-treesitter/nvim-treesitter',
     'nvim-telescope/telescope.nvim', -- or, 'folke/snacks.nvim'
   },
-  cmd = { 'ApidocsSearch', 'ApidocsInstall', 'ApidocsOpen', 'ApidocsSelect', 'ApidocsFilter', 'ApidocsAssignLanguage', 'ApidocsUpdate', 'ApidocsUninstall' },
+  cmd = { 'DocshelfSearch', 'DocshelfInstall', 'DocshelfOpen', 'DocshelfSelect', 'DocshelfFilter', 'DocshelfAssignLanguage', 'DocshelfUpdate', 'DocshelfUninstall' },
   config = function()
-    require('apidocs').setup()
+    require('docshelf').setup()
     -- Picker will be auto-detected. To select a picker of your choice explicitly you can set picker by the configuration option 'picker':
-    -- require('apidocs').setup({picker = "snacks"})
+    -- require('docshelf').setup({picker = "snacks"})
     -- Possible options are 'ui_select', 'telescope', and 'snacks'
     -- With snacks, the picker layout defaults to the "telescope" preset. Any snacks layout preset name or layout table works:
-    -- require('apidocs').setup({picker = "snacks", layout = "ivy_split"})
+    -- require('docshelf').setup({picker = "snacks", layout = "ivy_split"})
     -- You can change the keymap for following "local://" links by setting the configuration option 'follow_link_keymap' (default is "<C-]>"):
-    -- require('apidocs').setup({follow_link_keymap = "<C-]>"})
+    -- require('docshelf').setup({follow_link_keymap = "<C-]>"})
     -- The names a source can be linked to, in three lists joined into one. Languages: Python, CPython, Rust, C, C++,
     -- C#, .NET, Java, TypeScript, JavaScript, Go, PHP, Ruby, Odin, Zig, Elixir, Kotlin, Swift, Dart, Scala, Haskell,
     -- Lua, Perl, R, Julia, Erlang, OCaml, Nim, Clojure, WebAssembly, HTML, CSS, Sass, Less, GraphQL, Vue, Svelte, SQL,
@@ -171,25 +171,25 @@ return {
     -- YAML, TOML, Typst. Tools: Git, GitHub, Jujutsu, Docker, tmux, herdr, Neovim, Make, CMake, Homebrew, curl,
     -- ripgrep, fd, jq, SSH. Each SQL engine is its own name rather than a flavour of SQL, and LaTeX, TeX and BibTeX
     -- are distinct. For each list, 'add' extends it and 'only' replaces it. A name can carry aliases that match it too:
-    -- require('apidocs').setup({languages = {add = {"Fortran", "Prolog"}}, tools = {add = {{"Kubernetes", aliases = {"k8s"}}}}})
-    -- In the ApidocsFilter picker, the key that sets the language of the source under the cursor (false unbinds it):
-    -- require('apidocs').setup({assign_key = "<c-e>"})
+    -- require('docshelf').setup({languages = {add = {"Fortran", "Prolog"}}, tools = {add = {{"Kubernetes", aliases = {"k8s"}}}}})
+    -- In the DocshelfFilter picker, the key that sets the language of the source under the cursor (false unbinds it):
+    -- require('docshelf').setup({assign_key = "<c-e>"})
     -- Async work (page conversion during an install, registry searches) runs 4 jobs at once; 'workers' changes that (installs still run one at a time):
-    -- require('apidocs').setup({workers = 8})
+    -- require('docshelf').setup({workers = 8})
     -- Every documentation source is on. Switching one off by its origin only removes it from the install picker; docs already installed from it stay readable and keep updating:
-    -- require('apidocs').setup({sources = {["devdocs.io"] = false}})
+    -- require('docshelf').setup({sources = {["devdocs.io"] = false}})
   end,
   keys = {
     -- A capital letter is the same thing over every source, ignoring the
     -- filter without clearing it.
-    { '<leader>sad', '<cmd>ApidocsOpen<cr>', desc = 'Search Api Doc' },
-    { '<leader>saD', '<cmd>ApidocsOpen!<cr>', desc = 'Search Api Doc (all sources)' },
-    { '<leader>sas', '<cmd>ApidocsSearch<cr>', desc = 'Grep Api Docs' },
-    { '<leader>saS', '<cmd>ApidocsSearch!<cr>', desc = 'Grep Api Docs (all sources)' },
-    { '<leader>saf', '<cmd>ApidocsFilter<cr>', desc = 'Filter Api Docs' },
-    { '<leader>saF', '<cmd>ApidocsFilter!<cr>', desc = 'Clear the Api Docs filter' },
-    { '<leader>sai', '<cmd>ApidocsInstall<cr>', desc = 'Install Api Docs' },
-    { '<leader>saI', '<cmd>ApidocsInstall!<cr>', desc = 'Install Api Docs (all languages)' },
+    { '<leader>sad', '<cmd>DocshelfOpen<cr>', desc = 'Search Api Doc' },
+    { '<leader>saD', '<cmd>DocshelfOpen!<cr>', desc = 'Search Api Doc (all sources)' },
+    { '<leader>sas', '<cmd>DocshelfSearch<cr>', desc = 'Grep Api Docs' },
+    { '<leader>saS', '<cmd>DocshelfSearch!<cr>', desc = 'Grep Api Docs (all sources)' },
+    { '<leader>saf', '<cmd>DocshelfFilter<cr>', desc = 'Filter Api Docs' },
+    { '<leader>saF', '<cmd>DocshelfFilter!<cr>', desc = 'Clear the Api Docs filter' },
+    { '<leader>sai', '<cmd>DocshelfInstall<cr>', desc = 'Install Api Docs' },
+    { '<leader>saI', '<cmd>DocshelfInstall!<cr>', desc = 'Install Api Docs (all languages)' },
   },
 }
 ```
@@ -197,8 +197,8 @@ return {
 ### Vim.pack
 ```lua
 vim.schedule(function()
-	vim.pack.add({ "https://github.com/emmanueltouzery/apidocs.nvim" })
-	require("apidocs").setup() -- You can check the default configuration and add options to the setup. Check `lazy.nvim` installation for examples
+	vim.pack.add({ "https://github.com/ChrisGVE/docshelf.nvim" })
+	require("docshelf").setup() -- You can check the default configuration and add options to the setup. Check `lazy.nvim` installation for examples
 end)
 ```
 
@@ -209,14 +209,14 @@ end)
 
 ## Extension points
 
-If you wish to integrate these docs with your own scripts or another picker, you can use the following functions exported by apidocs.nvim:
+If you wish to integrate these docs with your own scripts or another picker, you can use the following functions exported by docshelf.nvim:
 
-- `require("apidocs").data_folder()` -- the folder where the converted apidoc files can be found
-- `require("apidocs").open_doc_in_new_window(docs_path)` -- open the documentation for a specific apidoc in a new window, where conceal and links navigation is properly set up
-- `require("apidocs").open_doc_in_cur_window(docs_path)` -- open the documentation for a specific apidoc in the current window, with conceal and links navigation is properly set up. Compared to open_doc_in_new_window(), winfixbuf is not set.
-- `require("apidocs").load_doc_in_buffer(buf, docs_path)` -- open the documentation for a specific apidoc in a buffer. You must set up conceal on the window yourself (conceallevel=2, concealcursor="n"). Link navigation is not set up, this is meant for a picker's preview not standalone display.
-- `require("apidocs").apidocs_filter()` -- open the filter picker. `require("apidocs").filter` is the filter itself: `set(names)`, `clear()`, `active()` (the sources picked, or nil), `languages()` (what they are written in) and `installed()`. Every picker call takes `follow_filter = false` to ignore it once, which is what the `!` commands pass.
-- `require("apidocs").ensure_install(langs)` -- install all languages in the provided array. E.g. if `langs` is `{ "lua~5.4", "rust" }` then the docs for Lua 5.4 and Rust will be installed. You can call this function after `setup()` in your configuration to ensure that your desired languages are available. Missing ones join the same install queue as `ApidocsInstall`, so they never install at the same time as each other or as sources picked there.
+- `require("docshelf").data_folder()` -- the folder where the converted apidoc files can be found
+- `require("docshelf").open_doc_in_new_window(docs_path)` -- open the documentation for a specific apidoc in a new window, where conceal and links navigation is properly set up
+- `require("docshelf").open_doc_in_cur_window(docs_path)` -- open the documentation for a specific apidoc in the current window, with conceal and links navigation is properly set up. Compared to open_doc_in_new_window(), winfixbuf is not set.
+- `require("docshelf").load_doc_in_buffer(buf, docs_path)` -- open the documentation for a specific apidoc in a buffer. You must set up conceal on the window yourself (conceallevel=2, concealcursor="n"). Link navigation is not set up, this is meant for a picker's preview not standalone display.
+- `require("docshelf").docshelf_filter()` -- open the filter picker. `require("docshelf").filter` is the filter itself: `set(names)`, `clear()`, `active()` (the sources picked, or nil), `languages()` (what they are written in) and `installed()`. Every picker call takes `follow_filter = false` to ignore it once, which is what the `!` commands pass.
+- `require("docshelf").ensure_install(langs)` -- install all languages in the provided array. E.g. if `langs` is `{ "lua~5.4", "rust" }` then the docs for Lua 5.4 and Rust will be installed. You can call this function after `setup()` in your configuration to ensure that your desired languages are available. Missing ones join the same install queue as `DocshelfInstall`, so they never install at the same time as each other or as sources picked there.
 
 ## Credits
 

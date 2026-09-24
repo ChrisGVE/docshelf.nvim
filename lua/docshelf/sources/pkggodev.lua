@@ -29,7 +29,7 @@ local base = "https://pkg.go.dev"
 local packages_file = ".pkggodev_packages.json"
 
 local function data_folder()
-  return require("apidocs.common").data_folder()
+  return require("docshelf.common").data_folder()
 end
 
 --- The remembered packages, { [docset] = { path = ..., version = ... } }.
@@ -167,7 +167,7 @@ local function docset_state(docset, system)
   local entry = M.package(docset)
   if not entry or type(entry.path) ~= "string" then
     error(
-      "apidocs does not know which package " .. docset .. " came from;"
+      "docshelf does not know which package " .. docset .. " came from;"
         .. " install it again by typing its pkg.go.dev address in the install picker",
       0
     )

@@ -30,14 +30,14 @@
 -- reported as having found nothing, never as an error that empties the picker.
 local M = {}
 
-local sources = require("apidocs.sources")
-local async = require("apidocs.async")
+local sources = require("docshelf.sources")
+local async = require("docshelf.async")
 
 local cache_file = ".registry_cache.json"
 
 --- Where the cache lives by default: beside the installed docsets.
 function M.cache_path()
-  return require("apidocs.common").data_folder() .. cache_file
+  return require("docshelf.common").data_folder() .. cache_file
 end
 
 local Cache = {}
@@ -190,9 +190,9 @@ function M.search(query, opts)
       local ok, rows = pcall(adapter[opts.method or "search"], query, system)
       if not ok then
         vim.notify(
-          "apidocs: " .. origin .. " could not be searched: " .. tostring(rows),
+          "docshelf: " .. origin .. " could not be searched: " .. tostring(rows),
           vim.log.levels.DEBUG,
-          { title = "apidocs" }
+          { title = "docshelf" }
         )
         rows = {}
       end

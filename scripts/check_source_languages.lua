@@ -1,4 +1,4 @@
--- Check lua/apidocs/source_languages.lua against the live devdocs catalogue.
+-- Check lua/docshelf/source_languages.lua against the live devdocs catalogue.
 --
 -- Usage, from the repository root:
 --   nvim --headless -l scripts/check_source_languages.lua
@@ -10,7 +10,7 @@
 -- Needs curl; gh is optional (without it every proposal is a placeholder).
 package.path = "lua/?.lua;lua/?/init.lua;" .. package.path
 
-local drift = require("apidocs.source_drift")
+local drift = require("docshelf.source_drift")
 
 -- devdocs answers 403 to clients without a browser user agent.
 local fetched = vim
@@ -34,8 +34,8 @@ local function repo_language(repo)
 end
 
 local catalogue = vim.json.decode(fetched.stdout)
-local result = drift.check(catalogue, require("apidocs.source_languages"))
-local errors = drift.row_errors(require("apidocs.source_languages"))
+local result = drift.check(catalogue, require("docshelf.source_languages"))
+local errors = drift.row_errors(require("docshelf.source_languages"))
 
 if #result.missing > 0 then
   print(#result.missing .. " families missing from source_languages.lua; proposed rows:")

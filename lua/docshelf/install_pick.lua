@@ -11,7 +11,7 @@
 -- order is the one the rest of the editor gives.
 local M = {}
 
-local folders = require("apidocs.folders")
+local folders = require("docshelf.folders")
 
 -- Enough to lift an exact name over any other match of the same quality.
 local exact_bonus = 1000

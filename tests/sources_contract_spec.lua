@@ -1,6 +1,6 @@
 -- Every source adapter answers the contract in sources/init.lua.
 --
--- This walks lua/apidocs/sources/ rather than naming the adapters, so a new one
+-- This walks lua/docshelf/sources/ rather than naming the adapters, so a new one
 -- is checked the moment its file exists. It matters because a missing
 -- declaration fails SILENTLY: the pickers read a docset's origin from its
 -- folder name, so an adapter that declares no language installs docsets that
@@ -8,7 +8,7 @@
 -- Run from the repository root: nvim --headless -l tests/sources_contract_spec.lua
 package.path = "lua/?.lua;lua/?/init.lua;" .. package.path
 
-local devdocs_origin = require("apidocs.metadata").devdocs_origin
+local devdocs_origin = require("docshelf.metadata").devdocs_origin
 
 local failures = 0
 local function test(name, fn)
@@ -28,16 +28,16 @@ local function is(value, kind, what)
 end
 
 local adapters = {}
-for name in vim.fs.dir("lua/apidocs/sources") do
+for name in vim.fs.dir("lua/docshelf/sources") do
   local module = name:match("^(.+)%.lua$")
   if module and module ~= "init" then
-    adapters[module] = require("apidocs.sources." .. module)
+    adapters[module] = require("docshelf.sources." .. module)
   end
 end
 
 test("there is at least one adapter to check", function()
   if next(adapters) == nil then
-    error("no adapter found in lua/apidocs/sources", 0)
+    error("no adapter found in lua/docshelf/sources", 0)
   end
 end)
 

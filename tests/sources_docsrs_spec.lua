@@ -1,10 +1,10 @@
--- Tests for lua/apidocs/sources/docsrs.lua, offline: a fake command runner
+-- Tests for lua/docshelf/sources/docsrs.lua, offline: a fake command runner
 -- answers the crates.io requests and serves tests/fixtures/docsrs as the zip
 -- docs.rs would have handed over.
 -- Run from the repository root: nvim --headless -l tests/sources_docsrs_spec.lua
 package.path = "lua/?.lua;lua/?/init.lua;" .. package.path
 
-local docsrs = require("apidocs.sources.docsrs")
+local docsrs = require("docshelf.sources.docsrs")
 
 local failures = 0
 local function test(name, fn)

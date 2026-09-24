@@ -1,4 +1,4 @@
--- Tests for lua/apidocs/sources/docc.lua and lua/apidocs/docc_render.lua,
+-- Tests for lua/docshelf/sources/docc.lua and lua/docshelf/docc_render.lua,
 -- offline: a fake command runner serves tests/fixtures/docc/site as a DocC
 -- site, so the whole path -- the layout probe, the navigator index, the page
 -- list, the render-JSON to HTML conversion and the link rewriting -- runs for
@@ -11,8 +11,8 @@
 -- Run from the repository root: nvim --headless -l tests/sources_docc_spec.lua
 package.path = "lua/?.lua;lua/?/init.lua;" .. package.path
 
-local docc = require("apidocs.sources.docc")
-local render = require("apidocs.docc_render")
+local docc = require("docshelf.sources.docc")
+local render = require("docshelf.docc_render")
 
 local failures = 0
 local function test(name, fn)

@@ -1,4 +1,4 @@
--- Tests for lua/apidocs/sources/pkggodev.lua, offline: a fake command runner
+-- Tests for lua/docshelf/sources/pkggodev.lua, offline: a fake command runner
 -- serves tests/fixtures/pkggodev/site as pkg.go.dev, so the whole path -- the
 -- package page fetch, the version and the subpackage list read off it, the
 -- symbol index, the page cleaning and the link rewriting -- runs for real
@@ -7,7 +7,7 @@
 -- Run from the repository root: nvim --headless -l tests/sources_pkggodev_spec.lua
 package.path = "lua/?.lua;lua/?/init.lua;" .. package.path
 
-local pkggodev = require("apidocs.sources.pkggodev")
+local pkggodev = require("docshelf.sources.pkggodev")
 
 local failures = 0
 local function test(name, fn)

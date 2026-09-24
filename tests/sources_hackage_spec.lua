@@ -1,9 +1,9 @@
--- Tests for lua/apidocs/sources/hackage.lua, offline: a fake command runner
+-- Tests for lua/docshelf/sources/hackage.lua, offline: a fake command runner
 -- answers the Hackage requests and serves tests/fixtures/hackage as docs.tar.
 -- Run from the repository root: nvim --headless -l tests/sources_hackage_spec.lua
 package.path = "lua/?.lua;lua/?/init.lua;" .. package.path
 
-local hackage = require("apidocs.sources.hackage")
+local hackage = require("docshelf.sources.hackage")
 
 local failures = 0
 local function test(name, fn)

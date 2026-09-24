@@ -217,16 +217,16 @@ local function entry_of(item, where)
     name, extra = item[1], item.aliases or {}
   end
   if type(name) ~= "string" or name:match("^%s*$") then
-    error("apidocs: " .. where .. ": " .. vim.inspect(item) .. " is not a name or { name, aliases = {...} }", 0)
+    error("docshelf: " .. where .. ": " .. vim.inspect(item) .. " is not a name or { name, aliases = {...} }", 0)
   end
   if type(extra) ~= "table" then
-    error("apidocs: " .. where .. ": aliases of " .. name .. " must be a list of strings", 0)
+    error("docshelf: " .. where .. ": aliases of " .. name .. " must be a list of strings", 0)
   end
   local known = known_by_key[key(name)]
   local entry = { name = known and known[1] or name, aliases = {} }
   for _, alias in ipairs(vim.list_extend(vim.deepcopy(known and known.aliases or {}), extra)) do
     if type(alias) ~= "string" then
-      error("apidocs: " .. where .. ": aliases of " .. name .. " must be a list of strings", 0)
+      error("docshelf: " .. where .. ": aliases of " .. name .. " must be a list of strings", 0)
     end
     if not vim.tbl_contains(entry.aliases, alias) then
       table.insert(entry.aliases, alias)
@@ -241,19 +241,19 @@ local function one_list(what, opts)
     opts = {}
   end
   if type(opts) ~= "table" then
-    error("apidocs: " .. where .. " must be a table like { add = { ... } }, got " .. vim.inspect(opts), 0)
+    error("docshelf: " .. where .. " must be a table like { add = { ... } }, got " .. vim.inspect(opts), 0)
   end
   for k in pairs(opts) do
     if k ~= "add" and k ~= "only" then
-      error("apidocs: " .. where .. " accepts `add` or `only`, not " .. vim.inspect(k), 0)
+      error("docshelf: " .. where .. " accepts `add` or `only`, not " .. vim.inspect(k), 0)
     end
   end
   if opts.add and opts.only then
-    error("apidocs: " .. where .. " takes `add` or `only`, not both", 0)
+    error("docshelf: " .. where .. " takes `add` or `only`, not both", 0)
   end
   local items = opts.only or vim.list_extend(vim.deepcopy(M.defaults[what]), opts.add or {})
   if type(items) ~= "table" then
-    error("apidocs: " .. where .. " must list names, got " .. vim.inspect(items), 0)
+    error("docshelf: " .. where .. " must list names, got " .. vim.inspect(items), 0)
   end
   local entries = {}
   for _, item in ipairs(items) do
@@ -281,7 +281,7 @@ local function merged(entries)
     for _, word in ipairs(vim.list_extend({ entry.name }, entry.aliases)) do
       local other = owner[key(word)]
       if other and other ~= entry then
-        error("apidocs: " .. vim.inspect(word) .. " would name both " .. other.name .. " and " .. entry.name, 0)
+        error("docshelf: " .. vim.inspect(word) .. " would name both " .. other.name .. " and " .. entry.name, 0)
       end
       owner[key(word)] = entry
     end
@@ -297,7 +297,7 @@ local configured, by_key
 function M.configure(opts)
   opts = opts or {}
   if type(opts) ~= "table" then
-    error("apidocs: language options must be a table, got " .. vim.inspect(opts), 0)
+    error("docshelf: language options must be a table, got " .. vim.inspect(opts), 0)
   end
   local all = {}
   for _, what in ipairs(list_names) do
@@ -370,7 +370,7 @@ M.link = link
 ---@param sources? table defaults to the shipped source_languages table
 ---@return string?
 function M.of(slug, sources)
-  sources = sources or require("apidocs.source_languages")
+  sources = sources or require("docshelf.source_languages")
   local row = sources[family(slug)]
   return row and row.language
 end
@@ -422,7 +422,7 @@ end
 ---@param extra? string[] defaults to the languages in the install manifest
 ---@return string[]
 function M.available(extra)
-  extra = extra or require("apidocs.metadata").recorded_languages()
+  extra = extra or require("docshelf.metadata").recorded_languages()
   local names, seen = {}, {}
   for _, name in ipairs(vim.list_extend(M.list(), extra)) do
     if not seen[key(name)] then
@@ -464,7 +464,7 @@ end
 
 --- The recorded links of installed docsets (see metadata.installed_languages).
 local function installed_links(installed)
-  return require("apidocs.metadata").installed_languages(installed)
+  return require("docshelf.metadata").installed_languages(installed)
 end
 
 --- Installed docsets with no known language, sorted.

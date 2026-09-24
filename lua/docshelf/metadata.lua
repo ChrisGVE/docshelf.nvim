@@ -47,7 +47,7 @@ end
 -- installer that did not pass one, says devdocs.io for everything.
 local function origin_of(slug, record)
   if slug then
-    local _, origin = require("apidocs.folders").split(slug)
+    local _, origin = require("docshelf.folders").split(slug)
     return origin
   end
   return M.installed_origin(record)
@@ -61,13 +61,13 @@ local function declared_language(origin, declared)
   if declared or origin == nil or origin == M.devdocs_origin then
     return declared
   end
-  local ok, sources = pcall(require, "apidocs.sources")
+  local ok, sources = pcall(require, "docshelf.sources")
   local adapter = ok and sources.get(origin)
   return adapter and adapter.language or nil
 end
 
 local function resolve_language(slug, origin, declared)
-  return require("apidocs.languages").resolve(slug, {
+  return require("docshelf.languages").resolve(slug, {
     devdocs = origin == M.devdocs_origin,
     declared = declared_language(origin, declared),
   })
@@ -102,7 +102,7 @@ end
 ---@param record? table
 function M.language_link(slug, record)
   if record and record.language then
-    return require("apidocs.languages").link(slug, record.language)
+    return require("docshelf.languages").link(slug, record.language)
   end
   return resolve_language(slug, origin_of(slug, record))
 end
@@ -210,11 +210,11 @@ end
 -- Helpers bound to the real data folder --------------------------------------
 
 local function manifest_path()
-  return require("apidocs.common").data_folder() .. M.manifest_name
+  return require("docshelf.common").data_folder() .. M.manifest_name
 end
 
 local function installed_folders()
-  local root = require("apidocs.common").data_folder()
+  local root = require("docshelf.common").data_folder()
   local slugs, mtimes = {}, {}
   for name, kind in vim.fs.dir(root) do
     if kind == "directory" then
@@ -239,7 +239,7 @@ function M.installed_origins(installed)
   local manifest = M.read(manifest_path())
   local origins = {}
   for _, folder in ipairs(installed) do
-    local _, origin = require("apidocs.folders").split(folder)
+    local _, origin = require("docshelf.folders").split(folder)
     origins[folder] = origin ~= M.devdocs_origin and origin or M.installed_origin(manifest[folder])
   end
   return origins
@@ -280,12 +280,12 @@ end
 ---@param language string
 ---@return boolean ok, string? why
 function M.assign_language(slug, language)
-  if vim.fn.isdirectory(require("apidocs.common").data_folder() .. slug) ~= 1 then
+  if vim.fn.isdirectory(require("docshelf.common").data_folder() .. slug) ~= 1 then
     return false, slug .. " is not installed"
   end
   local path = manifest_path()
   local manifest = M.read(path)
-  local link, why = require("apidocs.languages").for_assignment(slug, language)
+  local link, why = require("docshelf.languages").for_assignment(slug, language)
   if not link then
     return false, why
   end

@@ -33,8 +33,8 @@
 -- place in the filter) moves over, and the old folder is removed.
 local M = {}
 
-local folders = require("apidocs.folders")
-local metadata = require("apidocs.metadata")
+local folders = require("docshelf.folders")
+local metadata = require("docshelf.metadata")
 
 --- The name and version a docset is called, or nil where it carries no
 --- version ("swiftui", a DocC site that publishes none).
@@ -173,7 +173,7 @@ end
 M.stamp_name = ".update.json"
 
 local function stamp_path()
-  return require("apidocs.common").data_folder() .. M.stamp_name
+  return require("docshelf.common").data_folder() .. M.stamp_name
 end
 
 function M.read_stamp()
@@ -186,14 +186,14 @@ function M.read_stamp()
 end
 
 function M.write_stamp(now)
-  vim.fn.mkdir(require("apidocs.common").data_folder(), "p")
+  vim.fn.mkdir(require("docshelf.common").data_folder(), "p")
   pcall(vim.fn.writefile, { vim.json.encode({ checked_at = now }) }, stamp_path())
 end
 
 -- ------------------------------------------------------------ asking round
 
 local function notify(text, level)
-  vim.notify("apidocs update: " .. text, level or vim.log.levels.INFO, { id = "apidocs_update", title = "apidocs" })
+  vim.notify("docshelf update: " .. text, level or vim.log.levels.INFO, { id = "docshelf_update", title = "docshelf" })
 end
 
 --- Ask each source what it offers now for the docsets installed from it.
@@ -204,7 +204,7 @@ end
 ---@param system fun(cmd: string[], opts?: table): vim.SystemCompleted
 ---@return table<string, string> folder -> the docset it offers now
 function M.offered(askable, system)
-  local sources = require("apidocs.sources")
+  local sources = require("docshelf.sources")
   local offered = {}
   for _, folder in ipairs(askable) do
     local docset, origin = folders.split(folder)
@@ -213,7 +213,7 @@ function M.offered(askable, system)
     if ok and type(answer) == "string" then
       offered[folder] = answer
     end
-    require("apidocs.async").yield_to_editor()
+    require("docshelf.async").yield_to_editor()
   end
   return offered
 end
@@ -223,16 +223,16 @@ end
 ---@param cont fun(items: table[], catalogue: table, slugs_to_mtimes: table)
 ---@param on_fail? fun(message: string)
 function M.check(cont, on_fail)
-  local install = require("apidocs.install")
-  local sources = require("apidocs.sources")
+  local install = require("docshelf.install")
+  local sources = require("docshelf.sources")
   install.fetch_slugs_and_mtimes_and_then(function(slugs_to_mtimes)
     local catalogue = install.catalogue()
     local manifest = metadata.refresh(catalogue)
     local installed = vim.tbl_keys(manifest)
     table.sort(installed)
-    require("apidocs.async").run(function()
+    require("docshelf.async").run(function()
       local system = function(cmd, opts)
-        return require("apidocs.async").system(cmd, opts or { text = true })
+        return require("docshelf.async").system(cmd, opts or { text = true })
       end
       local offered = M.offered(M.askable(installed, sources.get), system)
       cont(M.plan(manifest, catalogue, offered), catalogue, slugs_to_mtimes)
@@ -249,9 +249,9 @@ end
 --- What the user set on a docset, to be carried to the folder that replaces
 --- it: the language they assigned, and its place in the filter.
 local function carried(folder)
-  local manifest = metadata.read(require("apidocs.common").data_folder() .. metadata.manifest_name)
+  local manifest = metadata.read(require("docshelf.common").data_folder() .. metadata.manifest_name)
   local record = manifest[folder] or {}
-  local ok, filter = pcall(require, "apidocs.filter")
+  local ok, filter = pcall(require, "docshelf.filter")
   local filtered = false
   if ok then
     filtered = vim.tbl_contains(filter.active() or {}, folder)
@@ -263,13 +263,13 @@ end
 --- remove it. Only for a source that names its folder for the version it
 --- holds; a devdocs docset was reinstalled in place and has nothing to clean.
 local function supersede(item, held)
-  if vim.fn.isdirectory(require("apidocs.common").data_folder() .. item.target) ~= 1 then
+  if vim.fn.isdirectory(require("docshelf.common").data_folder() .. item.target) ~= 1 then
     return -- the install did not happen; leave what is there alone
   end
   if held.language then
     metadata.assign_language(item.target, held.language)
   end
-  local ok, filter = pcall(require, "apidocs.filter")
+  local ok, filter = pcall(require, "docshelf.filter")
   if ok and held.filtered then
     local active = vim.tbl_filter(function(name)
       return name ~= item.folder
@@ -277,7 +277,7 @@ local function supersede(item, held)
     active[#active + 1] = item.target
     filter.set(active)
   end
-  vim.system({ "rm", "-Rf", require("apidocs.common").data_folder() .. item.folder }, { text = true }):wait()
+  vim.system({ "rm", "-Rf", require("docshelf.common").data_folder() .. item.folder }, { text = true }):wait()
   metadata.forget(item.folder)
   if ok then
     filter.forget({ item.folder })
@@ -290,7 +290,7 @@ end
 ---@param slugs_to_mtimes table
 ---@param cont? fun()
 function M.apply(items, slugs_to_mtimes, cont)
-  local install = require("apidocs.install")
+  local install = require("docshelf.install")
   local held, targets = {}, {}
   for _, item in ipairs(items) do
     if item.replaces then
@@ -317,7 +317,7 @@ end
 ---@param opts? { only?: string[], quiet?: boolean, on_done?: fun(items: table[]) }
 function M.run(opts)
   opts = opts or {}
-  local install = require("apidocs.install")
+  local install = require("docshelf.install")
   if install.installing() then
     if not opts.quiet then
       notify("an install is already running; try again when it has finished", vim.log.levels.WARN)
@@ -380,7 +380,7 @@ function M.arm(opts)
   end
   local every_hours = opts.every_hours or 24
   vim.api.nvim_create_autocmd("CursorHold", {
-    group = vim.api.nvim_create_augroup("apidocs_update", { clear = true }),
+    group = vim.api.nvim_create_augroup("docshelf_update", { clear = true }),
     once = true,
     callback = function()
       if checked_this_session or not M.due(M.read_stamp(), os.time(), every_hours) then

@@ -11,7 +11,7 @@
 -- person sees is `display(folder)`, with the origin shown separately.
 local M = {}
 
-local devdocs_origin = require("apidocs.metadata").devdocs_origin
+local devdocs_origin = require("docshelf.metadata").devdocs_origin
 
 M.separator = "~~"
 

@@ -33,7 +33,7 @@ local base = "https://docs.rs"
 local registry = "https://crates.io/api/v1/crates"
 
 -- crates.io asks for a real user agent and refuses anonymous ones.
-local user_agent = "apidocs.nvim (https://github.com/emmanueltouzery/apidocs.nvim)"
+local user_agent = "docshelf.nvim (https://github.com/ChrisGVE/docshelf.nvim)"
 
 local function fetch_json(url, system)
   local res = system({ "curl", "-sfL", "-A", user_agent, url })

@@ -1,4 +1,4 @@
--- Tests for lua/apidocs/sources/sphinx.lua, offline: a fake command runner
+-- Tests for lua/docshelf/sources/sphinx.lua, offline: a fake command runner
 -- serves tests/fixtures/sphinx/site as the documentation site, so the whole
 -- path -- inventory fetch, zlib inflate, entry building, page fetch, link
 -- rewriting -- runs for real against a site that is only on disk.
@@ -9,7 +9,7 @@
 -- Run from the repository root: nvim --headless -l tests/sources_sphinx_spec.lua
 package.path = "lua/?.lua;lua/?/init.lua;" .. package.path
 
-local sphinx = require("apidocs.sources.sphinx")
+local sphinx = require("docshelf.sources.sphinx")
 local internal = sphinx._internal
 
 local failures = 0

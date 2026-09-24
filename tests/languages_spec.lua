@@ -1,8 +1,8 @@
--- Tests for lua/apidocs/languages.lua.
+-- Tests for lua/docshelf/languages.lua.
 -- Run from the repository root: nvim --headless -l tests/languages_spec.lua
 package.path = "lua/?.lua;lua/?/init.lua;" .. package.path
 
-local languages = require("apidocs.languages")
+local languages = require("docshelf.languages")
 
 local failures = 0
 local function test(name, fn)

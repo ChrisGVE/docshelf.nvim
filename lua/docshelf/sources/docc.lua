@@ -36,7 +36,7 @@ M.language = "Swift"
 local sites_file = ".docc_sites.json"
 
 local function data_folder()
-  return require("apidocs.common").data_folder()
+  return require("docshelf.common").data_folder()
 end
 
 --- The remembered sites, { [docset] = { url = ..., module = ..., layout = ... } }.
@@ -370,7 +370,7 @@ local function site_or_error(docset)
   local site = M.site(docset)
   if not site or type(site.url) ~= "string" or type(site.module) ~= "string" then
     error(
-      "apidocs does not know which site "
+      "docshelf does not know which site "
         .. docset
         .. " came from;"
         .. " install it again by typing its documentation URL in the install picker",
@@ -498,7 +498,7 @@ local function fetch_pages(held, dir, system, report)
     local cmd = { "curl", "-sfL", "--max-time", "120" }
     if parallel then
       -- required here, not at the top: sources/init.lua loads this adapter.
-      local workers = require("apidocs.sources").workers()
+      local workers = require("docshelf.sources").workers()
       vim.list_extend(cmd, { "--parallel", "--parallel-max", tostring(workers) })
     end
     vim.list_extend(cmd, { "-K", config_path })
@@ -629,7 +629,7 @@ function M.render(page, opts)
       return href_of(reference, opts.base, opts.keys, dir)
     end,
   }
-  return require("apidocs.docc_render").page(page, ctx)
+  return require("docshelf.docc_render").page(page, ctx)
 end
 
 function M.db(docset, _, system, report)

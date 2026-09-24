@@ -1,9 +1,9 @@
--- Tests for lua/apidocs/language_pick.lua (the rows of the language picker).
+-- Tests for lua/docshelf/language_pick.lua (the rows of the language picker).
 -- Run from the repository root: nvim --headless -l tests/language_pick_spec.lua
 package.path = "lua/?.lua;lua/?/init.lua;" .. package.path
 
-local pick = require("apidocs.language_pick")
-local languages = require("apidocs.languages")
+local pick = require("docshelf.language_pick")
+local languages = require("docshelf.languages")
 
 local failures = 0
 local function test(name, fn)

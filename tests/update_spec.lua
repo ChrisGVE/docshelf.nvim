@@ -1,11 +1,11 @@
--- Tests for lua/apidocs/update.lua -- the planning half, which is pure: it is
+-- Tests for lua/docshelf/update.lua -- the planning half, which is pure: it is
 -- handed a manifest, the devdocs catalogue and what each source says it offers
 -- now, and it answers what is out of date. Nothing here touches the network or
 -- the data folder.
 -- Run from the repository root: nvim --headless -l tests/update_spec.lua
 package.path = "lua/?.lua;lua/?/init.lua;" .. package.path
 
-local update = require("apidocs.update")
+local update = require("docshelf.update")
 
 local failures = 0
 local function test(name, fn)
