@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key>
+	<string>Tiny 1.2</string>
+	<key>dashIndexFilePath</key>
+	<string>site/guide/manual.html</string>
+</dict>
+</plist>
