@@ -88,6 +88,15 @@ test("rewrite_html turns a dropped link into plain text", function()
   eq(links.rewrite_html('<p><a href="gone.html">gone</a></p>', { dir = "", known = {} }), "<p>gone</p>")
 end)
 
+test("rewrite_html reads attribute and tag names in any case, as HTML does", function()
+  -- the Lua manual's contents page writes <A HREF="manual.html#2.4">
+  eq(
+    links.rewrite_html('<A HREF="intro.html#x">i</A><IMG SRC="p.png">', site),
+    '<A HREF="intro#x">i</A><IMG SRC="https://example.org/docs/guide/p.png">'
+  )
+  eq(links.rewrite_html('<p><A HREF="gone.html">gone</A></p>', { dir = "", known = {} }), "<p>gone</p>")
+end)
+
 if failures > 0 then
   print(failures .. " failure(s)")
   os.exit(1)

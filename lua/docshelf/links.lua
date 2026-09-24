@@ -100,8 +100,9 @@ end
 --- link goes nowhere keeps its text and loses the tag; a `src` that goes
 --- nowhere is removed.
 function M.rewrite_html(html, opts)
-  html = html:gsub("(<a%s[^>]*>)(.-)</a>", function(open, text)
-    local href = open:match('%shref="([^"]*)"')
+  -- HTML names tags and attributes in any case: older pages write <A HREF>
+  html = html:gsub("(<[aA]%s[^>]*>)(.-)</[aA]>", function(open, text)
+    local href = open:match('%s[hH][rR][eE][fF]="([^"]*)"')
     if href and M.rewrite(href, opts) == nil then
       return text
     end
@@ -109,7 +110,8 @@ function M.rewrite_html(html, opts)
   end)
   return (
     html:gsub('(%s)(%a+)="([^"]*)"', function(space, attribute, value)
-      if attribute ~= "href" and attribute ~= "src" then
+      local lowered = attribute:lower()
+      if lowered ~= "href" and lowered ~= "src" then
         return nil
       end
       local rewritten = M.rewrite(value, opts)
