@@ -32,6 +32,13 @@ test("a stem leaves room for the .html.md the file will end in", function()
   eq(#filenames.stem(string.rep("x", 400)), 255 - #".html.md")
 end)
 
+test("a stem cut to length never splits a character", function()
+  -- a file name must be valid UTF-8 on macOS; 246 x's and then "é" (two
+  -- bytes) would be cut in the middle of the "é"
+  local stem = filenames.stem(string.rep("x", 246) .. "é" .. string.rep("y", 20))
+  eq(stem, string.rep("x", 246))
+end)
+
 test("names differing only in case are twins", function()
   local twins = filenames.case_twins({ readdir, readdir_lower, "os.Open()#os/index#Open" })
   eq(twins, { [filenames.stem(readdir)] = true, [filenames.stem(readdir_lower)] = true })

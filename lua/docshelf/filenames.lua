@@ -23,10 +23,18 @@ local longest = 255 - #".html.md"
 local tag_pattern = "^~%x%x%x%x%x%x%x%x~"
 
 --- The plain file name for `name`: no "/" (it would be a folder) and no "'"
---- (it would break the shell command that converts the pages).
+--- (it would break the shell command that converts the pages), cut to fit
+--- without splitting a character.
 ---@param name string
 function M.stem(name)
-  return (name:gsub("/", "_"):gsub("'", "_"):sub(1, longest))
+  name = name:gsub("/", "_"):gsub("'", "_")
+  local cut = math.min(#name, longest)
+  -- a cut before a continuation byte (10xxxxxx) would split a character, and
+  -- macOS refuses a file name that is not valid UTF-8: end before it instead
+  while cut < #name and cut > 0 and name:byte(cut + 1) >= 0x80 and name:byte(cut + 1) < 0xC0 do
+    cut = cut - 1
+  end
+  return name:sub(1, cut)
 end
 
 --- The stems among `names` that another, differently spelled stem equals once
