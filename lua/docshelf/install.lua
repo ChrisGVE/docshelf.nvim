@@ -1,5 +1,6 @@
 local common = require("docshelf.common")
 local sections = require("docshelf.sections")
+local filenames = require("docshelf.filenames")
 local install_queue = require("docshelf.install_queue")
 local folders = require("docshelf.folders")
 -- Source adapters by origin, and the settings that govern them.
@@ -56,10 +57,6 @@ local function fetch_slugs_and_mtimes_and_then(cont)
     end
     cont(slugs_to_mtimes)
   end))
-end
-
-local function sanitize_fname(fname)
-  return fname:gsub("/", "_"):gsub("'", "_"):sub(1, 255-8) -- 8 == ".html.md"
 end
 
 -- if the line contains table cells it's sensitive to alignment...
@@ -174,20 +171,20 @@ local function urldecode(url)
   end))
 end
 
-local function fix_file_links_resolve_fname(choice, path_to_name, file_guessed_subpath_str, link_target)
+local function fix_file_links_resolve_fname(choice, path_to_name, file_guessed_subpath_str, link_target, name_file)
   local name = path_to_name[file_guessed_subpath_str .. "/" .. link_target] or path_to_name[link_target]
   if name ~= nil then
     if #file_guessed_subpath_str > 0 then
-      return "local://" .. choice .. "/", sanitize_fname(name .. "#" .. file_guessed_subpath_str .. "/" .. link_target)
+      return "local://" .. choice .. "/", name_file(name .. "#" .. file_guessed_subpath_str .. "/" .. link_target)
     else
-      return "local://" .. choice .. "/", sanitize_fname(name .. "#" .. link_target)
+      return "local://" .. choice .. "/", name_file(name .. "#" .. link_target)
     end
   end
   return nil, nil
 end
 
 local function fix_file_links(fname, lines, target_path, choice, path_to_name,
-    name_and_id_to_string_nearby, orig_path, orig_containing_path)
+    name_and_id_to_string_nearby, orig_path, orig_containing_path, name_file)
   local changes = false
   for i = #lines, 1, -1 do
     -- elinks right-aligns link numbers to four columns, so from 1000 on there is
@@ -230,7 +227,7 @@ local function fix_file_links(fname, lines, target_path, choice, path_to_name,
         -- to ourself, we likely want to point back to the original large file, not to us,
         -- which are the smaller split file.
         local link_file = file_id[2] .. "#" .. file_id[3]:gsub("%.html$", "")
-        local path = sanitize_fname(file_id[1]:gsub("^/", "") .. "#" .. link_file) -- TODO is that ever used?
+        local path = name_file(file_id[1]:gsub("^/", "") .. "#" .. link_file) -- TODO is that ever used?
         if link_file == orig_path and orig_containing_path ~= nil then
           path = orig_containing_path
         end
@@ -238,36 +235,36 @@ local function fix_file_links(fname, lines, target_path, choice, path_to_name,
           if name_and_id_to_string_nearby[path] ~= nil then
             local text_section = name_and_id_to_string_nearby[path][file_id[4]]
             if text_section ~= nil then
-              lines[i] = l .. "local://" .. choice .. "/" .. sanitize_fname(path) .. "#" .. text_section
+              lines[i] = l .. "local://" .. choice .. "/" .. name_file(path) .. "#" .. text_section
               changes = true
             else
               -- can't find a header by that name in the source file. sometimes the files
               -- are just broken. for instance date_fns/I18n Contribution Guide.
               -- in that case do the same as upstream devdocs/the browser: show the file at the top, ignoring the ID.
-              lines[i] = l .. "local://" .. choice .. "/" .. sanitize_fname(path) .. "\t+" .. file_id[4]
+              lines[i] = l .. "local://" .. choice .. "/" .. name_file(path) .. "\t+" .. file_id[4]
               changes = true
             end
           end
         end
       elseif #file_id == 3 then
         -- it's a link to the same file, which was already properly named... "name#path#id"
-        local path = sanitize_fname(file_id[1]:gsub("^/", "") .. "#" .. file_id[2]:gsub("%.html$", ""))
+        local path = name_file(file_id[1]:gsub("^/", "") .. "#" .. file_id[2]:gsub("%.html$", ""))
         if path ~= nil and name_and_id_to_string_nearby[path] ~= nil then
           local text_section = name_and_id_to_string_nearby[path][file_id[3]]
           if text_section ~= nil then
-            lines[i] = l .. "local://" .. choice .. "/" .. sanitize_fname(path) .. "#" .. text_section
+            lines[i] = l .. "local://" .. choice .. "/" .. name_file(path) .. "#" .. text_section
             changes = true
           else
             -- can't find a header by that name in the source file. sometimes the files
             -- are just broken. for instance date_fns/I18n Contribution Guide.
             -- in that case do the same as upstream devdocs/the browser: show the file at the top, ignoring the ID.
-            lines[i] = l .. "local://" .. choice .. "/" .. sanitize_fname(path) .. "\t+" .. file_id[3]
+            lines[i] = l .. "local://" .. choice .. "/" .. name_file(path) .. "\t+" .. file_id[3]
             changes = true
           end
         end
       elseif #file_id == 2 then
         -- link to another file, ID lookup
-        local local_path, local_fname = fix_file_links_resolve_fname(choice, path_to_name, file_guessed_subpath_str, file_id[1]:gsub("^/", ""))
+        local local_path, local_fname = fix_file_links_resolve_fname(choice, path_to_name, file_guessed_subpath_str, file_id[1]:gsub("^/", ""), name_file)
         if local_path ~= nil and name_and_id_to_string_nearby[local_fname] then
           local text_section = name_and_id_to_string_nearby[local_fname][file_id[2]]
           if text_section ~= nil then
@@ -282,7 +279,7 @@ local function fix_file_links(fname, lines, target_path, choice, path_to_name,
           end
         end
       else
-        local local_path, local_fname = fix_file_links_resolve_fname(choice, path_to_name, file_guessed_subpath_str, link_target:gsub("^/", ""))
+        local local_path, local_fname = fix_file_links_resolve_fname(choice, path_to_name, file_guessed_subpath_str, link_target:gsub("^/", ""), name_file)
         if local_path ~= nil then
           lines[i] = l .. local_path .. local_fname
           changes = true
@@ -370,7 +367,7 @@ local function apidoc_install(choice, slugs_to_mtimes, cont, on_fail)
       local file_id = vim.split(entry.path, "#")
       if #file_id == 2 then
         path_to_name[entry.path] = entry.name
-        local sanitized_fname = sanitize_fname(file_id[1])
+        local sanitized_fname = filenames.stem(file_id[1])
         if known_keys_per_path[file_id[1]] == nil then
           known_keys_per_path[file_id[1]] = {[file_id[2]] = true}
         else
@@ -385,6 +382,18 @@ local function apidoc_install(choice, slugs_to_mtimes, cont, on_fail)
       local target_path = data_folder .. choice
       vim.system({"sh", "-c", "rm -Rf " .. target_path}):wait()
       vim.fn.mkdir(target_path, "p")
+      -- every file name this install writes, so that names differing only in
+      -- case get told apart before one overwrites the other (filenames.lua)
+      local file_names = {}
+      for key in pairs(data) do
+        file_names[#file_names + 1] = (path_to_name[key] or key) .. "#" .. key
+      end
+      for path, name in pairs(path_to_name) do
+        if #vim.split(path, "#") == 2 then
+          file_names[#file_names + 1] = filenames.stem(name) .. "#" .. path
+        end
+      end
+      local name_file = filenames.namer(filenames.case_twins(file_names))
       -- used to split files in sections based on ids referenced from the toplevel
       local name_and_id_to_pos = {}
       -- used to gather all section "titles" so that we can prepare links to this
@@ -413,7 +422,7 @@ local function apidoc_install(choice, slugs_to_mtimes, cont, on_fail)
         progress(choice, "preparing pages " .. pages_done .. "/" .. page_count)
         yield_to_editor()
       end
-      local sanitized_key = sanitize_fname((path_to_name[key] or key) .. "#" .. key)
+      local sanitized_key = name_file((path_to_name[key] or key) .. "#" .. key)
       out_path_to_orig_path[sanitized_key .. ".html"] = key
       local fname = target_path .. "/" .. sanitized_key  .. ".html"
       local file = io.open(fname, "w")
@@ -534,9 +543,9 @@ local function apidoc_install(choice, slugs_to_mtimes, cont, on_fail)
         yield_to_editor()
       end
       local file_id = vim.split(path, "#")
-      local sanitized_fname = sanitize_fname(name)
+      local sanitized_fname = filenames.stem(name)
       if #file_id == 2 then
-        local sanitized_containing_file_name = sanitize_fname((path_to_name[file_id[1]] or file_id[1]) .. "#" .. file_id[1])
+        local sanitized_containing_file_name = name_file((path_to_name[file_id[1]] or file_id[1]) .. "#" .. file_id[1])
         if name_and_id_to_pos[sanitized_containing_file_name] == nil then
           -- devdocs's index.json is referencing a file that the db.json doesn't contain.
           -- this happens with bash, and we also get a 404 on devdocs.io in that case.
@@ -556,8 +565,8 @@ local function apidoc_install(choice, slugs_to_mtimes, cont, on_fail)
             end
             to_write_contents = string.sub(name_to_contents[sanitized_containing_file_name], byte, next_byte-1)
           end
-          local sanitized_name = sanitize_fname(name)
-          local out_path = sanitize_fname(sanitized_name .. "#" .. path) .. ".html"
+          local sanitized_name = filenames.stem(name)
+          local out_path = name_file(sanitized_name .. "#" .. path) .. ".html"
           out_path_to_orig_path[out_path] = path
           out_path_to_orig_containing_path[out_path] = sanitized_containing_file_name
           local file = io.open(target_path .. "/" .. out_path, "w")
@@ -640,7 +649,8 @@ local function apidoc_install(choice, slugs_to_mtimes, cont, on_fail)
           end
           local after_links, changes = fix_file_links(
             filepath, lines, target_path, choice, path_to_name, name_and_id_to_string_nearby,
-            out_path_to_orig_path[name:gsub(".md$", "")], out_path_to_orig_containing_path[name:gsub(".md$", "")])
+            out_path_to_orig_path[name:gsub(".md$", "")], out_path_to_orig_containing_path[name:gsub(".md$", "")],
+            name_file)
           if changes then
             local file = io.open(filepath, "w")
             file:write(vim.fn.join(after_links, "\n"))

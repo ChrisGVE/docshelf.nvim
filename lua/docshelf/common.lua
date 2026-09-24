@@ -105,14 +105,14 @@ local function open_doc_in_new_window(docs_path)
   open_doc_in_cur_window(docs_path)
   vim.wo.winfixbuf = true
   vim.bo.bufhidden = "delete"
-  local desc = vim.split(docs_path:match("([^/]+)$"), "#")[1]
+  local desc = require("docshelf.filenames").display(vim.split(docs_path:match("([^/]+)$"), "#")[1])
   vim.api.nvim_buf_set_name(0, desc)
 end
 
 -- convert filename to picker display string
 local function filename_to_display(filename)
   local components = vim.split(filename, "#")
-  local display = components[1]
+  local display = require("docshelf.filenames").display(components[1])
   -- little hack: In some languages the filename contains "Class#method", which messes
   -- up our "#" - separated schema. So if there are 4 "components" in the filename,
   -- the first two (separated by "#") have to be the actual key to display.
