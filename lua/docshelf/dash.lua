@@ -167,7 +167,53 @@ local function entry_path(row, known)
   return key .. anchor
 end
 
---- A page's own title, or its key when it has none.
+--- Whether `text` is valid UTF-8. vim.iconv cannot tell: it substitutes
+--- rather than failing.
+local function is_utf8(text)
+  local i = 1
+  while i <= #text do
+    local byte = text:byte(i)
+    local length = byte < 0x80 and 1
+      or (byte >= 0xC2 and byte <= 0xDF) and 2
+      or (byte >= 0xE0 and byte <= 0xEF) and 3
+      or (byte >= 0xF0 and byte <= 0xF4) and 4
+    if not length then
+      return false
+    end
+    for j = i + 1, i + length - 1 do
+      local continuation = text:byte(j)
+      if not continuation or continuation < 0x80 or continuation > 0xBF then
+        return false
+      end
+    end
+    i = i + length
+  end
+  return true
+end
+
+-- The named entities page titles actually use; any other is written as a
+-- number, which `decode_entities` reads whatever it is.
+local named_entities = {
+  amp = "&", lt = "<", gt = ">", quot = '"', apos = "'", nbsp = " ",
+  mdash = "—", ndash = "–", hellip = "…", lsquo = "‘", rsquo = "’",
+  ldquo = "“", rdquo = "”", copy = "©", reg = "®", trade = "™",
+}
+
+local function decode_entities(text)
+  return (
+    text:gsub("&(#?[xX]?)(%w+);", function(kind, value)
+      local number = (kind == "#" and tonumber(value)) or ((kind == "#x" or kind == "#X") and tonumber(value, 16))
+      if number then
+        return vim.fn.nr2char(number, true)
+      end
+      return kind == "" and named_entities[value] or nil
+    end)
+  )
+end
+
+--- A page's own title, or its key when it has none. Older pages are written
+--- in Latin-1 (Lua 5.1's Portuguese manual): a title that is not UTF-8 is
+--- read as that, since it becomes a name in the pickers and a file name.
 local function page_title(file, key)
   local handle = io.open(file, "r")
   local head = handle and handle:read(4096) or ""
@@ -176,6 +222,10 @@ local function page_title(file, key)
   end
   local title = head:match("<[tT][iI][tT][lL][eE][^>]*>(.-)</[tT][iI][tT][lL][eE]>")
   title = title and vim.trim(title:gsub("%s+", " ")) or ""
+  if not is_utf8(title) then
+    title = vim.iconv(title, "latin1", "utf-8") or ""
+  end
+  title = decode_entities(title)
   return title ~= "" and title or key
 end
 
@@ -224,6 +274,9 @@ local function clean_page(html, key, known)
   body = body
     :gsub("<[sS][cC][rR][iI][pP][tT].-</[sS][cC][rR][iI][pP][tT]>", "")
     :gsub("<[sS][tT][yY][lL][eE].-</[sS][tT][yY][lL][eE]>", "")
+    -- the "¶" a Sphinx theme puts beside every heading links to the heading
+    -- itself; doc2dash builds many contributed docsets from Sphinx sites
+    :gsub('<a class="headerlink"[^>]*>.-</a>', "")
   body = anchors_as_ids(body)
   return links.rewrite_html(body, {
     dir = key:match("^(.*)/[^/]*$") or "",

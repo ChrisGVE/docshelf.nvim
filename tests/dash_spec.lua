@@ -119,7 +119,41 @@ test("every page is an entry of its own, named by its title or its path", functi
   local pages = vim.tbl_filter(function(entry)
     return not entry.path:find("#", 1, true)
   end, index.entries)
-  eq(#pages, 2)
+  eq(#pages, 3)
+end)
+
+test("a title written in Latin-1 is read as Latin-1", function()
+  -- Lua 5.1's docset ships its Portuguese manual that way, and a name that is
+  -- not UTF-8 cannot become a file name on macOS
+  local system = serving(archives.searchindex)
+  local index = dash.index("small~1.0", "https://example.org/Small.tgz", system)
+  dash.forget("small~1.0")
+  local names = vim.tbl_map(function(entry)
+    return entry.name
+  end, index.entries)
+  eq(vim.tbl_contains(names, "Manual de Referência"), true)
+end)
+
+test("a title's HTML entities are decoded", function()
+  local system = serving(archives.searchindex)
+  local index = dash.index("small~1.0", "https://example.org/Small.tgz", system)
+  dash.forget("small~1.0")
+  local titles = {}
+  for _, entry in ipairs(index.entries) do
+    if entry.type == "Pages" then
+      titles[#titles + 1] = entry.name
+    end
+  end
+  table.sort(titles)
+  eq(titles, { "Manual de Referência", "Small — docs & more – → end" })
+end)
+
+test("a Sphinx permalink beside a heading is dropped", function()
+  -- doc2dash builds many contributed docsets from Sphinx sites
+  local system = serving(archives.searchindex)
+  local page = dash.db("small~1.0", "https://example.org/Small.tgz", system)["_static/extra"]
+  assert(not page:find("headerlink", 1, true), page)
+  assert(not page:find("¶", 1, true), page)
 end)
 
 test("an entry on a page the archive does not hold is left out", function()
@@ -141,9 +175,10 @@ test("the searchIndex layout drops Dash's entry markup from a path", function()
   end)
   eq(index.entries, {
     { name = "Extra", path = "_static/extra", type = "Guide" },
+    { name = "Manual de Referência", path = "_static/latin", type = "Pages" },
+    { name = "Small — docs & more – → end", path = "index", type = "Pages" },
     { name = "core.alert", path = "index#core.alert", type = "Directive" },
     { name = "core.emerg", path = "index#core.emerg", type = "Directive" },
-    { name = "index", path = "index", type = "Pages" },
   })
 end)
 
