@@ -630,11 +630,18 @@ match is not always the one meant.
 ==============================================================================
 12. CREDITS						 *docshelf-credits*
 
-apidocs.nvim	https://github.com/emmanueltouzery/apidocs.nvim
+docshelf.nvim is a derivative work of apidocs.nvim, by Emmanuel Touzery:
+https://github.com/emmanueltouzery/apidocs.nvim
+The devdocs.io integration, the conversion to text and the pickers are his;
+docshelf adds the other sources, languages, the filter, updates and the
+install queue. Many thanks to him.
 
 The idea, and the first implementation of it, come from nvim-devdocs:
 https://github.com/luckasRanarison/nvim-devdocs
 
-The documentation itself is devdocs.io's: https://devdocs.io
+The documentation itself belongs to the projects that publish it.
+
+License: Apache-2.0 (LICENSE). The code that comes from apidocs.nvim remains
+under its MIT license, kept in full in NOTICE.
 
 vim:tw=78:ts=8:noet:ft=help:norl:

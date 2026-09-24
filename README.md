@@ -1,9 +1,21 @@
-# Docshelf.nvim
+# docshelf.nvim
 
-This is an integration of <https://devdocs.io/> in neovim.
+Offline API documentation, read inside Neovim.
 
-This plugin will download devdocs documentations for offline usage and pre-format them for in-neovim display.
-It will also extract the documentation for individual methods (`List.add()`...) for nicer browsing, and leverages neovim conceal features for a user-friendly display.
+docshelf downloads documentation once and converts it into plain text you read in a normal
+buffer, split into one page per entry (`List.add()` is a page of its own), with Neovim's
+conceal features doing the formatting. Opening a page and grepping across everything you
+have installed are local operations: nothing is fetched while you read.
+
+Documentation comes from several places: the whole [devdocs.io](https://devdocs.io/)
+catalogue, Haskell packages from Hackage, Rust crates from docs.rs, any Sphinx site (Python
+and much of the scientific stack), Go modules from pkg.go.dev, and any DocC site, Apple's
+own developer documentation included. Every source knows its language, so a Rust session
+and a Python session can each narrow the pickers to what they need.
+
+docshelf.nvim began as a fork of Emmanuel Touzery's
+[apidocs.nvim](https://github.com/emmanueltouzery/apidocs.nvim) and grew well past what that
+plugin sets out to be; see [Credits](#credits).
 
 ![basic screenshot](https://raw.githubusercontent.com/wiki/emmanueltouzery/apidocs.nvim/shot1.png)
 
@@ -220,4 +232,19 @@ If you wish to integrate these docs with your own scripts or another picker, you
 
 ## Credits
 
-Credits go to <https://github.com/luckasRanarison/nvim-devdocs> for the initial project which inspired this.
+docshelf.nvim is a derivative work of [apidocs.nvim](https://github.com/emmanueltouzery/apidocs.nvim)
+by Emmanuel Touzery. The devdocs.io integration, the conversion to text and the pickers at
+the heart of this plugin are his; docshelf adds the other sources, languages, the filter,
+updates and the install queue on top. Many thanks to him for the plugin, and for his kind
+encouragement to carry this work on as a project of its own. If all you want is devdocs.io
+in Neovim, lightweight, apidocs.nvim is the plugin to use.
+
+apidocs.nvim in turn credits <https://github.com/luckasRanarison/nvim-devdocs> for the
+initial project which inspired it, and the documentation itself belongs to the projects
+that publish it.
+
+## License
+
+docshelf.nvim is licensed under the [Apache License 2.0](LICENSE). The code that comes from
+apidocs.nvim remains under its MIT license, whose copyright and permission notice are kept
+in full in [NOTICE](NOTICE).
