@@ -60,6 +60,14 @@ for module, adapter in pairs(adapters) do
       -- its docsets are linked through source_languages.lua instead.
       return
     end
+    if adapter.catalogue == true then
+      -- a catalogue of many languages (Dash) says so instead: its docsets
+      -- take their language from their name, as languages.lua's rule 3 does.
+      if adapter.language ~= nil then
+        error("a catalogue must not also declare one language", 0)
+      end
+      return
+    end
     is(adapter.language, "string", "language")
     if adapter.language == "" then
       error("language must not be empty", 0)

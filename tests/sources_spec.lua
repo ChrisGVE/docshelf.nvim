@@ -64,7 +64,17 @@ end)
 
 test("origins are listed in a stable order, shipped sources included", function()
   sources.register(example)
-  eq(sources.origins(), { "devdocs.io", "docc", "docs.rs", "example.org", "hackage.haskell.org", "pkg.go.dev", "sphinx" })
+  eq(sources.origins(), {
+    "contrib.kapeli.com",
+    "devdocs.io",
+    "docc",
+    "docs.rs",
+    "example.org",
+    "hackage.haskell.org",
+    "kapeli.com",
+    "pkg.go.dev",
+    "sphinx",
+  })
 end)
 
 test("workers defaults to 4 async jobs", function()

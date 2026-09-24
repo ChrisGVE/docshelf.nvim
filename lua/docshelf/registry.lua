@@ -11,7 +11,10 @@
 --                            search can be narrowed to the sources that could
 --                            answer it at all
 -- `version` is optional: a registry that does not return one leaves the
--- version to be resolved when a row is picked.
+-- version to be resolved when a row is picked. A source whose catalogue
+-- spans many languages (Dash) declares `catalogue = true` instead of a
+-- language: its docsets take their language from their name, and it is left
+-- out of a search narrowed to languages.
 --
 -- A source that is not a registry at all -- a Sphinx site stands alone, with
 -- nothing to search -- may instead declare:
