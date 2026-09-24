@@ -146,6 +146,45 @@ test("restrict works when given no options at all", function()
   eq(filter.restrict(nil, installed, links).restrict_sources, { "rust", "tokio" })
 end)
 
+-- narrowing the install picker to the filter's languages --------------------
+
+test("with no filter set, install options are left alone", function()
+  eq(filter.narrow({}, links), {})
+end)
+
+test("a filter narrows the install picker to its languages", function()
+  filter.set({ "numpy~2.5", "rust" })
+  eq(filter.narrow({}, links).languages, { Python = true, Rust = true })
+end)
+
+test("follow_filter = false offers every language without clearing the filter", function()
+  filter.set({ "rust" })
+  eq(filter.narrow({ follow_filter = false }, links).languages, nil)
+  eq(filter.active(), { "rust" })
+end)
+
+test("languages named explicitly win over the filter", function()
+  filter.set({ "rust" })
+  eq(filter.narrow({ languages = { Haskell = true } }, links).languages, { Haskell = true })
+end)
+
+test("a filter covering no language leaves the install picker whole", function()
+  filter.set({ "mystery" })
+  eq(filter.narrow({}, links).languages, nil)
+end)
+
+test("narrow never mutates the options it was given", function()
+  filter.set({ "rust" })
+  local opts = {}
+  filter.narrow(opts, links)
+  eq(opts, {})
+end)
+
+test("narrow works when given no options at all", function()
+  filter.set({ "rust" })
+  eq(filter.narrow(nil, links).languages, { Rust = true })
+end)
+
 -- uninstalling out of the filter ---------------------------------------------
 
 test("an uninstalled source leaves the filter", function()

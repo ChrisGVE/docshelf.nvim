@@ -165,4 +165,23 @@ function M.restrict(opts, installed, links)
   return resolved
 end
 
+--- The install picker's twin of `restrict`: resolve the filter into the
+--- `languages` the install picker narrows by, so in a Python session it offers
+--- Python docsets and the registries that document Python.
+---
+--- The options are left untouched when the caller named its own languages,
+--- when `follow_filter = false` asks for everything this once, or when no
+--- filter is set. A filter whose docsets name no language narrows nothing.
+---@param opts? table
+---@param links? table<string, table>
+---@return table
+function M.narrow(opts, links)
+  local resolved = vim.tbl_extend("force", {}, opts or {})
+  if resolved.languages or resolved.follow_filter == false or not active then
+    return resolved
+  end
+  resolved.languages = links and M.languages_of(active, links) or M.languages()
+  return resolved
+end
+
 return M
