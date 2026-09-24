@@ -154,7 +154,7 @@ return {
     'nvim-treesitter/nvim-treesitter',
     'nvim-telescope/telescope.nvim', -- or, 'folke/snacks.nvim'
   },
-  cmd = { 'DocshelfSearch', 'DocshelfInstall', 'DocshelfOpen', 'DocshelfSelect', 'DocshelfFilter', 'DocshelfAssignLanguage', 'DocshelfUpdate', 'DocshelfUninstall' },
+  cmd = { 'DocshelfSearch', 'DocshelfInstall', 'DocshelfOpen', 'DocshelfFilter', 'DocshelfAssignLanguage', 'DocshelfUpdate', 'DocshelfUninstall' },
   config = function()
     require('docshelf').setup()
     -- Picker will be auto-detected. To select a picker of your choice explicitly you can set picker by the configuration option 'picker':
