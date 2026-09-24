@@ -20,6 +20,8 @@
 -- installed again.
 local M = {}
 
+local links = require("docshelf.links")
+
 M.origin = "pkg.go.dev"
 
 M.language = "Go"
@@ -347,27 +349,6 @@ function M.index(docset, _, system)
   return { entries = entries }
 end
 
---- `path` written from the directory `dir`, going up no further than it has
---- to. A page key here is both a page and a directory -- "widget" holds
---- "widget/render" -- so the target's own directory is what `dir` is compared
---- against, and a link from widget/render back to widget is "../widget".
-local function relative_to(dir, path)
-  local from = vim.split(dir, "/", { trimempty = true })
-  local to = vim.split(path, "/", { trimempty = true })
-  local shared = 0
-  while from[shared + 1] and to[shared + 1] and shared + 1 < #to and from[shared + 1] == to[shared + 1] do
-    shared = shared + 1
-  end
-  local out = {}
-  for _ = shared + 1, #from do
-    out[#out + 1] = ".."
-  end
-  for i = shared + 1, #to do
-    out[#out + 1] = to[i]
-  end
-  return table.concat(out, "/")
-end
-
 --- Where a link should point once the page is a buffer. A link to another
 --- package of this docset becomes that package's page; every other
 --- site-relative link -- the standard library, another module, pkg.go.dev's
@@ -391,7 +372,10 @@ local function rewrite_href(href, dir, keys, page_href)
   -- page -- taking the query off would point it at the docs it is not.
   local key = not target:find("?", 1, true) and keys[import_path(target)] or nil
   if key then
-    return relative_to(dir, key) .. anchor
+    -- A page key is both a page and a directory ("widget" holds
+    -- "widget/render"), so from widget/render the link back is "../widget":
+    -- links.relative never writes the empty string.
+    return links.relative(dir, key) .. anchor
   end
   return base .. href
 end
@@ -426,7 +410,7 @@ M._internal = {
   read_page = read_page,
   docset_name = docset_name,
   page_key = page_key,
-  relative_to = relative_to,
+  relative_to = links.relative,
 }
 
 return M
