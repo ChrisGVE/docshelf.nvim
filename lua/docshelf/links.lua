@@ -1,14 +1,15 @@
 --- Link rewriting shared by the sources that hand the installer pages written
---- for a website (Sphinx, pkg.go.dev, DocC, and every source after them).
+--- for a website (docs.rs, Sphinx, pkg.go.dev, DocC, and every source after
+--- them).
 ---
 --- A page is keyed by its path inside the docset. Once it is a buffer, a link
 --- to another page of the docset must name that page's key, written relative
 --- to the page holding the link; any other link must become an address a
---- browser can open. Three adapters wrote their own copy of this and a real
---- install found the same bugs in each: `src` left site-relative, so an image
---- became `file:///static/...`, and a link to a page's own parent written as
---- the empty string, which reads as the docset folder. This module is the one
---- copy, and its spec pins both.
+--- browser can open. Four adapters wrote their own copy of this, and a real
+--- install found the same bugs in three of them: `src` left site-relative, so
+--- an image became `file:///static/...`, and a link to a page's own parent
+--- written as the empty string, which reads as the docset folder. This module
+--- is the one copy, and its spec pins both.
 local M = {}
 
 --- Resolve `href` against the directory `dir` of the page holding it, the way
