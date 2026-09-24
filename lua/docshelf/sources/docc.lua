@@ -27,6 +27,8 @@
 -- installed docsets, since the folder name cannot carry a URL.
 local M = {}
 
+local links = require("docshelf.links")
+
 M.origin = "docc"
 
 -- Every DocC site documents Swift (some also carry the Objective-C spelling of
@@ -521,32 +523,6 @@ end
 
 -- --------------------------------------------------------------- the links
 
---- `path` written from `dir`, climbing no further than it has to: the
---- installer reads a link against the page key of the page holding it.
----
---- A page key here is both a page and a directory -- "widget/wheel" holds
---- "widget/wheel/spin()" -- so one segment of the target is always written
---- out, even when the target IS the directory: from a symbol's page, its own
---- type is "../wheel", never the empty string. An empty href is how a link to
---- a parent page became a link to the docset folder (found by the devicecheck
---- install, and the same defect pkg.go.dev's adapter had to fix).
-local function relative_to(dir, path)
-  local from = vim.split(dir, "/", { trimempty = true })
-  local to = vim.split(path, "/", { trimempty = true })
-  local shared = 0
-  while from[shared + 1] and to[shared + 1] and shared + 1 < #to and from[shared + 1] == to[shared + 1] do
-    shared = shared + 1
-  end
-  local out = {}
-  for _ = shared + 1, #from do
-    out[#out + 1] = ".."
-  end
-  for i = shared + 1, #to do
-    out[#out + 1] = to[i]
-  end
-  return table.concat(out, "/")
-end
-
 --- A site-relative URL as an address. A DocC site published under a path of
 --- its own ("https://docs.swift.org/swift-book") writes some URLs from the
 --- site root and some from its own base, so which one this is decides which
@@ -600,7 +576,10 @@ local function href_of(reference, base, keys, dir)
   local target, anchor = url:match("^([^#]*)(#?.*)$")
   local key = keys[page_key(target):lower()]
   if key then
-    return relative_to(dir, key) .. anchor
+    -- A page key here is both a page and a directory ("widget/wheel" holds
+    -- "widget/wheel/spin()"), so from a symbol's page its own type is
+    -- "../wheel": links.relative never writes the empty string.
+    return links.relative(dir, key) .. anchor
   end
   return address(base, url)
 end
@@ -665,7 +644,7 @@ M._internal = {
   pages_of = pages_of,
   short_name = short_name,
   docset_name = docset_name,
-  relative_to = relative_to,
+  relative_to = links.relative,
   address = address,
   language_tree = language_tree,
   layouts = layouts,
