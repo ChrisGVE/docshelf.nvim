@@ -102,6 +102,27 @@ function M.is_url(typed)
   return typed:match("^https?://[^%s]+$") ~= nil
 end
 
+-- Registries are only asked once the typed name is worth a request: one or two
+-- letters match thousands of packages and tell nobody anything.
+local min_registry_query = 3
+
+--- The sources worth asking about a typed name (not a URL). A registry waits
+--- for three letters. A catalogue source (Dash) filters a list it fetched once,
+--- so it is asked from the first letter: C, Go, Qt and R have no longer name.
+---@param origins string[]
+---@param typed string
+---@param is_catalogue fun(origin: string): boolean
+---@return string[]
+function M.worth_asking(origins, typed, is_catalogue)
+  if typed == "" then
+    return {}
+  end
+  if #typed >= min_registry_query then
+    return origins
+  end
+  return vim.tbl_filter(is_catalogue, origins)
+end
+
 --- The picker's title, with what is still being waited on. Registries are
 --- community-run and can take seconds: without this the picker looks finished
 --- while answers are still coming.

@@ -723,10 +723,6 @@ local language_column = 18
 
 local picker_title = "Install documentation (<Tab> marks several)"
 
--- Registries are only asked once the typed name is worth a request: one or two
--- letters match thousands of packages and tell nobody anything.
-local min_registry_query = 3
-
 -- How long a typed URL must stand still before the site behind it is asked.
 local url_settle_ms = 600
 
@@ -836,9 +832,12 @@ local function pick_and_queue(keys, format_item, origin_of, language_of, slugs_t
           stop_registry_search()
           search_state.query = typed
           local url = install_pick.is_url(typed)
-          local asked = url and url_origins or origins
-          local enough = url or #typed >= min_registry_query
-          if #asked > 0 and enough then
+          local asked = url and url_origins
+            or install_pick.worth_asking(origins, typed, function(origin)
+              local adapter = sources.get(origin)
+              return adapter ~= nil and adapter.catalogue == true
+            end)
+          if #asked > 0 then
             local picker = ctx.picker
             local function answered()
               vim.schedule(function()

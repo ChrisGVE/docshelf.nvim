@@ -113,5 +113,24 @@ test("the title counts the registries when there are several", function()
   eq(pick.title("Install", { "one.example", "two.example" }), "Install · searching 2 registries…")
 end)
 
+local function catalogue(origin)
+  return origin == "kapeli.com"
+end
+
+test("a name of three letters or more asks every source", function()
+  eq(pick.worth_asking({ "hackage.haskell.org", "kapeli.com" }, "lua", catalogue), { "hackage.haskell.org", "kapeli.com" })
+end)
+
+test("a shorter name asks only the sources that filter a list they hold", function()
+  -- a registry would answer "C" with thousands of packages; Dash's feed list
+  -- is fetched once, and C, Go, Qt and R are only reachable this way
+  eq(pick.worth_asking({ "hackage.haskell.org", "kapeli.com" }, "C", catalogue), { "kapeli.com" })
+  eq(pick.worth_asking({ "hackage.haskell.org", "kapeli.com" }, "Go", catalogue), { "kapeli.com" })
+end)
+
+test("nothing typed asks nothing", function()
+  eq(pick.worth_asking({ "hackage.haskell.org", "kapeli.com" }, "", catalogue), {})
+end)
+
 print(failures == 0 and "all passed" or (failures .. " failed"))
 os.exit(failures == 0 and 0 or 1)
