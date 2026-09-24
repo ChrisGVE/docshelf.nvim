@@ -103,10 +103,23 @@ test("the Core Data index names each token with its page and anchor", function()
     return a.name < b.name
   end)
   eq(index.entries, {
+    { name = "Tiny index", path = "site/guide/index", type = "Pages" },
     { name = "Tiny manual", path = "site/guide/manual", type = "Guide" },
     { name = "tiny.close", path = "site/guide/manual#//apple_ref/func/tiny%2Eclose", type = "func" },
     { name = "tiny.open", path = "site/guide/manual#//apple_ref/func/tiny%2Eopen", type = "func" },
   })
+end)
+
+test("every page is an entry of its own, named by its title or its path", function()
+  -- the installer only resolves a link to a page that is an entry, and Dash
+  -- indexes anchors: without this, "index#core.emerg" leads nowhere
+  local system = serving(archives.searchindex)
+  local index = dash.index("small~1.0", "https://example.org/Small.tgz", system)
+  dash.forget("small~1.0")
+  local pages = vim.tbl_filter(function(entry)
+    return not entry.path:find("#", 1, true)
+  end, index.entries)
+  eq(#pages, 2)
 end)
 
 test("an entry on a page the archive does not hold is left out", function()
@@ -130,6 +143,7 @@ test("the searchIndex layout drops Dash's entry markup from a path", function()
     { name = "Extra", path = "_static/extra", type = "Guide" },
     { name = "core.alert", path = "index#core.alert", type = "Directive" },
     { name = "core.emerg", path = "index#core.emerg", type = "Directive" },
+    { name = "index", path = "index", type = "Pages" },
   })
 end)
 
@@ -138,6 +152,17 @@ test("db holds every page of the archive, keyed without .html", function()
   dash.index("tiny~1.2", "https://example.org/Tiny.tgz", system)
   local db = dash.db("tiny~1.2", "https://example.org/Tiny.tgz", system)
   eq(sorted_keys(db), { "site/guide/index", "site/guide/manual" })
+end)
+
+test("a page that only redirects elsewhere is not a page", function()
+  -- Kapeli's archives open on a mirroring tool's refresh stub
+  local system = serving(archives.coredata)
+  local index = dash.index("tiny~1.2", "https://example.org/Tiny.tgz", system)
+  local db = dash.db("tiny~1.2", "https://example.org/Tiny.tgz", system)
+  eq(db["index"], nil)
+  for _, entry in ipairs(index.entries) do
+    assert(entry.path ~= "index", "the refresh stub is in the index")
+  end
 end)
 
 test("index and db download the archive only once per install", function()
@@ -164,13 +189,14 @@ test("an anchor written as a name is an id too, so a link to it lands", function
   local system = serving(archives.coredata)
   local page = dash.db("tiny~1.2", "https://example.org/Tiny.tgz", system)["site/guide/manual"]
   assert(page:find('<a id="pdf-tiny.open">', 1, true), page)
+  assert(page:find('<A id="shouted">', 1, true), page)
 end)
 
 test("a page keeps its body and loses scripts and styles", function()
   local system = serving(archives.coredata)
   local page = dash.db("tiny~1.2", "https://example.org/Tiny.tgz", system)["site/guide/manual"]
   assert(page:find("<h1>Tiny manual</h1>", 1, true), page)
-  for _, gone in ipairs({ "<script", "<style", "<title>", "<head>" }) do
+  for _, gone in ipairs({ "<script", "<SCRIPT", "<style", "<title>", "<head>" }) do
     assert(not page:find(gone, 1, true), gone .. " still in page")
   end
 end)

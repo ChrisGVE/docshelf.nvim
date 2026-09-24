@@ -89,6 +89,20 @@ local function page_key(path)
   return (path:gsub("%.html?$", ""))
 end
 
+--- A stub whose only job is to send the browser on -- Kapeli's archives open
+--- on a mirroring tool's -- documents nothing, and its link would point at
+--- whatever it refreshes to. HTTrack writes the refresh in the body, 5 KB in,
+--- so the scan reads a stub's worth rather than the head alone.
+local function is_redirect(file)
+  local handle = io.open(file, "r")
+  if not handle then
+    return false
+  end
+  local start = (handle:read(16384) or ""):lower()
+  handle:close()
+  return start:find('<meta[^>]*http%-equiv="refresh"') ~= nil
+end
+
 --- Every page under Documents, by key: its path without ".html".
 local function page_files(documents)
   local found = {}
@@ -96,7 +110,7 @@ local function page_files(documents)
     for entry, kind in vim.fs.dir(dir) do
       if kind == "directory" then
         walk(dir .. "/" .. entry, prefix .. entry .. "/")
-      elseif entry:match("%.html?$") then
+      elseif entry:match("%.html?$") and not is_redirect(dir .. "/" .. entry) then
         found[page_key(prefix .. entry)] = dir .. "/" .. entry
       end
     end
@@ -153,16 +167,36 @@ local function entry_path(row, known)
   return key .. anchor
 end
 
+--- A page's own title, or its key when it has none.
+local function page_title(file, key)
+  local handle = io.open(file, "r")
+  local head = handle and handle:read(4096) or ""
+  if handle then
+    handle:close()
+  end
+  local title = head:match("<[tT][iI][tT][lL][eE][^>]*>(.-)</[tT][iI][tT][lL][eE]>")
+  title = title and vim.trim(title:gsub("%s+", " ")) or ""
+  return title ~= "" and title or key
+end
+
 --- The index/db pair's first half (see sources/devdocs.lua) for the archive
---- at `url`, installed as `docset`.
+--- at `url`, installed as `docset`. Every page is an entry too: the installer
+--- only resolves a link to a page that is one, and Dash indexes anchors, so a
+--- link to "index#core.emerg" would otherwise lead nowhere.
 function M.index(docset, url, system)
   local docs = held(docset, url, system)
   local known = page_files(docs.documents)
-  local entries = {}
+  local entries, listed = {}, {}
   for _, row in ipairs(index_rows(docs.dsidx, system)) do
     local path = entry_path(row, known)
     if path and type(row.name) == "string" then
       entries[#entries + 1] = { name = row.name, path = path, type = row.type ~= vim.NIL and row.type or "Entries" }
+      listed[path] = true
+    end
+  end
+  for key, file in pairs(known) do
+    if not listed[key] then
+      entries[#entries + 1] = { name = page_title(file, key), path = key, type = "Pages" }
     end
   end
   return { entries = entries }
@@ -171,22 +205,26 @@ end
 --- Dash's entry marks, and any older named anchor, as ids.
 local function anchors_as_ids(html)
   return (
-    html:gsub("<a(%s[^>]*)>", function(attributes)
-      local name = attributes:match('%sname="([^"]*)"')
-      if not name or attributes:match('%sid="') then
+    html:gsub("<([aA])(%s[^>]*)>", function(tag, attributes)
+      local name = attributes:match('%s[nN][aA][mM][eE]="([^"]*)"')
+      if not name or attributes:match('%s[iI][dD]="') then
         return nil
       end
       if attributes:match('class="dashAnchor"') then
-        return '<a id="' .. name .. '">'
+        return "<" .. tag .. ' id="' .. name .. '">'
       end
-      return "<a" .. attributes:gsub('(%s)name="', '%1id="', 1) .. ">"
+      return "<" .. tag .. attributes:gsub('(%s)[nN][aA][mM][eE]="', '%1id="', 1) .. ">"
     end)
   )
 end
 
 local function clean_page(html, key, known)
-  local body = html:match("<body[^>]*>(.*)</body>") or html
-  body = anchors_as_ids(body:gsub("<script.-</script>", ""):gsub("<style.-</style>", ""))
+  -- tag names in any case, as for links
+  local body = html:match("<[bB][oO][dD][yY][^>]*>(.*)</[bB][oO][dD][yY]>") or html
+  body = body
+    :gsub("<[sS][cC][rR][iI][pP][tT].-</[sS][cC][rR][iI][pP][tT]>", "")
+    :gsub("<[sS][tT][yY][lL][eE].-</[sS][tT][yY][lL][eE]>", "")
+  body = anchors_as_ids(body)
   return links.rewrite_html(body, {
     dir = key:match("^(.*)/[^/]*$") or "",
     known = known,
