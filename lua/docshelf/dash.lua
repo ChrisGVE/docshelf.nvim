@@ -313,4 +313,35 @@ function M.db(docset, url, system)
   return db
 end
 
+--- A docset's name and release: "<name>~<release>" (Lua~5.5).
+---@param docset string
+---@param source string what to call the source in an error
+---@return string name, string release
+function M.split(docset, source)
+  local name, release = docset:match("^(.+)~([^~]+)$")
+  if not name then
+    error("a " .. source .. " docset is <name>~<version>, got " .. docset, 0)
+  end
+  return name, release
+end
+
+--- The index/db pair of a source whose docsets are Dash archives.
+--- `archive_url(docset, system)` says where a docset's archive is; it is
+--- asked once per install, by index, and its answer reused by db.
+---@param archive_url fun(docset: string, system: function): string
+---@return function index, function db
+function M.installer(archive_url)
+  local urls = {}
+  local function index(docset, _, system)
+    urls[docset] = archive_url(docset, system)
+    return M.index(docset, urls[docset], system)
+  end
+  local function db(docset, _, system)
+    local url = urls[docset] or archive_url(docset, system)
+    urls[docset] = nil
+    return M.db(docset, url, system)
+  end
+  return index, db
+end
+
 return M

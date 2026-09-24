@@ -88,11 +88,7 @@ local function read_feed(name, system)
 end
 
 local function split_docset(docset)
-  local name, release = docset:match("^(.+)~([^~]+)$")
-  if not name then
-    error("a Dash docset is <feed>~<version>, got " .. docset, 0)
-  end
-  return name, release
+  return dash.split(docset, "Dash")
 end
 
 --- The docset for a feed's current version.
@@ -129,18 +125,6 @@ local function archive_url(docset, system)
   error("the Dash feed " .. name .. " offers no version " .. release, 0)
 end
 
--- The address found by index, reused by the db call of the same install.
-local urls = {}
-
-function M.index(docset, _, system)
-  urls[docset] = archive_url(docset, system)
-  return dash.index(docset, urls[docset], system)
-end
-
-function M.db(docset, _, system)
-  local url = urls[docset] or archive_url(docset, system)
-  urls[docset] = nil
-  return dash.db(docset, url, system)
-end
+M.index, M.db = dash.installer(archive_url)
 
 return M

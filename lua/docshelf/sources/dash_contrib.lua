@@ -67,11 +67,7 @@ function M.search(query, system)
 end
 
 local function split_docset(docset)
-  local folder, release = docset:match("^(.+)~([^~]+)$")
-  if not folder then
-    error("a user-contributed Dash docset is <name>~<version>, got " .. docset, 0)
-  end
-  return folder, release
+  return dash.split(docset, "user-contributed Dash")
 end
 
 local function entry(folder, system)
@@ -111,18 +107,6 @@ local function archive_url(docset, system)
   error("the user-contributed Dash docset " .. folder .. " offers no version " .. release, 0)
 end
 
--- The address found by index, reused by the db call of the same install.
-local urls = {}
-
-function M.index(docset, _, system)
-  urls[docset] = archive_url(docset, system)
-  return dash.index(docset, urls[docset], system)
-end
-
-function M.db(docset, _, system)
-  local url = urls[docset] or archive_url(docset, system)
-  urls[docset] = nil
-  return dash.db(docset, url, system)
-end
+M.index, M.db = dash.installer(archive_url)
 
 return M
