@@ -204,10 +204,13 @@ local function fix_file_links(fname, lines, target_path, choice, path_to_name,
         file_guessed_subpath_str = ""
       end
       local prefix = "file://" .. target_path
+      -- elinks escapes the folder's own name too ("@" is "%40"), so the prefix
+      -- is looked for in the decoded link
+      local decoded = urldecode(m)
       -- if the link points to target_path/orig_subfolder/../../ then i must use orig_path/../../
       while #prefix > 0 do
-        -- take the parent folder of the prefix until it is a prefix of m.
-        if m:match("^" .. common.escape_pattern(prefix)) then
+        -- take the parent folder of the prefix until it is a prefix of the link.
+        if decoded:match("^" .. common.escape_pattern(prefix)) then
           break
         end
         -- everytime i take the parent of prefix, take the parent of orig_path too
@@ -219,7 +222,7 @@ local function fix_file_links(fname, lines, target_path, choice, path_to_name,
         end
       end
 
-      local link_target = urldecode(m):gsub("^" .. common.escape_pattern(prefix), "")
+      local link_target = decoded:gsub("^" .. common.escape_pattern(prefix), "")
       local file_id = vim.split(link_target, "#")
       if #file_id == 4 then
         -- it's a link to the same file, which was already properly named... "name#pa#th#id"

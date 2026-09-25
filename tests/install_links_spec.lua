@@ -73,6 +73,24 @@ test("so does one whose page key is a path", function()
   eq(changes, true)
 end)
 
+test("a docset folder elinks writes escaped (\"@\" as %40) is still the docset", function()
+  local folder = "/data/lib@org.example~1"
+  local file = name_file("fmt.println#fmt#println") .. ".html"
+  local lines, changes = fix_file_links(
+    folder .. "/" .. file .. ".md",
+    { "   1. file:///data/lib%40org.example~1/fmt.println%23fmt%23println.html#Info" },
+    folder,
+    "lib@org.example~1",
+    {},
+    { ["fmt#fmt"] = { Info = "Info" } },
+    "fmt#println",
+    "fmt#fmt",
+    name_file
+  )
+  eq(lines[1], "   1. local://lib@org.example~1/fmt#fmt#Info")
+  eq(changes, true)
+end)
+
 if failures > 0 then
   print(failures .. " failure(s)")
   os.exit(1)
