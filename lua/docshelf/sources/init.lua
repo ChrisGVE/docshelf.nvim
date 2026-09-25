@@ -18,7 +18,7 @@
 local M = {}
 
 local adapters = {}
-for _, adapter in ipairs({ require("docshelf.sources.dash"), require("docshelf.sources.dash_contrib"), require("docshelf.sources.devdocs"), require("docshelf.sources.docc"), require("docshelf.sources.docsrs"), require("docshelf.sources.hackage"), require("docshelf.sources.hexdocs"), require("docshelf.sources.metacpan"), require("docshelf.sources.odin"), require("docshelf.sources.pkggodev"), require("docshelf.sources.sphinx") }) do
+for _, adapter in ipairs({ require("docshelf.sources.dash"), require("docshelf.sources.dash_contrib"), require("docshelf.sources.devdocs"), require("docshelf.sources.docc"), require("docshelf.sources.docsrs"), require("docshelf.sources.hackage"), require("docshelf.sources.hexdocs"), require("docshelf.sources.maven"), require("docshelf.sources.metacpan"), require("docshelf.sources.odin"), require("docshelf.sources.pkggodev"), require("docshelf.sources.sphinx") }) do
   adapters[adapter.origin] = adapter
 end
 
