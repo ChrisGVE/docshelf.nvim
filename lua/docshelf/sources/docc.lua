@@ -27,6 +27,7 @@
 -- installed docsets, since the folder name cannot carry a URL.
 local M = {}
 
+local fetching = require("docshelf.fetch")
 local links = require("docshelf.links")
 
 M.origin = "docc"
@@ -469,56 +470,14 @@ end
 
 -- ------------------------------------------------------------ fetching pages
 
--- How many pages one curl call fetches. A DocC site has no archive, so the
--- pages come one request each; curl is asked for a batch at a time so the
--- install can say how far along it is, and reuses one connection for all of
--- them.
-local batch_size = 200
-
-local function curl_parallel(system)
-  local res = system({ "curl", "--help", "all" }, { text = true })
-  return res.code == 0 and (res.stdout or ""):find("--parallel-max", 1, true) ~= nil
-end
-
---- Fetch every page of `held` into `dir`, at most `sources.workers()` at once,
---- reporting as each batch lands. Returns the file each page was written to.
+--- Fetch every page of `held` into `dir` through `docshelf.fetch`, reporting
+--- as each batch lands. Returns the file each page was written to.
 local function fetch_pages(held, dir, system, report)
-  local parallel = curl_parallel(system)
-  local files, done = {}, 0
-  local pages = held.pages
-  for start = 1, #pages, batch_size do
-    local config, batch = {}, {}
-    for i = start, math.min(start + batch_size - 1, #pages) do
-      local page = pages[i]
-      local out = dir .. "/" .. page.key:gsub("/", "%%2F")
-      batch[#batch + 1] = { key = page.key, out = out }
-      config[#config + 1] = 'url = "' .. layouts[held.layout].page(held.base, page.path) .. '"'
-      config[#config + 1] = 'output = "' .. out .. '"'
-    end
-    local config_path = vim.fn.tempname()
-    vim.fn.writefile(config, config_path)
-    local cmd = { "curl", "-sfL", "--max-time", "120" }
-    if parallel then
-      -- required here, not at the top: sources/init.lua loads this adapter.
-      local workers = require("docshelf.sources").workers()
-      vim.list_extend(cmd, { "--parallel", "--parallel-max", tostring(workers) })
-    end
-    vim.list_extend(cmd, { "-K", config_path })
-    -- A page that 404s is skipped, not fatal: a navigator index can name a
-    -- page the site no longer serves, and one missing page is no reason to
-    -- lose the other 8350.
-    system(cmd)
-    for _, page in ipairs(batch) do
-      if vim.fn.filereadable(page.out) == 1 then
-        files[page.key] = page.out
-      end
-    end
-    done = math.min(done + batch_size, #pages)
-    if report then
-      report("fetching pages " .. done .. "/" .. #pages)
-    end
+  local requests = {}
+  for _, page in ipairs(held.pages) do
+    requests[#requests + 1] = { key = page.key, url = layouts[held.layout].page(held.base, page.path) }
   end
-  return files
+  return fetching.pages(requests, dir, system, report)
 end
 
 -- --------------------------------------------------------------- the links
