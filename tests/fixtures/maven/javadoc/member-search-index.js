@@ -1,0 +1,1 @@
+memberSearchIndex = [{"p":"com.example","c":"Box","l":"Box()","u":"%3Cinit%3E()","k":"3"},{"p":"com.example","c":"Box","l":"of(T)","k":"6"},{"p":"com.example","c":"Box","l":"EMPTY","k":"2"},{"p":"com.example","c":"Box.Builder","l":"build()"}];updateSearchResults();
