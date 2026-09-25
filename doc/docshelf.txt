@@ -447,6 +447,24 @@ pkg.odin-lang.org ~
 
 	Installs as `odin~<version>~~pkg.odin-lang.org`. The site only
 	documents the newest build, so an install holds today's version.
+metacpan.org ~
+	A Perl distribution from CPAN, read through MetaCPAN's API. It
+	answers the install picker's search: three letters and the
+	distributions whose modules MetaCPAN suggests join the list, each
+	once, carrying the version of its latest release. `perl` itself is
+	one of them and, named for the language, becomes Perl's reference.
+
+	An install fetches the POD of every documented file of the release.
+	Each module is an entry (`Moose::Util`), and so is every heading below
+	the top level and every `=item`, named after the module (`Moose::Util
+	is_role($package_or_obj)`) and typed by the section holding it
+	(`Methods`). A link to a module the docset holds names its page; any
+	other goes to metacpan.org. `Moose` is about 1,500 entries and half a
+	minute to install; `perl` about 12,400 entries, 62 MB and five
+	minutes on an M-series Mac.
+
+	Installs as `<distribution>~<version>~~metacpan.org`, the version the
+	release is named for (`perl-5.44.0` gives `perl~5.44.0`).
 
 ==============================================================================
 6. KEEPING DOCS CURRENT					*docshelf-updating*

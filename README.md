@@ -11,8 +11,8 @@ Documentation comes from several places: the whole [devdocs.io](https://devdocs.
 catalogue, Haskell packages from Hackage, Rust crates from docs.rs, any Sphinx site (Python
 and much of the scientific stack), Go modules from pkg.go.dev, any DocC site, Apple's own
 developer documentation included, Dash docsets, Kapeli's own and the user-contributed
-ones, Elixir, Erlang and Gleam packages from hexdocs.pm, and Odin's standard library and
-vendor bindings from pkg.odin-lang.org. Every docset knows its language, so a Rust session and a Python session can each
+ones, Elixir, Erlang and Gleam packages from hexdocs.pm, Odin's standard library and
+vendor bindings from pkg.odin-lang.org, and Perl distributions from MetaCPAN. Every docset knows its language, so a Rust session and a Python session can each
 narrow the pickers to what they need.
 
 docshelf.nvim began as a fork of Emmanuel Touzery's
@@ -212,6 +212,27 @@ of it converting pages; `odin_vendor` is about 29,000 entries, 145 MB and ten mi
 A docset installs as `odin~<version>~~pkg.odin-lang.org` (`odin~dev-2026-09~~pkg.odin-lang.org`).
 The site only documents the newest build, so an install always holds today's version, and
 `DocshelfUpdate` compares that with the version in the docset's name.
+
+### metacpan.org
+
+`metacpan.org` documents a Perl distribution from CPAN, read through MetaCPAN's API. It
+answers the install picker's search: type three letters and the distributions whose modules
+MetaCPAN suggests join the list, each once, carrying the version of its latest release.
+`perl` itself is one of them, and since it is named for the language it becomes Perl's
+reference: perlfunc, perlop, perldiag and the rest of the core documentation.
+
+An install asks MetaCPAN which files of that release carry documentation, then fetches each
+one's POD as a page. Every module is an entry (`Moose::Util`), and so is every heading below
+the top level and every `=item` in it, named after the module (`Moose::Util
+is_role($package_or_obj)`, `perlfunc sprintf FORMAT, LIST`) and typed by the section holding
+it (`Exported Functions`, `Methods`). A link to a module the docset holds names that module's
+page; any other goes to metacpan.org. `Moose` is 133 modules and about 1,500 entries, half a
+minute to install; `perl` is 346 pages and about 12,400 entries, 62 MB and five minutes on an
+M-series Mac, nearly all of it converting pages.
+
+A docset installs as `<distribution>~<version>~~metacpan.org` (`Moose~2.4000~~metacpan.org`).
+The version is the one the release is named for (`perl-5.44.0` gives `perl~5.44.0`), and
+`DocshelfUpdate` compares it with the distribution's latest release.
 
 ## Dependencies
 
