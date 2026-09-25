@@ -22,6 +22,7 @@
 --- keeps its text and loses the link.
 local M = {}
 
+local html_text = require("docshelf.html")
 local links = require("docshelf.links")
 
 --- A Dash version as a docset folder can carry it. Kapeli writes
@@ -191,26 +192,6 @@ local function is_utf8(text)
   return true
 end
 
--- The named entities page titles actually use; any other is written as a
--- number, which `decode_entities` reads whatever it is.
-local named_entities = {
-  amp = "&", lt = "<", gt = ">", quot = '"', apos = "'", nbsp = " ",
-  mdash = "—", ndash = "–", hellip = "…", lsquo = "‘", rsquo = "’",
-  ldquo = "“", rdquo = "”", copy = "©", reg = "®", trade = "™",
-}
-
-local function decode_entities(text)
-  return (
-    text:gsub("&(#?[xX]?)(%w+);", function(kind, value)
-      local number = (kind == "#" and tonumber(value)) or ((kind == "#x" or kind == "#X") and tonumber(value, 16))
-      if number then
-        return vim.fn.nr2char(number, true)
-      end
-      return kind == "" and named_entities[value] or nil
-    end)
-  )
-end
-
 --- A page's own title, or its key when it has none. Older pages are written
 --- in Latin-1 (Lua 5.1's Portuguese manual): a title that is not UTF-8 is
 --- read as that, since it becomes a name in the pickers and a file name.
@@ -225,7 +206,7 @@ local function page_title(file, key)
   if not is_utf8(title) then
     title = vim.iconv(title, "latin1", "utf-8") or ""
   end
-  title = decode_entities(title)
+  title = html_text.decode_entities(title)
   return title ~= "" and title or key
 end
 
