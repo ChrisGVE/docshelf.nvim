@@ -73,6 +73,7 @@ test("origins are listed in a stable order, shipped sources included", function(
     "hackage.haskell.org",
     "hexdocs.pm",
     "kapeli.com",
+    "metacpan.org",
     "pkg.go.dev",
     "pkg.odin-lang.org",
     "sphinx",
