@@ -129,6 +129,13 @@ test("search asks hex.pm by recent downloads, not by name", function()
   assert(url:find("sort=recent_downloads", 1, true), url)
 end)
 
+test("a query's own & and + stay inside the search term", function()
+  local system, seen = hex_runner({}, {})
+  hexdocs.search("a&b+c", system)
+  local url = seen[1][#seen[1]]
+  assert(url:find("search=a%26b%2bc&sort=", 1, true), url)
+end)
+
 test("a package with only prereleases documented offers the newest one", function()
   local system = hex_runner({}, {
     package("fresh", nil, { release("0.2.0-dev", true), release("0.1.0-dev", true) }),

@@ -56,7 +56,7 @@ end
 ---@param system fun(cmd: string[]): vim.SystemCompleted
 ---@return { name: string, version: string }[]
 function M.search(query, system)
-  local body = fetch_json(registry .. "?per_page=30&q=" .. vim.uri_encode(query), system)
+  local body = fetch_json(registry .. "?per_page=30&q=" .. vim.uri_encode(query, "rfc2396"), system)
   if type(body) ~= "table" or not vim.islist(body.crates) then
     error("crates.io answered a search with something other than a list of crates", 0)
   end

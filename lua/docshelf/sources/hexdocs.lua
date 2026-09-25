@@ -88,7 +88,7 @@ end
 ---@param system fun(cmd: string[]): vim.SystemCompleted
 ---@return { name: string, version: string }[]
 function M.search(query, system)
-  local body, code = fetch_json(registry .. "?search=" .. vim.uri_encode(query) .. "&sort=recent_downloads", system)
+  local body, code = fetch_json(registry .. "?search=" .. vim.uri_encode(query, "rfc2396") .. "&sort=recent_downloads", system)
   if not body then
     error("could not search hex.pm (curl exit " .. tostring(code) .. ")", 0)
   end

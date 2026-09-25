@@ -186,6 +186,16 @@ test("a search sends the query encoded for a URL", function()
   eq(sent, "https://hackage.haskell.org/packages/search?terms=text%20builder")
 end)
 
+test("a query's own & and + stay inside the search term", function()
+  local sent
+  local system = function(cmd)
+    sent = cmd[#cmd]
+    return { code = 0, stdout = "[]" }
+  end
+  hackage.search("a&b+c", system)
+  eq(sent, "https://hackage.haskell.org/packages/search?terms=a%26b%2bc")
+end)
+
 test("a search that finds nothing returns no rows", function()
   eq(hackage.search("nothinglikethis", search_runner("[]")), {})
 end)

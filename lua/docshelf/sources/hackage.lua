@@ -56,7 +56,7 @@ function M.search(query, system)
     "-sfL",
     "-H",
     "Accept: application/json",
-    base .. "/packages/search?terms=" .. vim.uri_encode(query),
+    base .. "/packages/search?terms=" .. vim.uri_encode(query, "rfc2396"),
   })
   if res.code ~= 0 then
     error("could not search Hackage (curl exit " .. tostring(res.code) .. ")", 0)

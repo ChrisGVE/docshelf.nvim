@@ -221,6 +221,12 @@ test("a search sends the query encoded for a URL, with a real user agent", funct
   assert(vim.tbl_contains(seen[1], "-A"), "crates.io refuses a request with no user agent")
 end)
 
+test("a query's own & and + stay inside the search term", function()
+  local system, seen = search_runner('{"crates":[]}')
+  docsrs.search("a&b+c", system)
+  assert(seen[1][#seen[1]]:find("q=a%26b%2bc", 1, true), vim.inspect(seen[1]))
+end)
+
 test("a search that finds nothing returns no rows", function()
   eq(docsrs.search("nothinglikethis", search_runner('{"crates":[]}')), {})
 end)
