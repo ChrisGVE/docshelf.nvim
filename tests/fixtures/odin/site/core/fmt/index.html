@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><title>package fmt - pkg.odin-lang.org</title>
+	<script src="//odin-lang.org/lib/highlight/highlight.min.js"></script>
+	<script>hljs.highlightAll()</script>
+</head>
+<body>
+	<nav class="navbar navbar-expand-lg navbar-dark bg-primary odin-menu"><a href="https://odin-lang.org/">Odin</a></nav>
+<main>
+<div class="row odin-main my-4" id="pkg">
+<nav id="pkg-sidebar" class="col-lg-2 odin-sidebar-border"><a href="/core/">core</a></nav>
+<article class="col-lg-8 p-4 documentation odin-article">
+<nav class="pkg-breadcrumb" aria-label="breadcrumb"><ol><li><a href="/core">core</a></li></ol></nav>
+<h1>package core/fmt</h1>
+<div id="pkg-top">
+<h2>Overview</h2>
+<div id="pkg-overview">
+<p>Overview of fmt.</p>
+</div>
+<div id="pkg-index">
+<h2>Index</h2>
+<details open><summary id="doc-index-types-header">Types (1)</summary><ul><li><a href="#first">first</a></li></ul></details>
+</div>
+</div>
+<section class="documentation">
+<div class="pkg-entity">
+<h3 id="Info"><span><a class="doc-id-link" href="#Info">Info<span class="a-hidden">&nbsp;¶</span></a></span><div class="doc-source"><a href="https://github.com/odin-lang/Odin/tree/master/x.odin#L1"><em>Source</em></a></div></h3>
+<div>
+<pre class="doc-code">Info :: struct {…}</pre>
+</div>
+<details class="odin-doc-toggle" open>
+<summary class="hideme"><span>&nbsp;</span></summary>
+<p>Formatting state.</p>
+</details>
+</div>
+<div class="pkg-entity">
+<h3 id="println"><span><a class="doc-id-link" href="#println">println<span class="a-hidden">&nbsp;¶</span></a></span><div class="doc-source"><a href="https://github.com/odin-lang/Odin/tree/master/x.odin#L1"><em>Source</em></a></div></h3>
+<div>
+<pre class="doc-code">println :: proc(args: ..<a href="/base/builtin#any"><span class="doc-builtin">any</span></a>, sep: <a href="/base/builtin#string">string</a>) -&gt; <a class="code-typename" href="/core/fmt/#Info">Info</a></pre>
+</div>
+<details class="odin-doc-toggle" open>
+<summary class="hideme"><span>&nbsp;</span></summary>
+<p>Writes to <a href="/core/strings/#Builder">a builder</a> or <a href="/vendor/raylib/#DrawText">the screen</a>, see <a href="//odin-lang.org/docs/overview/">the overview</a> and <a href="/core/gone/#vanished">a page never fetched</a>.</p>
+<details open class="code-example">
+<summary><b>Example:</b></summary>
+<pre><code class="hljs language-odin" data-lang="odin">fmt.println("hi")</code></pre>
+</details>
+</details>
+</div>
+<div class="pkg-entity">
+<h3 id="print_any"><span><a class="doc-id-link" href="#print_any">print_any<span class="a-hidden">&nbsp;¶</span></a></span><div class="doc-source"><a href="https://github.com/odin-lang/Odin/tree/master/x.odin#L1"><em>Source</em></a></div></h3>
+<div>
+<pre class="doc-code">print_any :: proc{print, println}</pre>
+</div>
+<details class="odin-doc-toggle" open>
+<summary class="hideme"><span>&nbsp;</span></summary>
+<p>A group.</p>
+</details>
+</div>
+</section>
+<h2 id="pkg-source-files">Source Files</h2>
+<ul><li><a href="https://github.com/odin-lang/Odin/tree/master/core/fmt/a.odin">a.odin</a></li></ul>
+<h2 id="pkg-generation-information">Generation Information</h2>
+<p>Generated with <code>odin version dev-2026-09</code></p>
+</article>
+<div class="col-lg-2 odin-toc-border"><nav id="TableOfContents"><ul><li><a href="#pkg-overview">Overview</a></li></ul></nav></div>
+</div>
+<script type="text/javascript">var odin_pkg_name = "fmt";</script>
+</main>
+<footer class="odin-footer"><a href="https://forum.odin-lang.org">Forum</a></footer>
+<script src="/pkg-data.js"></script>
+</body>
+</html>

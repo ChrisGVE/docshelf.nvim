@@ -74,6 +74,7 @@ test("origins are listed in a stable order, shipped sources included", function(
     "hexdocs.pm",
     "kapeli.com",
     "pkg.go.dev",
+    "pkg.odin-lang.org",
     "sphinx",
   })
 end)
