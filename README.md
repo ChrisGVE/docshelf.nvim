@@ -12,7 +12,8 @@ catalogue, Haskell packages from Hackage, Rust crates from docs.rs, any Sphinx s
 and much of the scientific stack), Go modules from pkg.go.dev, any DocC site, Apple's own
 developer documentation included, Dash docsets, Kapeli's own and the user-contributed
 ones, Elixir, Erlang and Gleam packages from hexdocs.pm, Odin's standard library and
-vendor bindings from pkg.odin-lang.org, and Perl distributions from MetaCPAN. Every docset knows its language, so a Rust session and a Python session can each
+vendor bindings from pkg.odin-lang.org, Perl distributions from MetaCPAN, and Java,
+Kotlin and Scala libraries from Maven Central. Every docset knows its language, so a Rust session and a Python session can each
 narrow the pickers to what they need.
 
 docshelf.nvim began as a fork of Emmanuel Touzery's
@@ -234,6 +235,30 @@ A docset installs as `<distribution>~<version>~~metacpan.org` (`Moose~2.4000~~me
 The version is the one the release is named for (`perl-5.44.0` gives `perl~5.44.0`), and
 `DocshelfUpdate` compares it with the distribution's latest release.
 
+### Maven Central
+
+`central.sonatype.com` documents a Java, Kotlin or Scala library from Maven Central, which
+keeps beside most releases a `-javadoc.jar`: the HTML documentation the library's build
+generated. An install is that one jar (read with `unzip`). It answers the install picker's
+search: type three letters and the artifacts Maven Central finds join the list, only those
+that ship such a jar, each carrying its newest release.
+
+The entries are what the jar's own search index lists -- every package, type and member --
+and every generator's index is read: javadoc's (both the one it writes since JDK 11 and the
+older `index-all.html`), Scala 3's and Scala 2's scaladoc, and Kotlin's Dokka. The language
+is the generator's: javadoc is Java, scaladoc Scala, Dokka Kotlin. The pages are those the
+index names; the jar's class-use pages, trees and lists are left out, and a link to one goes
+to javadoc.io. Many Kotlin libraries (okhttp, kotlinx-coroutines) publish an empty placeholder
+jar instead, and such a docset is refused with a message saying so. `commons-lang3` is about
+4,600 entries, 29 MB and a minute and a half to install on an M-series Mac; `cats-core_3`
+about 6,700 entries and two and a half minutes; `ktor-client-core-jvm` about 1,200 entries
+and half a minute.
+
+A docset installs as `<artifact>@<group>~<version>~~central.sonatype.com`
+(`cats-core_3@org.typelevel~2.13.0~~central.sonatype.com`): an artifact's name alone is
+ambiguous, two unrelated `cats-core` exist. `DocshelfUpdate` compares the version with the
+artifact's newest release.
+
 ## Dependencies
 
 This plugin requires:
@@ -244,6 +269,7 @@ This plugin requires:
 - ripgrep
 - curl
 - tar, for Dash docsets and hexdocs.pm; sqlite3, for Dash docsets
+- unzip, for docs.rs and Maven Central
 - linux and probably OSX. Windows will not work, except maybe using WSL
 - treesitter for html and markdown_inline, easiest way to get them is via [treesitter.nvim](https://github.com/nvim-treesitter/nvim-treesitter) plugin
 

@@ -42,6 +42,8 @@ For Dash docsets and hexdocs.pm (|docshelf-source-list|):
 	- tar
 For Dash docsets only:
 	- sqlite3
+For docs.rs and Maven Central:
+	- unzip
 
 One picker, either one:
 	- telescope.nvim
@@ -465,6 +467,24 @@ metacpan.org ~
 
 	Installs as `<distribution>~<version>~~metacpan.org`, the version the
 	release is named for (`perl-5.44.0` gives `perl~5.44.0`).
+Maven Central ~
+	A Java, Kotlin or Scala library from Maven Central, origin
+	`central.sonatype.com`. An install is the release's `-javadoc.jar`,
+	the HTML its build generated, read with `unzip`. It answers the
+	install picker's search: three letters and the artifacts that ship
+	such a jar join the list, each carrying its newest release.
+
+	The entries are what the jar's own search index lists, whichever
+	generator wrote it: javadoc (since JDK 11, or the older
+	`index-all.html`), Scala 3 or Scala 2 scaladoc, or Kotlin's Dokka.
+	The language is the generator's: javadoc Java, scaladoc Scala, Dokka
+	Kotlin. Class-use pages, trees and lists are left out, and a link to
+	one goes to javadoc.io. A library that publishes an empty placeholder
+	jar (okhttp, kotlinx-coroutines) is refused. `commons-lang3` is about
+	4,600 entries, 29 MB and a minute and a half on an M-series Mac.
+
+	Installs as `<artifact>@<group>~<version>~~central.sonatype.com`: an
+	artifact's name alone is ambiguous (two unrelated `cats-core` exist).
 
 ==============================================================================
 6. KEEPING DOCS CURRENT					*docshelf-updating*
