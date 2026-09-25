@@ -228,7 +228,12 @@ local function fix_file_links(fname, lines, target_path, choice, path_to_name,
         -- which are the smaller split file.
         local link_file = file_id[2] .. "#" .. file_id[3]:gsub("%.html$", "")
         local path = name_file(file_id[1]:gsub("^/", "") .. "#" .. link_file) -- TODO is that ever used?
-        if link_file == orig_path and orig_containing_path ~= nil then
+        -- Whether the link names the very file holding it is read off the file
+        -- names: orig_path is the page key as the source spelt it, and a key
+        -- holding "/" is written "_" in the file name, so the two never match.
+        local own_file = vim.fs.basename(fname):gsub("%.md$", "")
+        local linked_file = table.concat({ file_id[1]:gsub("^/", ""), file_id[2], file_id[3] }, "#")
+        if linked_file == own_file and orig_containing_path ~= nil then
           path = orig_containing_path
         end
         if path ~= nil then
@@ -960,6 +965,8 @@ end
 
 
 return {
+  -- for the specs only
+  _internal = { fix_file_links = fix_file_links },
   fetch_slugs_and_mtimes_and_then = fetch_slugs_and_mtimes_and_then,
   -- devdocs' catalogue entries by docset name, as the last
   -- fetch_slugs_and_mtimes_and_then left them. Empty until one has run.
