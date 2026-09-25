@@ -55,6 +55,22 @@ for module, adapter in pairs(adapters) do
   end)
 
   test(module .. " declares a language unless it is a whole catalogue", function()
+    if adapter.languages ~= nil then
+      -- a registry whose packages are written in one of several languages
+      -- (hex.pm: Elixir, Erlang, Gleam) lists them, and says which one a
+      -- docset is once it has read it
+      if adapter.language ~= nil or adapter.catalogue ~= nil then
+        error("a source listing its languages must not also declare one, or be a catalogue", 0)
+      end
+      if not vim.islist(adapter.languages) or #adapter.languages == 0 then
+        error("languages must be a non-empty list, got " .. vim.inspect(adapter.languages), 0)
+      end
+      for _, language in ipairs(adapter.languages) do
+        is(language, "string", "each of languages")
+      end
+      is(adapter.language_of, "function", "language_of")
+      return
+    end
     if adapter.origin == devdocs_origin then
       -- devdocs documents everything, so it has no one language to declare;
       -- its docsets are linked through source_languages.lua instead.

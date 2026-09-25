@@ -38,6 +38,7 @@ local function fake_source(origin, answers, opts)
   local adapter = {
     origin = origin,
     language = opts.language,
+    languages = opts.languages,
     index = function() end,
     db = function() end,
     asked = {},
@@ -160,6 +161,13 @@ test("a language narrows the sources to the ones that document it", function()
     registry.searchable({ languages = { Haskellish = true, Rustish = true } }),
     { "haskellish.example", "rustish.example" }
   )
+end)
+
+test("a source listing several languages is asked for any one of them", function()
+  sources.register(bind(fake_source("beamish.example", {}, { languages = { "Elixirish", "Erlangish" } })))
+  eq(vim.tbl_contains(registry.searchable({ languages = { Erlangish = true } }), "beamish.example"), true)
+  eq(vim.tbl_contains(registry.searchable({ languages = { Elixirish = true } }), "beamish.example"), true)
+  eq(vim.tbl_contains(registry.searchable({ languages = { Rustish = true } }), "beamish.example"), false)
 end)
 
 test("a source that declares no language is left out when a language is asked for", function()

@@ -119,8 +119,10 @@ function Cache:match(query)
 end
 
 --- The origins a search may ask: on, able to search, and -- when `languages`
---- is given -- documenting one of those languages. A source that declares no
---- language cannot be narrowed to one, so it is left out of a narrowed search.
+--- is given -- documenting one of those languages: the one it declares, or any
+--- of those it lists (hex.pm lists Elixir, Erlang and Gleam). A source that
+--- names no language cannot be narrowed to one, so it is left out of a
+--- narrowed search.
 ---@param opts? { languages?: table<string, boolean>, method?: string }
 ---@return string[]
 function M.searchable(opts)
@@ -132,7 +134,12 @@ function M.searchable(opts)
       return false
     end
     if languages then
-      return adapter.language ~= nil and languages[adapter.language] == true
+      for _, language in ipairs(adapter.languages or { adapter.language }) do
+        if languages[language] then
+          return true
+        end
+      end
+      return false
     end
     return true
   end, sources.origins())
