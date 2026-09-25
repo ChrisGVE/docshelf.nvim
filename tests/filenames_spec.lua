@@ -102,6 +102,17 @@ test("the pickers show a twin without its tag", function()
   eq(common.filename_to_display("go/" .. name(readdir)), "go/os.File.ReadDir()")
 end)
 
+test("an entry name keeps no # of its own, and shows it again", function()
+  -- Ruby names a method Class#method, Scala has a method named #::; the file
+  -- name scheme splits on "#" (issue #4)
+  local common = require("docshelf.common")
+  local named = filenames.entry_name("Nokogiri::XML::NodeSet#css")
+  eq(named:find("#", 1, true), nil)
+  eq(common.filename_to_display(named .. "#Nokogiri_XML_NodeSet"), "Nokogiri::XML::NodeSet#css")
+  eq(common.filename_to_display(filenames.entry_name("Ops.#::") .. "#ops#x"), "Ops.#::")
+  eq(filenames.entry_name("str.lower()"), "str.lower()")
+end)
+
 if failures > 0 then
   os.exit(1)
 end

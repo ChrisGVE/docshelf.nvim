@@ -365,16 +365,19 @@ local function apidoc_install(choice, slugs_to_mtimes, cont, on_fail)
       progress(choice, text)
     end
     local data = adapter.index(slug, mtime, system, report)
+    -- an entry's name as it goes into file names (filenames.entry_name), and
+    -- as its source spells it, for the line naming a split entry's page
     local path_to_name = {}
+    local path_to_title = {}
     local path_to_type = {}
     local known_keys_per_path = {}
     for _, entry in ipairs(data["entries"]) do
-      path_to_name[entry.path] = entry.name
+      path_to_name[entry.path] = filenames.entry_name(entry.name)
+      path_to_title[entry.path] = entry.name
       path_to_type[entry.path] = entry.type
 
       local file_id = vim.split(entry.path, "#")
       if #file_id == 2 then
-        path_to_name[entry.path] = entry.name
         local sanitized_fname = filenames.stem(file_id[1])
         if known_keys_per_path[file_id[1]] == nil then
           known_keys_per_path[file_id[1]] = {[file_id[2]] = true}
@@ -580,7 +583,7 @@ local function apidoc_install(choice, slugs_to_mtimes, cont, on_fail)
           local file = io.open(target_path .. "/" .. out_path, "w")
           file:write(html_extra_css(slug))
           if path_to_type[file_id[1]] ~= nil then
-            file:write("<p>&gt; " .. slug .. "/" .. path_to_type[file_id[1]] .. "/" .. path_to_name[file_id[1]] .. "\n</p>\n")
+            file:write("<p>&gt; " .. slug .. "/" .. path_to_type[file_id[1]] .. "/" .. path_to_title[file_id[1]] .. "\n</p>\n")
           else
             file:write("<p>&gt; " .. slug .. "\n</p>\n")
           end

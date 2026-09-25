@@ -102,6 +102,11 @@ local function docshelf_open(opts)
     win = common_win_options,
     dirs = get_data_dirs(opts),
     ft = { "markdown", "md" },
+    -- a file name writes an entry name's own "#" as a stand-in (filenames.lua):
+    -- match on "#", the way the list shows it
+    transform = function(item)
+      item.text = require("docshelf.filenames").display(item.text)
+    end,
     confirm = function(picker, item)
       require("docshelf").open_doc_in_new_window(item.file)
     end,

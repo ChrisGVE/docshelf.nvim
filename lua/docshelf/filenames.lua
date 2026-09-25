@@ -60,6 +60,19 @@ function M.case_twins(names)
   return twins
 end
 
+-- An entry's own name may hold "#" -- Ruby names a method Class#method, Scala
+-- has a method named #:: -- and every reader of a file name finds its parts by
+-- "#". In a file name that "#" stands as U+FF03 FULLWIDTH NUMBER SIGN, which
+-- reads the same, and `display` turns it back.
+local hash_standin = "\239\188\131"
+
+--- `name`, an entry's name as its source spells it, fit to stand before the
+--- first "#" of a file name.
+---@param name string
+function M.entry_name(name)
+  return (name:gsub("#", hash_standin))
+end
+
 --- A function naming files for one install whose twins are `twins`. Naming a
 --- name it already produced gives that name back, which the link fixer relies
 --- on: it passes names it read from links through it again.
@@ -84,7 +97,7 @@ function M.display(name)
   if not folder then
     folder, file = "", name
   end
-  return folder .. file:gsub(tag_pattern, "")
+  return (folder .. file:gsub(tag_pattern, ""):gsub(hash_standin, "#"))
 end
 
 return M

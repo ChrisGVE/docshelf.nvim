@@ -91,6 +91,21 @@ test("a docset folder elinks writes escaped (\"@\" as %40) is still the docset",
   eq(changes, true)
 end)
 
+test("an entry whose name held # still reaches the page it was split from", function()
+  -- Scala's #:: method: the name's "#" is kept out of the file name, and elinks
+  -- percent-encodes what stands in for it
+  local escaped = filenames.entry_name("Ops.#::")
+  local line, changes = fixed({
+    name = escaped,
+    key = "cats_data_Ops",
+    id = "x",
+    containing = "Ops#cats_data_Ops",
+    href = vim.uri_encode(escaped, "rfc2396") .. "%23cats_data_Ops%23x.html#Info",
+  })
+  eq(line, "   1. local://set~1/Ops#cats_data_Ops#Info")
+  eq(changes, true)
+end)
+
 if failures > 0 then
   print(failures .. " failure(s)")
   os.exit(1)
