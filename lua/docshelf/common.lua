@@ -47,6 +47,36 @@ local function buf_view_switch_to_new(new_buf)
   end, { buffer = true })
 end
 
+-- Splits a local:// link target, "<choice>/<file name>[#<section>]", into
+-- the file name and the section. A file name holds one "#" ("name#page") or
+-- two (Lua's "Class#method" pages), and a section is a heading's text, which
+-- may hold "#" itself (Scala's `#::`): so the file name is the longest prefix
+-- that names a file, never a count of "#". `readable(file)` answers for a
+-- target without ".html.md". Nothing on disk: "name#page", the rest the section.
+local function split_local_target(target, readable)
+  local parts = vim.split(target, "#", { plain = true })
+  for k = #parts, 2, -1 do
+    local file = table.concat(parts, "#", 1, k)
+    if readable(file) then
+      local section = k < #parts and table.concat(parts, "#", k + 1) or nil
+      return file, section
+    end
+  end
+  local section = #parts > 2 and table.concat(parts, "#", 3) or nil
+  return table.concat(parts, "#", 1, math.min(2, #parts)), section
+end
+
+-- Moves the cursor to the first line holding `section` as plain text (a
+-- heading may hold ".", "[", "/" or "\\"), and puts it at the top. The
+-- pattern goes in the search register, so "n" finds the next one.
+local function find_section(section)
+  local pattern = "\\V" .. vim.fn.escape(section, "\\")
+  vim.fn.setreg("/", pattern)
+  if vim.fn.search(pattern, "cw") > 0 then
+    vim.cmd("norm! zt")
+  end
+end
+
 local function open_doc_in_cur_window(docs_path)
   local buf = vim.api.nvim_create_buf(true, false)
   local follow_link_keymap = Config and Config.follow_link_keymap or "<C-]>"
@@ -66,31 +96,14 @@ local function open_doc_in_cur_window(docs_path)
       -- when parsing the local:// url, drop "<tab>+" text at the end,
       -- we add this marker when we can't resolve the ID reference
       local target = line:sub(#m + 1):gsub("\t%+.+$", "")
-      local components = vim.split(target, "#")
-      if #components == 2 then
-        -- plain file name
-        local new_buf = vim.api.nvim_create_buf(true, false)
-        load_doc_in_buffer(new_buf, data_folder() .. target .. ".html.md")
-        buf_view_switch_to_new(new_buf)
-      elseif #components == 3 then
-        -- file name+section ID
-        local new_buf = vim.api.nvim_create_buf(true, false)
-        load_doc_in_buffer(new_buf, data_folder() .. components[1] .. "#" .. components[2] .. ".html.md")
-        buf_view_switch_to_new(new_buf)
-        vim.cmd("/" .. components[3])
-        -- put the match at the top of the screen, then scroll up one line <C-y>
-        vim.cmd("norm! zt | ")
-      elseif #components == 4 then
-        -- file name with two hashes+section ID (happens for lua)
-        local new_buf = vim.api.nvim_create_buf(true, false)
-        load_doc_in_buffer(
-          new_buf,
-          data_folder() .. components[1] .. "#" .. components[2] .. "#" .. components[3] .. ".html.md"
-        )
-        buf_view_switch_to_new(new_buf)
-        vim.cmd("/" .. components[4])
-        -- put the match at the top of the screen, then scroll up one line <C-y>
-        vim.cmd("norm! zt | ")
+      local file, section = split_local_target(target, function(f)
+        return vim.fn.filereadable(data_folder() .. f .. ".html.md") == 1
+      end)
+      local new_buf = vim.api.nvim_create_buf(true, false)
+      load_doc_in_buffer(new_buf, data_folder() .. file .. ".html.md")
+      buf_view_switch_to_new(new_buf)
+      if section then
+        find_section(section)
       end
     end
   end, { buf = buf })
@@ -130,4 +143,6 @@ return {
   open_doc_in_cur_window = open_doc_in_cur_window,
   open_doc_in_new_window = open_doc_in_new_window,
   filename_to_display = filename_to_display,
+  split_local_target = split_local_target,
+  find_section = find_section,
 }
