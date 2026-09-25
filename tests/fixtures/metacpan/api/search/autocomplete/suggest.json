@@ -1,0 +1,5 @@
+{"suggestions":[
+ {"author":"ALICE","date":"2026-01-02T00:00:00","deprecated":false,"distribution":"Demo-Dist","name":"Demo::Dist","release":"Demo-Dist-1.02"},
+ {"author":"ALICE","date":"2026-01-02T00:00:00","deprecated":false,"distribution":"Demo-Dist","name":"Demo::Dist::Util","release":"Demo-Dist-1.02"},
+ {"author":"BOB","date":"2025-05-05T00:00:00","deprecated":false,"distribution":"Demo-Extra","name":"Demo::Extra","release":"Demo-Extra-0.001_002"}
+]}

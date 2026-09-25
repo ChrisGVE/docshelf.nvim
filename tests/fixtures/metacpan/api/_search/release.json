@@ -1,0 +1,4 @@
+{"hits":{"total":2,"hits":[
+ {"_source":{"name":"Demo-Dist-1.02","author":"MALLORY","authorized":false}},
+ {"_source":{"name":"Demo-Dist-1.02","author":"ALICE","authorized":true}}
+]}}
