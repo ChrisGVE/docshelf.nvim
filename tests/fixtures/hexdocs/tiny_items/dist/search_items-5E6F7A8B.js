@@ -1,0 +1,1 @@
+searchNodes=[{"ref":"tiny_erl.html","title":"tiny_erl","type":"module","doc":"An Erlang module."},{"ref":"tiny_erl.html#hello-1","title":"tiny_erl.hello/1","type":"function","doc":"Uses \#{name} in a string."}]
