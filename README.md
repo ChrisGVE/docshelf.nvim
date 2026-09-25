@@ -11,7 +11,8 @@ Documentation comes from several places: the whole [devdocs.io](https://devdocs.
 catalogue, Haskell packages from Hackage, Rust crates from docs.rs, any Sphinx site (Python
 and much of the scientific stack), Go modules from pkg.go.dev, any DocC site, Apple's own
 developer documentation included, Dash docsets, Kapeli's own and the user-contributed
-ones, and Elixir, Erlang and Gleam packages from hexdocs.pm. Every docset knows its language, so a Rust session and a Python session can each
+ones, Elixir, Erlang and Gleam packages from hexdocs.pm, and Odin's standard library and
+vendor bindings from pkg.odin-lang.org. Every docset knows its language, so a Rust session and a Python session can each
 narrow the pickers to what they need.
 
 docshelf.nvim began as a fork of Emmanuel Touzery's
@@ -189,6 +190,28 @@ A docset installs as `<name>~<version>~~hexdocs.pm` (`jason~1.4.5~~hexdocs.pm`).
 search nor the package record says which language a package is written in, so the docs are
 asked: Gleam's index names it, and ExDoc links a stylesheet per language. `jason` is Elixir,
 `telemetry` Erlang, `gleam_stdlib` Gleam.
+
+### pkg.odin-lang.org
+
+`pkg.odin-lang.org` documents the packages that ship with the Odin compiler. Odin has no
+package manager, so there is nothing to search: the source offers two docsets, and typing
+`odin` in the install picker lists both. `odin` is the `base` and `core` collections -- the
+standard library, and so Odin's reference -- and `odin_vendor` the `vendor` bindings (raylib,
+SDL, Vulkan, ...). Picking one reads the version the site documents from the first line of its
+catalogue, a few hundred bytes.
+
+The site's own search data lists every package and every declaration in it, so each package
+is an entry named by its import path (`encoding/json`) and each declaration one qualified by
+it (`encoding/json.marshal`), typed as a procedure, type, constant and so on. An install then
+fetches a page per package -- 180 for `odin`, 56 for `odin_vendor` in September 2026 -- and
+keeps the documentation only. A link to a package the docset does not hold (from `core` to
+`vendor`, say) goes to its page on the site. These are large docsets: `odin` is about 70,000
+entries and 350 MB on disk, and took twenty minutes to install on an M-series Mac, nearly all
+of it converting pages; `odin_vendor` is about 29,000 entries, 145 MB and ten minutes.
+
+A docset installs as `odin~<version>~~pkg.odin-lang.org` (`odin~dev-2026-09~~pkg.odin-lang.org`).
+The site only documents the newest build, so an install always holds today's version, and
+`DocshelfUpdate` compares that with the version in the docset's name.
 
 ## Dependencies
 

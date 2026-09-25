@@ -429,6 +429,24 @@ hexdocs.pm ~
 	from the docs: Gleam's index names it, and ExDoc links a stylesheet
 	per language. `jason` is Elixir, `telemetry` Erlang, `gleam_stdlib`
 	Gleam.
+pkg.odin-lang.org ~
+	The packages that ship with the Odin compiler. Odin has no package
+	manager, so there is nothing to search: typing `odin` offers two
+	docsets. `odin` is the `base` and `core` collections — the standard
+	library, and so Odin's reference — and `odin_vendor` the `vendor`
+	bindings (raylib, SDL, Vulkan, …). Picking one reads the version the
+	site documents from the first line of its catalogue.
+
+	Each package is an entry named by its import path (`encoding/json`),
+	each declaration one qualified by it (`encoding/json.marshal`). An
+	install fetches a page per package (180 for `odin`, 56 for
+	`odin_vendor` in September 2026). A link to a package the docset does
+	not hold goes to its page on the site. Both are large: `odin` is about
+	70,000 entries and 350 MB, twenty minutes to install on an M-series
+	Mac; `odin_vendor` about 29,000 entries, 145 MB and ten minutes.
+
+	Installs as `odin~<version>~~pkg.odin-lang.org`. The site only
+	documents the newest build, so an install holds today's version.
 
 ==============================================================================
 6. KEEPING DOCS CURRENT					*docshelf-updating*
