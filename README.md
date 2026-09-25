@@ -10,8 +10,8 @@ have installed are local operations: nothing is fetched while you read.
 Documentation comes from several places: the whole [devdocs.io](https://devdocs.io/)
 catalogue, Haskell packages from Hackage, Rust crates from docs.rs, any Sphinx site (Python
 and much of the scientific stack), Go modules from pkg.go.dev, any DocC site, Apple's own
-developer documentation included, and Dash docsets, Kapeli's own and the user-contributed
-ones. Every docset knows its language, so a Rust session and a Python session can each
+developer documentation included, Dash docsets, Kapeli's own and the user-contributed
+ones, and Elixir, Erlang and Gleam packages from hexdocs.pm. Every docset knows its language, so a Rust session and a Python session can each
 narrow the pickers to what they need.
 
 docshelf.nvim began as a fork of Emmanuel Touzery's
@@ -78,7 +78,8 @@ first letter. Pickers other than snacks have no live input to drive this and kee
 the catalogue alone.
 
 Narrow the picker to one or more languages -- both the devdocs rows and the registries, which
-declare the language they document; Dash, which spans every language, is left out -- with:
+declare the language they document (hexdocs.pm declares Elixir, Erlang and Gleam, and is asked
+for any of them); Dash, which spans every language, is left out -- with:
 
 ```lua
 :lua require("docshelf").docshelf_install({languages = {Haskell = true}})
@@ -167,6 +168,28 @@ and a Lua filter pulls it in. A name that is no language (`HAProxy_Lua`) is Unkn
 give it one. An archive has no website behind it, so a link to a page the docset does not
 hold keeps its text and loses the link.
 
+### hexdocs.pm
+
+`hexdocs.pm` documents a package from hex.pm, the registry Elixir, Erlang and Gleam share.
+hex.pm keeps each release's documentation as one tarball, so an install is a single request
+(read with `tar`). Its pages are the ones hexdocs.pm serves, minus the sidebar, the search bar,
+the footer and the link and source icons; its entries are what the package's own search index
+lists -- every module, function, type, callback and guide, and the sections inside them
+(`Examples - Jason.decode/2`). That index has changed shape over the years, and every shape
+is read, back to packages built in 2017. A link to another package's docs goes to that
+package's page on hexdocs.pm, at the version it was built against.
+
+It answers the install picker's search: type three letters of a package name and its hex.pm
+matches join the list, most downloaded first (hex.pm's search has no order of relevance),
+each carrying the version that will be installed -- the newest stable release that has
+documentation. A package with none, such as one documented only on its own site, is not
+offered.
+
+A docset installs as `<name>~<version>~~hexdocs.pm` (`jason~1.4.5~~hexdocs.pm`). Neither the
+search nor the package record says which language a package is written in, so the docs are
+asked: Gleam's index names it, and ExDoc links a stylesheet per language. `jason` is Elixir,
+`telemetry` Erlang, `gleam_stdlib` Gleam.
+
 ## Dependencies
 
 This plugin requires:
@@ -176,7 +199,7 @@ This plugin requires:
 - the <https://github.com/rkd77/elinks> elinks TUI browser, to convert HTML
 - ripgrep
 - curl
-- tar and sqlite3, for Dash docsets
+- tar, for Dash docsets and hexdocs.pm; sqlite3, for Dash docsets
 - linux and probably OSX. Windows will not work, except maybe using WSL
 - treesitter for html and markdown_inline, easiest way to get them is via [treesitter.nvim](https://github.com/nvim-treesitter/nvim-treesitter) plugin
 

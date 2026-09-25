@@ -38,8 +38,10 @@ Required:
 	- curl		to fetch the docsets
 	- tree-sitter parsers for `html` and `markdown_inline`
 
-For Dash docsets only (|docshelf-source-list|):
-	- tar and sqlite3
+For Dash docsets and hexdocs.pm (|docshelf-source-list|):
+	- tar
+For Dash docsets only:
+	- sqlite3
 
 One picker, either one:
 	- telescope.nvim
@@ -306,7 +308,8 @@ catalogue alone.
                                                    *docshelf-source-languages*
 The install picker can be narrowed to one or more languages — the devdocs
 rows and the registries alike, since a registry declares what language it
-documents. Dash, which spans every language, is left out: >lua
+documents (hexdocs.pm declares Elixir, Erlang and Gleam, and is asked for
+any of them). Dash, which spans every language, is left out: >lua
 	require("docshelf").docshelf_install({
 	  languages = { Haskell = true },
 	})
@@ -405,6 +408,27 @@ kapeli.com, contrib.kapeli.com ~
 
 	Installs as `<name>~<version>~~kapeli.com` or
 	`~~contrib.kapeli.com`.
+hexdocs.pm ~
+	A package from hex.pm, the registry Elixir, Erlang and Gleam share.
+	hex.pm keeps each release's documentation as one tarball, so an
+	install is a single request, read with `tar`. The pages are the ones
+	hexdocs.pm serves, minus sidebar, search bar, footer and icons; the
+	entries are what the package's own search index lists — modules,
+	functions, types, callbacks, guides, and the sections inside them
+	(`Examples - Jason.decode/2`). Every shape that index has had is
+	read, back to packages built in 2017. A link to another package goes
+	to its page on hexdocs.pm, at the version it was built against.
+
+	It answers the install picker's search: three letters of a package
+	name and its hex.pm matches join the list, most downloaded first
+	(hex.pm's search has no order of relevance), each carrying the
+	version that will be installed — the newest stable release with
+	documentation. A package with none is not offered.
+
+	Installs as `<name>~<version>~~hexdocs.pm`. Its language is read
+	from the docs: Gleam's index names it, and ExDoc links a stylesheet
+	per language. `jason` is Elixir, `telemetry` Erlang, `gleam_stdlib`
+	Gleam.
 
 ==============================================================================
 6. KEEPING DOCS CURRENT					*docshelf-updating*
