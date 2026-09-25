@@ -325,13 +325,17 @@ function readers.scaladoc2(dir)
         if type(entity[kind]) == "string" then
           items[#items + 1] = { name = entity.name, page = entity[kind], type = kind_name(kind) }
           for _, member in ipairs(entity["members_" .. kind] or {}) do
-            local page, anchor = member.link:match("^([^#]*)#?(.*)$")
-            items[#items + 1] = {
-              name = last_segment(entity.name) .. "." .. member.label,
-              page = page,
-              anchor = anchor ~= "" and anchor or nil,
-              type = kind_name(member.kind or ""),
-            }
+            -- scaladoc lists what it cannot render (constructors) as
+            -- {member, error = "unsupported entity"}: no link, no label
+            if type(member.link) == "string" and type(member.label) == "string" then
+              local page, anchor = member.link:match("^([^#]*)#?(.*)$")
+              items[#items + 1] = {
+                name = last_segment(entity.name) .. "." .. member.label,
+                page = page,
+                anchor = anchor ~= "" and anchor or nil,
+                type = kind_name(member.kind or ""),
+              }
+            end
           end
         end
       end
