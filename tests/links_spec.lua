@@ -88,6 +88,13 @@ test("rewrite_html turns a dropped link into plain text", function()
   eq(links.rewrite_html('<p><a href="gone.html">gone</a></p>', { dir = "", known = {} }), "<p>gone</p>")
 end)
 
+test("rewrite_html turns a link to the page holding it into plain text", function()
+  -- scaladoc links a type's name to its own page with href="", which elinks
+  -- reads as the docset folder; in a buffer there is nowhere to go
+  eq(links.rewrite_html('<p><a href="" class="extype">OptionT</a></p>', site), "<p>OptionT</p>")
+  eq(links.rewrite_html('<p><A HREF="">OptionT</A></p>', site), "<p>OptionT</p>")
+end)
+
 test("rewrite_html reads attribute and tag names in any case, as HTML does", function()
   -- the Lua manual's contents page writes <A HREF="manual.html#2.4">
   eq(

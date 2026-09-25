@@ -97,13 +97,14 @@ function M.rewrite(href, opts)
 end
 
 --- Rewrite every `href` and `src` in `html` (see `rewrite`). An `<a>` whose
---- link goes nowhere keeps its text and loses the tag; a `src` that goes
---- nowhere is removed.
+--- link goes nowhere keeps its text and loses the tag, and so does one linking
+--- to the page holding it (`href=""`, which elinks reads as the docset
+--- folder); a `src` that goes nowhere is removed.
 function M.rewrite_html(html, opts)
   -- HTML names tags and attributes in any case: older pages write <A HREF>
   html = html:gsub("(<[aA]%s[^>]*>)(.-)</[aA]>", function(open, text)
     local href = open:match('%s[hH][rR][eE][fF]="([^"]*)"')
-    if href and M.rewrite(href, opts) == nil then
+    if href and (href == "" or M.rewrite(href, opts) == nil) then
       return text
     end
     return nil

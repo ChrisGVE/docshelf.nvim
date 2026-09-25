@@ -380,9 +380,6 @@ local function clean_page(html)
   body = body:gsub('<span id="[^"]*"></span>', "")
   -- a heading that is a link to itself (Gleam) is just its text
   body = body:gsub('(<h%d[^>]*>)%s*<a href="#[^"]*">(.-)</a>', "%1%2")
-  -- so is a link to the page holding it (TypeDoc's, in phoenix's JS docs):
-  -- elinks would turn href="" into a link to the docset folder
-  body = body:gsub('<a href=""[^>]*>(.-)</a>', "%1")
   return body
 end
 
