@@ -516,6 +516,24 @@ crystal-lang.org ~
 	M-series Mac.
 
 	Installs as `crystal~<version>~~crystal-lang.org`.
+Documenter sites ~
+	Julia packages, from the site each one publishes with Documenter.jl.
+	Typing part of a name searches the General registry; a pick reads
+	the package's GitHub Pages site (`<owner>.github.io/<Package>.jl/
+	stable/`, redirected to its own domain where it has one). A package
+	documented elsewhere (Plots, Makie) is installed by pasting the
+	address of any page of its documentation, as for a Sphinx site.
+	Julia's own manual is on devdocs.
+
+	An install reads the site's search index, then fetches a page per
+	page. Every page, section and docstring is an entry, typed as
+	function, method, type, macro, constant, keyword or module; each
+	method of a function is its own entry. A link to a page the docset
+	holds names it; any other goes back to the site. DataFrames 1.8.2 is
+	2.7 MB and 19 seconds on an M-series Mac.
+
+	Installs as `<Package>~<version>~~documenter`. The site is remembered
+	in `.documenter_sites.json`, so an update asks it again.
 
 ==============================================================================
 6. KEEPING DOCS CURRENT					*docshelf-updating*

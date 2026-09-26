@@ -13,8 +13,8 @@ and much of the scientific stack), Go modules from pkg.go.dev, any DocC site, Ap
 developer documentation included, Dash docsets, Kapeli's own and the user-contributed
 ones, Elixir, Erlang and Gleam packages from hexdocs.pm, Odin's standard library and
 vendor bindings from pkg.odin-lang.org, Perl distributions from MetaCPAN, Java,
-Kotlin and Scala libraries from Maven Central, Ruby gems from gemdocs.org, and Crystal's
-standard library from crystal-lang.org. Every docset knows its language, so a Rust session and a Python session can each
+Kotlin and Scala libraries from Maven Central, Ruby gems from gemdocs.org, Crystal's
+standard library from crystal-lang.org, and Julia packages from their Documenter.jl sites. Every docset knows its language, so a Rust session and a Python session can each
 narrow the pickers to what they need.
 
 docshelf.nvim began as a fork of Emmanuel Touzery's
@@ -297,6 +297,32 @@ an M-series Mac, nearly all of it converting pages.
 
 A docset installs as `crystal~<version>~~crystal-lang.org` (`crystal~1.21.0~~crystal-lang.org`),
 and `DocshelfUpdate` compares the version with the newest release.
+
+### Documenter sites (Julia)
+
+Julia packages are registered in the General registry, but each one publishes its
+documentation on a site of its own, nearly always built with Documenter.jl. Type part of a
+package's name in the install picker and the registry's names are searched; picking one reads
+the site Documenter deploys by default, the repository's GitHub Pages
+(`https://<owner>.github.io/<Package>.jl/stable/`, which redirects to the project's own domain
+where it has one). A package documented somewhere else -- Plots and Makie are -- is reached the
+way a Sphinx site is: paste the address of any page of its documentation into the install
+picker, and the row shows the package, its version and how many pages the install will fetch.
+Julia's own manual is on devdocs.
+
+An install reads the site's search index, one file naming every page, section and docstring,
+then fetches a page per page. Every page is an entry, and so is every section and every
+docstring (`DataFrames.innerjoin`, `Base.:-`), typed by what it documents: function, method,
+type, macro, constant, keyword or module. Each method of a function is its own entry, landing
+on its own docstring. A link to a page the docset holds names that page; any other goes back
+to the site. DataFrames 1.8.2 is 20 pages and 287 entries, 2.7 MB and 19 seconds to install
+on an M-series Mac; Julia's manual, typed as `https://docs.julialang.org/en/v1/`, is 158 pages
+and about 4,150 entries.
+
+A docset installs as `<Package>~<version>~~documenter` (`DataFrames~1.8.2~~documenter`), named
+for the version the site was built for. The site it came from is remembered in the data
+folder's `.documenter_sites.json`, and `DocshelfUpdate` asks that site which version it holds
+now.
 
 ## Dependencies
 
