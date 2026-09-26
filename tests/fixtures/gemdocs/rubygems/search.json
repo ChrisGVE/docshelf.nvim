@@ -1,0 +1,20 @@
+[
+ {
+  "name": "noko",
+  "version": "2.1.0",
+  "downloads": 19246,
+  "info": "Ruby client for the Noko API"
+ },
+ {
+  "name": "noko_builder",
+  "version": "0.1.1",
+  "downloads": 7947,
+  "info": "a gem that lets you add overwriteable values and attributes to the xmls you build"
+ },
+ {
+  "name": "nokogiri",
+  "version": "1.19.4",
+  "downloads": 1268110492,
+  "info": "Nokogiri (\u92f8) makes it easy and painless to work with XML and HTML from Ruby. It provides a\nsensible, easy-to-understand API for reading, writing, modifying, and querying documents. It is\nfast and standards-compliant by relying on native parsers like libxml2, libgumbo, or xerces.\n"
+ }
+]

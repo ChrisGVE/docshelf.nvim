@@ -71,6 +71,7 @@ test("origins are listed in a stable order, shipped sources included", function(
     "docc",
     "docs.rs",
     "example.org",
+    "gemdocs.org",
     "hackage.haskell.org",
     "hexdocs.pm",
     "kapeli.com",
