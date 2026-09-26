@@ -119,6 +119,19 @@ test("a download size is asked for once per row, and kept once known", function(
   eq(sizes:claim({ name = "Lua", origin = "contrib.kapeli.com" }), true)
 end)
 
+test("a registry row's language is the one its source declares", function()
+  eq(pick.row_language({ name = "aeson" }, { language = "Haskell" }), "Haskell")
+end)
+
+test("a catalogue row's language comes from its name, as it will once installed", function()
+  eq(pick.row_language({ name = "C++" }, { catalogue = true }), "C++")
+  eq(pick.row_language({ name = "HAProxy_Lua" }, { catalogue = true }), "")
+end)
+
+test("a row from no known source has no language", function()
+  eq(pick.row_language({ name = "x" }, nil), "")
+end)
+
 test("a row found by URL survives an order that the typed URL cannot match", function()
   local url_row = pick.registry_row({ name = "numpy", version = "2.5", origin = "sphinx", url = "https://x/" })
   local other = { text = "numpy~2.4" }
