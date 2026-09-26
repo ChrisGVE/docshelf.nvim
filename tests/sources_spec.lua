@@ -66,6 +66,7 @@ test("origins are listed in a stable order, shipped sources included", function(
   sources.register(example)
   eq(sources.origins(), {
     "central.sonatype.com",
+    "cljdoc.org",
     "contrib.kapeli.com",
     "crystal-lang.org",
     "devdocs.io",
