@@ -93,6 +93,32 @@ test("a row found by URL shows its page count and keeps the name matchable", fun
   eq(row.always, true)
 end)
 
+test("a download size reads in bytes, kilobytes, megabytes or gigabytes", function()
+  eq(pick.size_text(512), "512 B")
+  eq(pick.size_text(236609), "237 KB")
+  eq(pick.size_text(2400000), "2.4 MB")
+  eq(pick.size_text(173140596), "173 MB")
+  eq(pick.size_text(1250000000), "1.3 GB")
+end)
+
+test("a row with a known download size shows it and keeps the name matchable", function()
+  local row = pick.registry_row({ name = "C++", origin = "kapeli.com", size = 173140596 })
+  eq(row.label, "C++ · 173 MB")
+  eq(row.text, "C++")
+end)
+
+test("a download size is asked for once per row, and kept once known", function()
+  local sizes = pick.sizes()
+  local row = { name = "Lua", origin = "kapeli.com" }
+  eq(sizes:claim(row), true)
+  eq(sizes:claim(row), false)
+  eq(sizes:get(row), nil)
+  sizes:set(row, 236609)
+  eq(sizes:get({ name = "Lua", origin = "kapeli.com" }), 236609)
+  -- the same name from the other catalogue is another archive
+  eq(sizes:claim({ name = "Lua", origin = "contrib.kapeli.com" }), true)
+end)
+
 test("a row found by URL survives an order that the typed URL cannot match", function()
   local url_row = pick.registry_row({ name = "numpy", version = "2.5", origin = "sphinx", url = "https://x/" })
   local other = { text = "numpy~2.4" }

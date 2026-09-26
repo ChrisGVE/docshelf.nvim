@@ -99,6 +99,10 @@ local function runner(opts)
     if opts.down then
       return { code = 22, stdout = "" }
     end
+    if cmd[2] == "-sfIL" then
+      -- a HEAD request: the headers of every response, redirects first
+      return { code = opts.headers and 0 or 22, stdout = opts.headers or "" }
+    end
     if url == "https://api.github.com/repos/Kapeli/feeds/contents/" then
       return { code = 0, stdout = listing }
     elseif url == "https://raw.githubusercontent.com/Kapeli/feeds/master/Lua.xml" then
@@ -193,6 +197,25 @@ test("a catalogue that cannot be fetched is an error", function()
   eq(ok, false)
 end)
 
+test("a feed's size is what its archive's address answers a HEAD with", function()
+  local system, seen = runner({ headers = "HTTP/2 200\r\ncontent-length: 236609\r\n\r\n" })
+  eq(dash.size("Lua", system), 236609)
+  -- one request, and not for the feed: the current archive's address is known
+  eq(#seen, 1)
+  eq(seen[1], { "curl", "-sfIL", "https://kapeli.com/feeds/Lua.tgz" })
+end)
+
+test("a size behind a redirect is the last response's", function()
+  local headers = "HTTP/1.1 302 Found\r\nContent-Length: 0\r\nLocation: x\r\n\r\n"
+    .. "HTTP/2 200\r\nContent-Length: 173140596\r\n\r\n"
+  eq(dash.size("C++", runner({ headers = headers })), 173140596)
+end)
+
+test("an archive that does not answer, or names no length, has no size", function()
+  eq(dash.size("Lua", runner()), nil)
+  eq(dash.size("Lua", runner({ headers = "HTTP/2 200\r\n\r\n" })), nil)
+end)
+
 -- The user-contributed feeds ----------------------------------------------------
 
 test("user-contributed docsets install under contrib.kapeli.com", function()
@@ -243,6 +266,16 @@ test("the same name in both feeds stays two docsets", function()
   -- Swift and Xojo are in both; the origin keeps them apart
   eq(dash.origin ~= contrib.origin, true)
   eq(contrib.resolve("Swift", runner()), "Swift~5.1")
+end)
+
+test("a contributed docset's size is its current archive's", function()
+  local system, _, urls = runner({ headers = "HTTP/2 200\r\ncontent-length: 298000000\r\n\r\n" })
+  eq(contrib.size("Jest", system), 298000000)
+  eq(urls[#urls], "https://kapeli.com/feeds/zzz/user_contributed/build/Jest/Jest.tgz")
+end)
+
+test("a contributed docset that is not in the catalogue has no size", function()
+  eq(contrib.size("Nope", runner({ headers = "HTTP/2 200\r\ncontent-length: 1\r\n\r\n" })), nil)
 end)
 
 -- Both ----------------------------------------------------------------------------
