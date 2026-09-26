@@ -198,8 +198,11 @@ test("every class and module is an entry, keyed by its page", function()
   eq(entries["Demo/Set"], { name = "Demo::Set", path = "Demo/Set", type = "Classes" })
 end)
 
-test("the top-level namespace is not an entry", function()
-  eq(entries_of()["top-level-namespace"], nil)
+test("every page is an entry, the top-level namespace too", function()
+  -- the installer resolves a link to "Page#anchor" through the page's entry
+  local entries = entries_of()
+  eq(entries["top-level-namespace"], { name = "Top Level Namespace", path = "top-level-namespace", type = "Modules" })
+  eq(entries["Object/Extra"], { name = "Object::Extra", path = "Object/Extra", type = "Modules" })
 end)
 
 test("every method is an entry named as YARD names it", function()
@@ -240,7 +243,7 @@ end)
 test("every page an entry names is kept, a missing one skipped", function()
   local keys = vim.tbl_keys(db_of())
   table.sort(keys)
-  eq(keys, { "Demo", "Demo/Set", "index" })
+  eq(keys, { "Demo", "Demo/Set", "Object/Extra", "index", "top-level-namespace" })
 end)
 
 test("pages are fetched in one batch, in parallel where curl can", function()

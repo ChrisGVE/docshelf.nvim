@@ -125,9 +125,13 @@ local function read_type(t, key, entries, names)
   local program = t.program == true
   -- "Array(T)" is typed "Array"; the top level has no name of its own
   local name = program and "" or t.full_name:gsub("%b()", "")
-  if not program then
-    entries[#entries + 1] = { name = name, path = key, type = type_kinds[t.kind] or "Types" }
-  end
+  -- every page is an entry, the top level's too: the installer finds where a
+  -- link to "toplevel#STDOUT" goes through the entry of its page
+  entries[#entries + 1] = {
+    name = program and t.full_name or name,
+    path = key,
+    type = type_kinds[t.kind] or "Types",
+  }
   local function add(entry_name, id, entry_type)
     local anchor = anchors.hex_id(id)
     names[key][anchor] = names[key][anchor] or entry_name

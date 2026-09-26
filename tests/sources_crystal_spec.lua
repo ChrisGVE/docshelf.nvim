@@ -179,9 +179,10 @@ test("every type is an entry, named without its type parameters", function()
   eq(entries["Signal"].type, "Enums")
 end)
 
-test("the top level is not an entry, its members are, unprefixed", function()
+test("the top level is an entry, and its members, unprefixed", function()
   local entries = entries_of()
-  eq(entries["toplevel"], nil)
+  -- the installer resolves a link to "toplevel#ARGV" through this entry
+  eq(entries["toplevel"], { name = "Top Level Namespace", path = "toplevel", type = "Modules" })
   eq(entries["toplevel#" .. hex("puts(*objects):Nil-class-method")].name, "puts(*objects)")
   eq(entries["toplevel#" .. hex("record(__name,*properties,**kwargs,&block)-macro")], {
     name = "record(__name, *properties, **kwargs, &block)",

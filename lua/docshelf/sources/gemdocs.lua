@@ -134,7 +134,7 @@ local function member_type(anchor)
   return "Methods"
 end
 
-local object_types = { class = "Classes", module = "Modules" }
+local object_types = { class = "Classes", module = "Modules", root = "Modules" }
 
 -- ------------------------------------------------------------ the lists
 
@@ -212,6 +212,18 @@ local function read_gem(docset, system, report)
       add_page(key)
       names[key][id] = names[key][id] or method.name
       entries[#entries + 1] = { name = method.name, path = key .. "#" .. id, type = member_type(anchor) }
+    end
+  end
+  -- every page is an entry: the installer finds where a link to
+  -- "Page#anchor" goes through the entry of its page, so a page holding
+  -- methods but missing from the class list gets one named by its path
+  local has_entry = {}
+  for _, entry in ipairs(entries) do
+    has_entry[entry.path] = true
+  end
+  for key in pairs(pages) do
+    if not has_entry[key] then
+      entries[#entries + 1] = { name = (key:gsub("/", "::")), path = key, type = "Modules" }
     end
   end
   for _, file in ipairs(lists.file_list) do
