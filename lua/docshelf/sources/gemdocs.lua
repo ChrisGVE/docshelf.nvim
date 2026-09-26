@@ -29,8 +29,7 @@
 --
 -- YARD's ids hold Ruby's operator names ("&-instance_method",
 -- "[]=-instance_method", "--instance_method" for "-"). Every id is made plain
--- by a rule that keeps two operators apart: a character that is not a letter,
--- digit, "_" or "-" is written "." and its two hex digits ("&" is ".26").
+-- by `anchors.hex_id`, which keeps two operators apart ("&" is ".26").
 local anchors = require("docshelf.anchors")
 local fetching = require("docshelf.fetch")
 local html_text = require("docshelf.html")
@@ -117,23 +116,7 @@ end
 
 -- ------------------------------------------------------------- the ids
 
-local function url_decode(text)
-  return (text:gsub("%%(%x%x)", function(hex)
-    return string.char(tonumber(hex, 16))
-  end))
-end
-
---- An id as plain text: decoded as a link and as HTML would write it, then
---- every character that is not a letter, digit, "_" or "-" written "." and
---- its two hex digits. "&" and "-" stay apart ("..26-instance_method" is
---- never "--instance_method"), and a link meets the id it names.
-local function plain_id(id)
-  return (
-    html_text.decode_entities(url_decode(id)):gsub("[^%w_%-]", function(char)
-      return string.format(".%02X", char:byte())
-    end)
-  )
-end
+local plain_id = anchors.hex_id
 
 -- What YARD calls a member, by the end of its anchor, in the pickers' words.
 local member_types = {

@@ -8,7 +8,29 @@
 --- something else. So every id is made plain text by the source's own rule,
 --- every link's anchor with it, and a heading naming the entry is put before
 --- each anchor an entry lands on.
+local html_text = require("docshelf.html")
+
 local M = {}
+
+local function url_decode(text)
+  return (text:gsub("%%(%x%x)", function(hex)
+    return string.char(tonumber(hex, 16))
+  end))
+end
+
+--- An id as plain text that keeps every id distinct: decoded as a link and
+--- as HTML would write it, then every character that is not a letter, digit,
+--- "_" or "-" written "." and its two hex digits. Operators stay apart
+--- (Ruby's "&-instance_method" is ".26-instance_method", never the
+--- "--instance_method" of "-"), and a link meets the id it names.
+---@param id string
+function M.hex_id(id)
+  return (
+    html_text.decode_entities(url_decode(id)):gsub("[^%w_%-]", function(char)
+      return string.format(".%02X", char:byte())
+    end)
+  )
+end
 
 local function escape(text)
   return (text:gsub('[&<>"]', { ["&"] = "&amp;", ["<"] = "&lt;", [">"] = "&gt;", ['"'] = "&quot;" }))

@@ -58,5 +58,22 @@ test("a link to another site keeps its anchor", function()
   eq(anchors.plain_fragments(html, plain), html)
 end)
 
+test("a hex id keeps letters, digits, _ and -, and writes anything else in hex", function()
+  eq(anchors.hex_id("css-instance_method"), "css-instance_method")
+  eq(anchors.hex_id("&-instance_method"), ".26-instance_method")
+  eq(anchors.hex_id("&amp;-instance_method"), ".26-instance_method")
+  eq(anchors.hex_id("%5B%5D-instance_method"), ".5B.5D-instance_method")
+  eq(anchors.hex_id("a.b"), "a.2Eb")
+end)
+
+test("two operators never share a hex id", function()
+  local ids = {}
+  for _, op in ipairs({ "&", "-", "|", "^", "+", "[]", "[]=", "==", "===", "=~", "<=>", "<<", "-@", "!", "!=", ".", ".2E" }) do
+    local id = anchors.hex_id(op)
+    eq(ids[id], nil)
+    ids[id] = op
+  end
+end)
+
 print(failures == 0 and "all passed" or (failures .. " failed"))
 os.exit(failures == 0 and 0 or 1)
