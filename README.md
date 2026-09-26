@@ -14,8 +14,8 @@ developer documentation included, Dash docsets, Kapeli's own and the user-contri
 ones, Elixir, Erlang and Gleam packages from hexdocs.pm, Odin's standard library and
 vendor bindings from pkg.odin-lang.org, Perl distributions from MetaCPAN, Java,
 Kotlin and Scala libraries from Maven Central, Ruby gems from gemdocs.org, Crystal's
-standard library from crystal-lang.org, Julia packages from their Documenter.jl sites, and
-OCaml packages from ocaml.org. Every docset knows its language, so a Rust session and a Python session can each
+standard library from crystal-lang.org, Julia packages from their Documenter.jl sites,
+OCaml packages from ocaml.org, and Clojure libraries from cljdoc.org. Every docset knows its language, so a Rust session and a Python session can each
 narrow the pickers to what they need.
 
 docshelf.nvim began as a fork of Emmanuel Touzery's
@@ -347,6 +347,28 @@ for the version the site was built for. The site it came from is remembered in t
 folder's `.documenter_sites.json`, and `DocshelfUpdate` asks that site which version it holds
 now.
 
+### cljdoc.org
+
+`cljdoc.org` documents Clojure and ClojureScript libraries from Clojars and Maven Central.
+It answers the install picker's search: type three letters and the libraries cljdoc finds
+join the list, best match first, named `artifact@group` (`ring-core@ring`), because the
+same artifact name can live in several groups. A row carries no version: the pick installs
+the version cljdoc shows by default, which is not always the newest release. A version
+cljdoc has not built yet cannot be installed; asking for it at cljdoc.org starts a build.
+
+An install is two requests: cljdoc's search set, naming everything the library documents,
+and its offline bundle, the whole documentation as one zip (read with `unzip`). Every
+namespace is an entry (`ring.util.response`), and so is every var, macro, protocol and
+multimethod, named the way Clojure writes it (`ring.util.response/redirect`,
+`clojure.core.async/>!`), every protocol method, and every article with each of its
+sections. The raw docstring cljdoc keeps beside each rendered one is left out. A link to a
+page the docset holds names that page; any other goes to cljdoc.org. malli 0.20.2 is about
+1,000 entries, 5 MB and 40 seconds to install on an M-series Mac.
+
+A docset installs as `<artifact>@<group>~<version>~~cljdoc.org`
+(`ring-core@ring~1.15.5~~cljdoc.org`), and `DocshelfUpdate` compares the version with the
+one cljdoc shows now.
+
 ## Dependencies
 
 This plugin requires:
@@ -357,7 +379,7 @@ This plugin requires:
 - ripgrep
 - curl
 - tar, for Dash docsets and hexdocs.pm; sqlite3, for Dash docsets
-- unzip, for docs.rs and Maven Central
+- unzip, for docs.rs, Maven Central and cljdoc.org
 - linux and probably OSX. Windows will not work, except maybe using WSL
 - treesitter for html and markdown_inline, easiest way to get them is via [treesitter.nvim](https://github.com/nvim-treesitter/nvim-treesitter) plugin
 

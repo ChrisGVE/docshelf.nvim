@@ -42,7 +42,7 @@ For Dash docsets and hexdocs.pm (|docshelf-source-list|):
 	- tar
 For Dash docsets only:
 	- sqlite3
-For docs.rs and Maven Central:
+For docs.rs, Maven Central and cljdoc.org:
 	- unzip
 
 One picker, either one:
@@ -552,6 +552,24 @@ Documenter sites ~
 
 	Installs as `<Package>~<version>~~documenter`. The site is remembered
 	in `.documenter_sites.json`, so an update asks it again.
+cljdoc.org ~
+	Clojure and ClojureScript libraries from Clojars and Maven Central.
+	Three letters and the libraries cljdoc finds join the list, named
+	`artifact@group` (`ring-core@ring`), without a version: a pick
+	installs the version cljdoc shows by default. A version cljdoc has
+	not built cannot be installed; asking for it at cljdoc.org starts a
+	build.
+
+	An install reads cljdoc's search set and its offline bundle, one zip
+	(read with `unzip`). Every namespace, var, macro, protocol, protocol
+	method and multimethod is an entry, named as Clojure writes it
+	(`ring.util.response/redirect`, `clojure.core.async/>!`); so is every
+	article and each of its sections. The raw docstrings are left out. A
+	link to a page the docset holds names it; any other goes to
+	cljdoc.org. malli 0.20.2 is about 1,000 entries, 5 MB and 40 seconds
+	on an M-series Mac.
+
+	Installs as `<artifact>@<group>~<version>~~cljdoc.org`.
 
 ==============================================================================
 6. KEEPING DOCS CURRENT					*docshelf-updating*
