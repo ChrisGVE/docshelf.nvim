@@ -13,7 +13,8 @@ and much of the scientific stack), Go modules from pkg.go.dev, any DocC site, Ap
 developer documentation included, Dash docsets, Kapeli's own and the user-contributed
 ones, Elixir, Erlang and Gleam packages from hexdocs.pm, Odin's standard library and
 vendor bindings from pkg.odin-lang.org, Perl distributions from MetaCPAN, Java,
-Kotlin and Scala libraries from Maven Central, and Ruby gems from gemdocs.org. Every docset knows its language, so a Rust session and a Python session can each
+Kotlin and Scala libraries from Maven Central, Ruby gems from gemdocs.org, and Crystal's
+standard library from crystal-lang.org. Every docset knows its language, so a Rust session and a Python session can each
 narrow the pickers to what they need.
 
 docshelf.nvim began as a fork of Emmanuel Touzery's
@@ -277,6 +278,25 @@ page the docset holds names that page; any other goes to gemdocs.org.
 A docset installs as `<gem>~<version>~~gemdocs.org` (`nokogiri~1.19.2~~gemdocs.org`), and
 `DocshelfUpdate` compares the version with the newest one gemdocs has built.
 
+
+### crystal-lang.org
+
+`crystal-lang.org` documents Crystal's standard library. Crystal has no central package
+registry, so there is one docset, `crystal`: type part of its name in the install picker and
+it is offered at the newest release. Named for the language, it becomes Crystal's reference.
+
+An install is the site's own index of the whole API, one file, then a page per type. Every
+type is an entry (`Array`, `Atomic::Flag`), and so is every constructor, class method and
+macro (`Array.new(initial_capacity : Int)`), every instance method (`Array#&(other :
+Array(U))`) and every constant (`Signal::INT`); each overload of a method is an entry of its
+own, named with its parameters. The top level's methods and macros (`puts`, `record`) are
+entries without a type. A link to a page the docset holds names that page; any other goes to
+crystal-lang.org.
+Crystal 1.21.0 is 734 pages and about 17,300 entries, 89 MB and nine minutes to install on
+an M-series Mac, nearly all of it converting pages.
+
+A docset installs as `crystal~<version>~~crystal-lang.org` (`crystal~1.21.0~~crystal-lang.org`),
+and `DocshelfUpdate` compares the version with the newest release.
 
 ## Dependencies
 

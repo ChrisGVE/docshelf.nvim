@@ -500,6 +500,22 @@ gemdocs.org ~
 	docset holds names it; any other goes to gemdocs.org.
 
 	Installs as `<gem>~<version>~~gemdocs.org`.
+crystal-lang.org ~
+	Crystal's standard library. Crystal has no central package registry,
+	so there is one docset, `crystal`, offered at the newest release and,
+	named for the language, Crystal's reference.
+
+	An install reads the site's index of the whole API, then fetches a
+	page per type. Every type is an entry (`Atomic::Flag`), and so is
+	every constructor, class method and macro (`Array.new(initial_capacity
+	: Int)`), instance method (`Array#&(other : Array(U))`) and constant
+	(`Signal::INT`); each overload is its own entry. The top level's
+	methods and macros (`puts`, `record`) have no type. A link to a page
+	the docset holds names it; any other goes to crystal-lang.org.
+	Crystal 1.21.0 is about 17,300 entries, 89 MB and nine minutes on an
+	M-series Mac.
+
+	Installs as `crystal~<version>~~crystal-lang.org`.
 
 ==============================================================================
 6. KEEPING DOCS CURRENT					*docshelf-updating*
