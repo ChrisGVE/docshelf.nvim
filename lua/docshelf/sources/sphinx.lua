@@ -506,7 +506,9 @@ local function name_the_anchors(html, names)
   )
 end
 
-local function clean_page(html, key, base, known, names)
+--- `served` is the path the page was fetched from: a dirhtml page
+--- ("guide/intro/") writes its links against its own folder.
+local function clean_page(html, key, base, known, names, served)
   local body = name_the_anchors(main_content(html), names)
   body = body
     :gsub("<script.-</script>", "")
@@ -521,7 +523,12 @@ local function clean_page(html, key, base, known, names)
   -- A link to another page of this docset becomes that page's key; anything
   -- else -- the theme's static files and images, a genindex, another site --
   -- becomes an address back on the site.
-  return links.rewrite_html(body, { dir = key:match("^(.*)/[^/]*$") or "", known = known, base = base })
+  return links.rewrite_html(body, {
+    dir = key:match("^(.*)/[^/]*$") or "",
+    from = served and served:match("/$") and served or nil,
+    known = known,
+    base = base,
+  })
 end
 
 function M.db(docset, _, system, report)
@@ -540,7 +547,7 @@ function M.db(docset, _, system, report)
     if file then
       local html = file:read("*a")
       file:close()
-      db[key] = clean_page(html, key, held.base, known, held.inventory.anchors[key])
+      db[key] = clean_page(html, key, held.base, known, held.inventory.anchors[key], held.inventory.pages[key])
     end
   end
   return db

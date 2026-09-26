@@ -317,6 +317,16 @@ test("a link to the page's own parent names that page", function()
   has(html, 'href="../guide"')
 end)
 
+test("a dirhtml page's links are read against its own folder", function()
+  -- Sphinx's dirhtml builder serves guide/intro as guide/intro/, so its
+  -- "../other/" is guide/other, not the top-level other
+  local known = { ["guide/intro"] = true, ["guide/other"] = true, ["other"] = true }
+  local html = internal.clean_page('<a href="../other/">o</a>', "guide/intro", site, known, nil, "guide/intro/")
+  has(html, 'href="other"')
+  local flat = internal.clean_page('<a href="../other.html">o</a>', "guide/intro", site, known, nil, "guide/intro.html")
+  has(flat, 'href="../other"')
+end)
+
 test("an address that is already absolute is left alone", function()
   local db = db_of()
   has(db["index"], 'href="https://example.com/"')
