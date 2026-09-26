@@ -516,6 +516,24 @@ crystal-lang.org ~
 	M-series Mac.
 
 	Installs as `crystal~<version>~~crystal-lang.org`.
+ocaml.org ~
+	OCaml packages: ocaml.org builds every opam package's documentation
+	with odoc. Three letters and the packages it finds join the list,
+	best match first, each with its newest version; a package without
+	documentation is left out. OCaml's standard library is on devdocs.
+
+	An install reads odoc's own search index, then fetches a page per
+	module, module type, class and extra file. Every module, type,
+	value, exception, constructor, field, method and extension is an
+	entry, named as odoc names it (`Lwt.bind`, `Lwt.state.Return`,
+	`Lwt.Infix.(>>=)`); so is each library's module list and each extra
+	file such as the README. Links to source listings are left out. A
+	link to a page the docset holds names it; any other, another
+	package's included, goes to ocaml.org.
+	lwt 6.1.2 is about 1,300 entries, 5.7 MB and 42 seconds on an
+	M-series Mac.
+
+	Installs as `<package>~<version>~~ocaml.org`.
 Documenter sites ~
 	Julia packages, from the site each one publishes with Documenter.jl.
 	Typing part of a name searches the General registry; a pick reads

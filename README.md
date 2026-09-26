@@ -14,7 +14,8 @@ developer documentation included, Dash docsets, Kapeli's own and the user-contri
 ones, Elixir, Erlang and Gleam packages from hexdocs.pm, Odin's standard library and
 vendor bindings from pkg.odin-lang.org, Perl distributions from MetaCPAN, Java,
 Kotlin and Scala libraries from Maven Central, Ruby gems from gemdocs.org, Crystal's
-standard library from crystal-lang.org, and Julia packages from their Documenter.jl sites. Every docset knows its language, so a Rust session and a Python session can each
+standard library from crystal-lang.org, Julia packages from their Documenter.jl sites, and
+OCaml packages from ocaml.org. Every docset knows its language, so a Rust session and a Python session can each
 narrow the pickers to what they need.
 
 docshelf.nvim began as a fork of Emmanuel Touzery's
@@ -297,6 +298,28 @@ an M-series Mac, nearly all of it converting pages.
 
 A docset installs as `crystal~<version>~~crystal-lang.org` (`crystal~1.21.0~~crystal-lang.org`),
 and `DocshelfUpdate` compares the version with the newest release.
+
+### ocaml.org
+
+`ocaml.org` documents OCaml packages: it builds every opam package's documentation with odoc
+and serves it itself. It answers the install picker's search: type three letters and the
+packages ocaml.org finds join the list, best match first, each with its newest version. A
+package ocaml.org has no documentation for is left out. OCaml's standard library is on
+devdocs.
+
+An install reads odoc's own search index, one file naming everything the package documents,
+then fetches a page per module, module type, class and extra file. Every module is an entry
+(`Lwt`, `Lwt.Infix`), and so is every type, value, exception, constructor, record field,
+method and extension, named the way odoc names it (`Lwt.bind`, `Lwt.state.Return`, operators
+included: `Lwt.Infix.(>>=)`), and typed accordingly. Each library's list of modules (`Library
+lwt.unix`) and each extra file, such as the README, is an entry too. The link to each item's
+source listing is left out. A link to a page the docset holds names that page; any other,
+including one to another package's documentation, goes to ocaml.org.
+lwt 6.1.2 is 78 pages and about 1,300 entries, 5.7 MB and 42 seconds to install on an
+M-series Mac.
+
+A docset installs as `<package>~<version>~~ocaml.org` (`lwt~6.1.2~~ocaml.org`), and
+`DocshelfUpdate` compares the version with the newest one ocaml.org documents.
 
 ### Documenter sites (Julia)
 
