@@ -73,6 +73,21 @@ test("so does one whose page key is a path", function()
   eq(changes, true)
 end)
 
+test("a link with a scheme elinks does not know goes back to its address (#3)", function()
+  -- elinks writes git://host/path as a path under the docset folder, with
+  -- one "/" after the scheme
+  local line, changes = fixed({
+    name = "perl5122delta",
+    key = "perl5122delta",
+    id = "Info",
+    containing = "perl5122delta#perl5122delta",
+    href = "git:/perl5.git.perl.org/perl.git",
+  })
+  eq(line, "   1. git://perl5.git.perl.org/perl.git")
+  eq(changes, true)
+  eq((fixed({ name = "n", key = "k", id = "i", containing = "k#k", href = "irc:/irc.perl.org/%23p5p" })), "   1. irc://irc.perl.org/#p5p")
+end)
+
 test("a docset folder elinks writes escaped (\"@\" as %40) is still the docset", function()
   local folder = "/data/lib@org.example~1"
   local file = name_file("fmt.println#fmt#println") .. ".html"

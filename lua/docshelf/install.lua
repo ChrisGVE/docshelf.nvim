@@ -183,6 +183,19 @@ local function fix_file_links_resolve_fname(choice, path_to_name, file_guessed_s
   return nil, nil
 end
 
+--- The address elinks turned into a path, or nil for any other link. elinks
+--- does not know every scheme (git:, irc:, svn:) and writes "git://host/path"
+--- as "<docset folder>/git:/host/path"; the docset's files sit in one flat
+--- folder, so nothing of it is reached through "<name>:/" (#3).
+local function unknown_scheme_link(decoded, target_path)
+  local folder = "file://" .. target_path .. "/"
+  if decoded:sub(1, #folder) ~= folder then
+    return nil
+  end
+  local scheme, rest = decoded:sub(#folder + 1):match("^(%a[%w+.-]*):/+(.+)$")
+  return scheme and (scheme .. "://" .. rest) or nil
+end
+
 local function fix_file_links(fname, lines, target_path, choice, path_to_name,
     name_and_id_to_string_nearby, orig_path, orig_containing_path, name_file)
   local changes = false
@@ -197,7 +210,11 @@ local function fix_file_links(fname, lines, target_path, choice, path_to_name,
     end
     -- remove the path prefix, which could be the folder in which we store the files, or
     -- any parent of it, in case it's a link to '../../filename'
-    if m ~= nil and m:match("^file://") then
+    local unknown_scheme = m ~= nil and m:match("^file://") and unknown_scheme_link(urldecode(m), target_path)
+    if unknown_scheme then
+      lines[i] = l .. unknown_scheme
+      changes = true
+    elseif m ~= nil and m:match("^file://") then
       local file_guessed_subpath_str = orig_path:gsub("/[^/]+$", "") -- take the parent the first time, it's the filename
       if not orig_path:match("/") then
         -- completing the gsub before.. no child folder. remove the filename
