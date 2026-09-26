@@ -107,6 +107,18 @@ local function archive_url(docset, system)
   error("the user-contributed Dash docset " .. folder .. " offers no version " .. release, 0)
 end
 
+--- How many bytes a docset's current archive is (one HEAD request, the
+--- catalogue being already fetched by the search that offered the row).
+---@param name string build folder, e.g. "HAProxy_Lua"
+---@return integer?
+function M.size(name, system)
+  local ok, found = pcall(entry, name, system)
+  if not ok then
+    return nil
+  end
+  return dash.archive_size(build .. name .. "/" .. found.archive, system)
+end
+
 M.index, M.db = dash.installer(archive_url)
 
 return M

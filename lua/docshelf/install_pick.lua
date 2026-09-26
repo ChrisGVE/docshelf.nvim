@@ -63,6 +63,27 @@ function M.order(items, typed)
   end, scored)
 end
 
+--- A download size as it reads in a row: 237 KB, 2.4 MB, 173 MB. Decimal
+--- units, as the servers' own lengths are counted; one decimal below ten.
+---@param bytes integer
+function M.size_text(bytes)
+  if bytes < 1000 then
+    return bytes .. " B"
+  end
+  local value, unit = bytes / 1000, "KB"
+  for _, next_unit in ipairs({ "MB", "GB" }) do
+    if value < 1000 then
+      break
+    end
+    value, unit = value / 1000, next_unit
+  end
+  if value < 10 then
+    -- rounded half up by hand: %.1f rounds 1.25 down, its binary being 1.2499…
+    return string.format("%.1f %s", math.floor(value * 10 + 0.5) / 10, unit)
+  end
+  return string.format("%d %s", math.floor(value + 0.5), unit)
+end
+
 --- A row for a package a registry answered with. `slug` is the folder it would
 --- install into, which is only known once the version is: a registry that
 --- returns none leaves the row to be resolved when it is picked.
@@ -71,13 +92,21 @@ end
 --- beside the name. A source with an archive downloads it in one request and
 --- reports none; a Sphinx site fetches a page at a time, and numpy is 2671 of
 --- them -- which is worth knowing while choosing rather than after committing.
----@param row { name: string, version?: string, origin: string, pages?: integer }
+--- `size` is the same warning for a source with an archive: how many bytes
+--- that one request brings (a Dash docset runs from kilobytes to 300 MB).
+---@param row { name: string, version?: string, origin: string, pages?: integer, size?: integer }
 ---@param language? string the language the row's source documents
 function M.registry_row(row, language)
   local name = row.version and (row.name .. "~" .. row.version) or row.name
-  -- `text` is what the typed name is matched against, so the note stays out of
+  -- `text` is what the typed name is matched against, so the notes stay out of
   -- it; `label` is what is shown.
-  local label = row.pages and (name .. " · " .. row.pages .. " pages") or name
+  local label = name
+  if row.pages then
+    label = label .. " · " .. row.pages .. " pages"
+  end
+  if row.size then
+    label = label .. " · " .. M.size_text(row.size)
+  end
   return {
     text = name,
     label = label,
@@ -92,6 +121,43 @@ function M.registry_row(row, language)
     url = row.url,
     slug = row.version and folders.name(row.name .. "~" .. row.version, row.origin) or nil,
   }
+end
+
+-- Download sizes, asked for as rows come into view. A source that can say
+-- how big a row's archive is does so with one request per row (see a
+-- source's `size`), and a first letter matches hundreds of Dash docsets: the
+-- picker asks only for the rows it draws, once each, and keeps the answers
+-- for as long as the picker is open.
+local Sizes = {}
+Sizes.__index = Sizes
+
+--- An empty set of sizes.
+function M.sizes()
+  return setmetatable({ _known = {}, _asked = {} }, Sizes)
+end
+
+local function size_key(row)
+  return row.origin .. "\0" .. row.name
+end
+
+--- True the first time a row is claimed, false after: whoever claims it asks.
+function Sizes:claim(row)
+  local key = size_key(row)
+  if self._asked[key] then
+    return false
+  end
+  self._asked[key] = true
+  return true
+end
+
+---@param bytes integer?
+function Sizes:set(row, bytes)
+  self._known[size_key(row)] = bytes
+end
+
+---@return integer?
+function Sizes:get(row)
+  return self._known[size_key(row)]
 end
 
 --- What was typed is a documentation URL, not a package name: the sources to

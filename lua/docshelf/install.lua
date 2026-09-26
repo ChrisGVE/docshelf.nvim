@@ -843,6 +843,38 @@ local function pick_and_queue(keys, format_item, origin_of, language_of, slugs_t
       return adapter and adapter.language or ""
     end
     stop_registry_search()
+    -- A row's download size, asked for when the row is drawn (see
+    -- install_pick.sizes): answers land one by one, so the redraw they ask for
+    -- is made once for all of those that arrived together.
+    local sizes = install_pick.sizes()
+    local redraw_pending = false
+    local function redraw(picker)
+      if redraw_pending then
+        return
+      end
+      redraw_pending = true
+      vim.schedule(function()
+        redraw_pending = false
+        if not picker.closed then
+          picker:find({ refresh = true })
+        end
+      end)
+    end
+    local function ask_size(item, picker)
+      local adapter = item.name and sources.get(item.origin)
+      if not (adapter and adapter.size) or not sizes:claim(item) then
+        return
+      end
+      run(function()
+        local ok, bytes = pcall(adapter.size, item.name, function(cmd)
+          return system_async(cmd, { text = true })
+        end)
+        if ok and bytes then
+          sizes:set(item, bytes)
+          redraw(picker)
+        end
+      end)
+    end
     require("snacks").picker.pick({
       title = picker_title,
       layout = { preset = "select" },
@@ -854,7 +886,8 @@ local function pick_and_queue(keys, format_item, origin_of, language_of, slugs_t
         local typed = ctx.filter.search or ""
         local items = catalogue_rows()
         for _, row in ipairs(cache:match(typed)) do
-          items[#items + 1] = install_pick.registry_row(row, origin_language(row.origin))
+          local shown = sizes:get(row) and vim.tbl_extend("force", row, { size = sizes:get(row) }) or row
+          items[#items + 1] = install_pick.registry_row(shown, origin_language(row.origin))
         end
         if typed ~= search_state.query then
           stop_registry_search()
@@ -906,7 +939,10 @@ local function pick_and_queue(keys, format_item, origin_of, language_of, slugs_t
         end
         return install_pick.order(items, typed)
       end,
-      format = function(item)
+      format = function(item, picker)
+        -- snacks formats only the rows it draws, so this is where a size is
+        -- asked for: never for the hundreds of rows a first letter matches.
+        ask_size(item, picker)
         local line = { { item.language, "SnacksPickerComment" }, { " | ", "SnacksPickerDelim" }, { item.label } }
         if item.origin then
           line[#line + 1] = {

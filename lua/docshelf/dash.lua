@@ -306,6 +306,24 @@ function M.split(docset, source)
   return name, release
 end
 
+--- How many bytes the archive at `url` is, from the headers a HEAD request
+--- answers with; nil when the server does not answer or names no length. A
+--- redirect answers twice, so the last length named is the archive's own.
+---@param url string
+---@param system fun(cmd: string[]): vim.SystemCompleted
+---@return integer?
+function M.archive_size(url, system)
+  local res = system({ "curl", "-sfIL", url })
+  if res.code ~= 0 then
+    return nil
+  end
+  local size
+  for length in (res.stdout or ""):lower():gmatch("content%-length:%s*(%d+)") do
+    size = tonumber(length)
+  end
+  return size
+end
+
 --- The index/db pair of a source whose docsets are Dash archives.
 --- `archive_url(docset, system)` says where a docset's archive is; it is
 --- asked once per install, by index, and its answer reused by db.

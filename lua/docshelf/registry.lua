@@ -23,6 +23,11 @@
 -- which is asked only when what was typed is a URL. `pages` is shown in the
 -- row, because such a source installs one page per HTTP request.
 --
+-- A source whose install is one archive may declare
+--   size(name, system) -> integer?   -- bytes the archive is, nil if unknown
+-- which the install picker asks for each row it draws, and shows beside the
+-- name as it shows `pages`: one request per row, so never at search time.
+--
 -- A source outside devdocs has no catalogue entry to record at install, so it
 -- may also declare:
 --   release(slug) -> string?   -- the patch release the docset holds

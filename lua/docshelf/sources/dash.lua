@@ -125,6 +125,15 @@ local function archive_url(docset, system)
   error("the Dash feed " .. name .. " offers no version " .. release, 0)
 end
 
+--- How many bytes a feed's current archive is, shown in the install picker
+--- before the pick: Lua is a few hundred kilobytes, C++ 173 MB. The current
+--- archive's address needs no feed, so this is one HEAD request.
+---@param name string feed name, e.g. "Lua"
+---@return integer?
+function M.size(name, system)
+  return dash.archive_size(archives .. name .. ".tgz", system)
+end
+
 M.index, M.db = dash.installer(archive_url)
 
 return M
