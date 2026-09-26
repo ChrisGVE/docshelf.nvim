@@ -12,8 +12,8 @@ catalogue, Haskell packages from Hackage, Rust crates from docs.rs, any Sphinx s
 and much of the scientific stack), Go modules from pkg.go.dev, any DocC site, Apple's own
 developer documentation included, Dash docsets, Kapeli's own and the user-contributed
 ones, Elixir, Erlang and Gleam packages from hexdocs.pm, Odin's standard library and
-vendor bindings from pkg.odin-lang.org, Perl distributions from MetaCPAN, and Java,
-Kotlin and Scala libraries from Maven Central. Every docset knows its language, so a Rust session and a Python session can each
+vendor bindings from pkg.odin-lang.org, Perl distributions from MetaCPAN, Java,
+Kotlin and Scala libraries from Maven Central, and Ruby gems from gemdocs.org. Every docset knows its language, so a Rust session and a Python session can each
 narrow the pickers to what they need.
 
 docshelf.nvim began as a fork of Emmanuel Touzery's
@@ -258,6 +258,25 @@ A docset installs as `<artifact>@<group>~<version>~~central.sonatype.com`
 (`cats-core_3@org.typelevel~2.13.0~~central.sonatype.com`): an artifact's name alone is
 ambiguous, two unrelated `cats-core` exist. `DocshelfUpdate` compares the version with the
 artifact's newest release.
+
+### gemdocs.org
+
+`gemdocs.org` documents a Ruby gem: the site builds every gem's YARD documentation ahead of
+time. It answers the install picker's search: type three letters and the gems rubygems.org
+finds join the list, the most downloaded first. A row carries no version, because gemdocs
+does not always have the newest release built yet (nokogiri 1.19.4 was released while its
+docs stopped at 1.19.2); the pick installs the newest version gemdocs has.
+
+The entries are YARD's own lists: every class and module (`Nokogiri::XML::NodeSet`), every
+method as Ruby writes it (`Nokogiri::XML::NodeSet#css`, `Nokogiri::HTML4::Document.parse`,
+operators included: `NodeSet#&`, `NodeSet#<=>`), typed `Instance Methods` or `Class
+Methods`, every constant, and the gem's extra files such as its README. A page is fetched
+per class and module; the source code YARD shows under each method is left out. A link to a
+page the docset holds names that page; any other goes to gemdocs.org.
+
+A docset installs as `<gem>~<version>~~gemdocs.org` (`nokogiri~1.19.2~~gemdocs.org`), and
+`DocshelfUpdate` compares the version with the newest one gemdocs has built.
+
 
 ## Dependencies
 

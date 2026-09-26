@@ -485,6 +485,21 @@ Maven Central ~
 
 	Installs as `<artifact>@<group>~<version>~~central.sonatype.com`: an
 	artifact's name alone is ambiguous (two unrelated `cats-core` exist).
+gemdocs.org ~
+	A Ruby gem, its YARD documentation as gemdocs.org builds it. It
+	answers the install picker's search: three letters and the gems
+	rubygems.org finds join the list, the most downloaded first, without
+	a version: gemdocs does not always have the newest release built, so
+	a pick installs the newest version gemdocs has.
+
+	The entries are YARD's own lists: every class and module, every
+	method as Ruby writes it (`Nokogiri::XML::NodeSet#css`,
+	`Nokogiri::HTML4::Document.parse`, operators such as `NodeSet#&`
+	included), every constant, and the extra files such as the README.
+	The source code under each method is left out. A link to a page the
+	docset holds names it; any other goes to gemdocs.org.
+
+	Installs as `<gem>~<version>~~gemdocs.org`.
 
 ==============================================================================
 6. KEEPING DOCS CURRENT					*docshelf-updating*
