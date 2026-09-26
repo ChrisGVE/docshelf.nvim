@@ -79,6 +79,7 @@ test("origins are listed in a stable order, shipped sources included", function(
     "hexdocs.pm",
     "kapeli.com",
     "metacpan.org",
+    "nimdoc",
     "ocaml.org",
     "pkg.go.dev",
     "pkg.odin-lang.org",
