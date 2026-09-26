@@ -34,6 +34,7 @@
 --
 -- The language of a docset is its generator's: javadoc documents Java,
 -- scaladoc Scala, Dokka Kotlin.
+local anchors = require("docshelf.anchors")
 local html_text = require("docshelf.html")
 local links = require("docshelf.links")
 
@@ -503,45 +504,6 @@ local function main_content(html, format)
   return stop and body:sub(1, stop - 1) or body
 end
 
-local function escape(text)
-  return (text:gsub('[&<>"]', { ["&"] = "&amp;", ["<"] = "&lt;", [">"] = "&gt;", ['"'] = "&quot;" }))
-end
-
---- Every id of a page made plain, an old <a name> made an id, and a heading
---- naming the entry put before each anchor an entry lands on.
-local function name_the_anchors(body, names)
-  body = body:gsub("<[aA](%s[^>]*)>", function(attributes)
-    if attributes:match("%s[iI][dD]=") then
-      return nil
-    end
-    return "<a" .. attributes:gsub('(%s)[nN][aA][mM][eE]="', '%1id="') .. ">"
-  end)
-  local landed = {}
-  return (
-    body:gsub('<(%w+)([^>]-)%s[iI][dD]="([^"]*)"([^>]*)>', function(tag, before, id, after)
-      local plain = plain_id(id)
-      local name = names and names[plain]
-      if name and not landed[plain] then
-        landed[plain] = true
-        return '<h4 id="' .. plain .. '">' .. escape(name) .. "</h4><" .. tag .. before .. after .. ">"
-      end
-      return "<" .. tag .. before .. ' id="' .. plain .. '"' .. after .. ">"
-    end)
-  )
-end
-
---- A link's anchor made plain like the ids, unless it leads to another site.
-local function plain_fragments(body)
-  return (
-    body:gsub('(%s[hH][rR][eE][fF]=")([^"#]*)#([^"]*)"', function(attribute, target, anchor)
-      if target:match("^%a[%w+.-]*:") or target:match("^//") then
-        return nil
-      end
-      return attribute .. target .. "#" .. plain_id(anchor) .. '"'
-    end)
-  )
-end
-
 local function clean_page(html, format, names)
   local body = main_content(html, format)
     :gsub("<script.-</script>", "")
@@ -550,7 +512,7 @@ local function clean_page(html, format, names)
     :gsub("<svg.-</svg>", "")
     -- Scala 2's permalink icon beside every member
     :gsub('<span class="permalink">.-</span>', "")
-  return plain_fragments(name_the_anchors(body, names))
+  return anchors.plain_fragments(anchors.name_the_anchors(body, names, plain_id), plain_id)
 end
 
 function M.db(docset, _, system)
