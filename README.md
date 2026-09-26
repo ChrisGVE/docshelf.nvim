@@ -165,8 +165,9 @@ A docset installs as `<name>~<version>~~kapeli.com` (`Lua~5.5~~kapeli.com`). Pic
 Kapeli feed asks the feed for its current version; a user-contributed row already carries
 it. Where Kapeli has no better number the version is its own (Bash installs as `Bash~9`). An
 install is one `.tgz` archive and needs `tar` and the `sqlite3` program, which reads the
-docset's index. Sizes vary a lot -- Lua is a few hundred kilobytes, C++ 173 MB -- and the
-picker does not show the size before you pick.
+docset's index. Sizes vary a lot -- Lua is a few hundred kilobytes, C++ 173 MB -- so a row
+shows its archive's size (`Lua · 237 KB`) once the picker has asked kapeli.com for it: one
+request per row, made only for the rows on screen.
 
 Dash covers every language, so a docset's language comes from its name: `Lua~5.5` is Lua,
 and a Lua filter pulls it in. A name that is no language (`HAProxy_Lua`) is Unknown until you
