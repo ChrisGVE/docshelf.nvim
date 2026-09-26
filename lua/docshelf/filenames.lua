@@ -22,19 +22,38 @@ local longest = 255 - #".html.md"
 
 local tag_pattern = "^~%x%x%x%x%x%x%x%x~"
 
+--- `text` cut to at most `limit` bytes without splitting a character: a cut
+--- before a continuation byte (10xxxxxx) ends before it instead, since macOS
+--- refuses a file name that is not valid UTF-8.
+local function cut(text, limit)
+  local at = math.min(#text, limit)
+  while at < #text and at > 0 and text:byte(at + 1) >= 0x80 and text:byte(at + 1) < 0xC0 do
+    at = at - 1
+  end
+  return text:sub(1, at)
+end
+
+--- `name` cut to fit a file name. A file is named "<entry>#<page>[#<id>]",
+--- and the link fixer reads a file back by the "#..." its name ends in, so a
+--- name too long loses the end of the entry's name, never that tail (nimdoc
+--- names a proc by its whole signature, well past the limit). Only a tail too
+--- long to fit on its own is cut like any other text.
+local function fit(name)
+  if #name <= longest then
+    return name
+  end
+  local head, tail = name:match("^([^#]*)(#.*)$")
+  if head and #tail < longest then
+    return cut(head, longest - #tail) .. tail
+  end
+  return cut(name, longest)
+end
+
 --- The plain file name for `name`: no "/" (it would be a folder) and no "'"
---- (it would break the shell command that converts the pages), cut to fit
---- without splitting a character.
+--- (it would break the shell command that converts the pages), cut to fit.
 ---@param name string
 function M.stem(name)
-  name = name:gsub("/", "_"):gsub("'", "_")
-  local cut = math.min(#name, longest)
-  -- a cut before a continuation byte (10xxxxxx) would split a character, and
-  -- macOS refuses a file name that is not valid UTF-8: end before it instead
-  while cut < #name and cut > 0 and name:byte(cut + 1) >= 0x80 and name:byte(cut + 1) < 0xC0 do
-    cut = cut - 1
-  end
-  return name:sub(1, cut)
+  return fit((name:gsub("/", "_"):gsub("'", "_")))
 end
 
 --- The stems among `names` that another, differently spelled stem equals once
@@ -82,7 +101,7 @@ function M.namer(twins)
   return function(name)
     local stem = M.stem(name)
     if twins[stem] then
-      return ("~" .. vim.fn.sha256(stem):sub(1, 8) .. "~" .. stem):sub(1, longest)
+      return fit("~" .. vim.fn.sha256(stem):sub(1, 8) .. "~" .. stem)
     end
     return stem
   end

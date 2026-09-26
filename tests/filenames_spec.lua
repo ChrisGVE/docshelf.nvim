@@ -48,6 +48,31 @@ test("a name listed twice is not its own twin", function()
   eq(filenames.case_twins({ readdir, readdir }), {})
 end)
 
+test("a name too long loses the end of the entry's name, never the page and id after it", function()
+  -- the link fixer reads a file back by the "#page#id" its name ends in
+  local tail = "#pixie_images#.5B.5D.3D.2CImage"
+  local stem = filenames.stem(string.rep("x", 400) .. tail)
+  eq(stem, string.rep("x", 255 - #".html.md" - #tail) .. tail)
+end)
+
+test("a name cut before its page never splits a character", function()
+  local tail = "#page#id"
+  local room = 255 - #".html.md" - #tail
+  eq(filenames.stem(string.rep("x", room - 1) .. "é" .. tail), string.rep("x", room - 1) .. tail)
+end)
+
+test("a tail too long to fit on its own is cut like any name", function()
+  eq(#filenames.stem("name#" .. string.rep("p", 400)), 255 - #".html.md")
+end)
+
+test("a twin's tagged name too long keeps its page and id too", function()
+  local tail = "#go#os.File.ReadDir"
+  local long = string.rep("x", 400) .. tail
+  local name = filenames.namer({ [filenames.stem(long)] = true })(long)
+  eq(#name, 255 - #".html.md")
+  eq(name:sub(-#tail), tail)
+end)
+
 test("without twins, a name gets its plain stem", function()
   local name = filenames.namer({})
   eq(name(readdir), filenames.stem(readdir))
