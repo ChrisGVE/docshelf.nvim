@@ -1,0 +1,44 @@
+[
+  {
+    "name": "pixie",
+    "url": "https://github.com/treeform/pixie",
+    "method": "git",
+    "tags": ["images", "paths", "rendering", "graphics"],
+    "description": "Full-featured 2d graphics library for Nim.",
+    "license": "MIT",
+    "web": "https://github.com/treeform/pixie"
+  },
+  {
+    "name": "argparse",
+    "url": "https://github.com/iffy/nim-argparse",
+    "method": "git",
+    "tags": ["cli", "argparse", "optparse"],
+    "description": "WIP strongly-typed argument parser with sub command support",
+    "license": "MIT",
+    "web": "https://github.com/iffy/nim-argparse",
+    "doc": "https://www.iffycan.com/nim-argparse/argparse.html"
+  },
+  {
+    "name": "jester",
+    "url": "https://github.com/dom96/jester/",
+    "method": "git",
+    "tags": ["web", "http", "framework", "dsl"],
+    "description": "A sinatra-like web framework for Nim.",
+    "license": "MIT",
+    "web": "https://github.com/dom96/jester"
+  },
+  {
+    "name": "nim0",
+    "url": "https://gitlab.com/pmetras/nim0.git",
+    "method": "git",
+    "tags": ["compiler", "risc"],
+    "description": "Nim0 is a toy one-pass compiler",
+    "license": "MIT",
+    "web": "https://gitlab.com/pmetras/nim0",
+    "doc": "https://gitlab.com/pmetras/nim0"
+  },
+  {
+    "name": "pixel",
+    "alias": "pixie"
+  }
+]
