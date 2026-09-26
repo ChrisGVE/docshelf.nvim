@@ -838,10 +838,6 @@ local function pick_and_queue(keys, format_item, origin_of, language_of, slugs_t
     -- this: the user has already said which documentation they mean, and what
     -- language it turns out to document is only known once it is asked.
     local url_origins = registry.searchable({ method = "from_url" })
-    local function origin_language(origin)
-      local adapter = sources.get(origin)
-      return adapter and adapter.language or ""
-    end
     stop_registry_search()
     -- A row's download size, asked for when the row is drawn (see
     -- install_pick.sizes): answers land one by one, so the redraw they ask for
@@ -887,7 +883,7 @@ local function pick_and_queue(keys, format_item, origin_of, language_of, slugs_t
         local items = catalogue_rows()
         for _, row in ipairs(cache:match(typed)) do
           local shown = sizes:get(row) and vim.tbl_extend("force", row, { size = sizes:get(row) }) or row
-          items[#items + 1] = install_pick.registry_row(shown, origin_language(row.origin))
+          items[#items + 1] = install_pick.registry_row(shown, install_pick.row_language(row, sources.get(row.origin)))
         end
         if typed ~= search_state.query then
           stop_registry_search()

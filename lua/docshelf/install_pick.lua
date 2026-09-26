@@ -160,6 +160,24 @@ function Sizes:get(row)
   return self._known[size_key(row)]
 end
 
+--- The language shown in a registry row: the one its source declares, or --
+--- for a catalogue of many languages (Dash) -- the one the name gives, which
+--- is what the docset will be filed under once installed. Blank when neither
+--- says.
+---@param row { name: string }
+---@param adapter? { language?: string, catalogue?: boolean }
+---@return string
+function M.row_language(row, adapter)
+  if not adapter then
+    return ""
+  end
+  if adapter.catalogue then
+    local guessed = require("docshelf.languages").guess(row.name)
+    return guessed and guessed.language or ""
+  end
+  return adapter.language or ""
+end
+
 --- What was typed is a documentation URL, not a package name: the sources to
 --- ask are the ones that can read a site, and the row they answer with stands
 --- whatever the typed text looks like.
