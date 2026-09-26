@@ -220,7 +220,9 @@ end
 
 --- Parse a site's search_index.js into its pages and entries.
 local function read_index(body)
-  local json = body:match("^[^{]*(%b{})")
+  -- from the first "{" to the last: a docstring's text may hold a "{" of its
+  -- own ("Tuple{Any"), so the braces cannot be counted
+  local json = body:match("^[^{]*({.*})")
   local ok, decoded = pcall(vim.json.decode, json or "")
   if not (ok and type(decoded) == "table" and type(decoded.docs) == "table") then
     error("the site's search_index.js is not Documenter's search index", 0)
