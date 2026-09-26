@@ -65,6 +65,11 @@ end
 ---               when the pages have no site behind them (an archive)
 --- `opts.key_of` maps a resolved path to a page key (default: drop ".html"
 ---               and a trailing "/")
+--- `opts.from`   the directory the page's own links are written against, when
+---               it is not `dir`: a page served as a folder (Documenter, and
+---               Sphinx's dirhtml, serve lib/functions as lib/functions/)
+---               writes "../types/" for lib/types, while the installer reads
+---               the rewritten link against `dir`, the directory of its key
 ---
 --- Returns nil when the link leads outside the docset and there is no site to
 --- send it to: the caller keeps the link's text and drops the link.
@@ -85,7 +90,7 @@ function M.rewrite(href, opts)
   if target == "" then
     return href
   end
-  local resolved = M.resolve(opts.dir or "", target)
+  local resolved = M.resolve(opts.from or opts.dir or "", target)
   local key = (opts.key_of or default_key_of)(resolved)
   if opts.known[key] then
     return M.relative(opts.dir or "", key) .. anchor
@@ -93,7 +98,9 @@ function M.rewrite(href, opts)
   if not opts.base then
     return nil
   end
-  return opts.base .. resolved .. anchor
+  -- a folder keeps its "/": the site may not answer without it
+  local folder = (resolved ~= "" and target:match("/$")) and "/" or ""
+  return opts.base .. resolved .. folder .. anchor
 end
 
 --- Rewrite every `href` and `src` in `html` (see `rewrite`). An `<a>` whose

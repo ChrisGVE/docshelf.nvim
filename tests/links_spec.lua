@@ -104,6 +104,22 @@ test("rewrite_html reads attribute and tag names in any case, as HTML does", fun
   eq(links.rewrite_html('<p><A HREF="gone.html">gone</A></p>', { dir = "", known = {} }), "<p>gone</p>")
 end)
 
+test("a page served as a folder writes its links against that folder", function()
+  -- Documenter and Sphinx's dirhtml serve lib/functions as lib/functions/,
+  -- so "../types/" there is lib/types -- while the installer reads the
+  -- rewritten link against lib, the directory of the key
+  local opts = {
+    dir = "lib",
+    from = "lib/functions",
+    known = { ["lib/functions"] = true, ["lib/types"] = true, ["man/joins"] = true },
+    base = "https://example.org/docs/",
+  }
+  eq(links.rewrite("../types/#DataFrames.GroupKey", opts), "types#DataFrames.GroupKey")
+  eq(links.rewrite("../../man/joins/", opts), "../man/joins")
+  eq(links.rewrite("../../assets/logo.png", opts), "https://example.org/docs/assets/logo.png")
+  eq(links.rewrite("../gone/", opts), "https://example.org/docs/lib/gone/")
+end)
+
 if failures > 0 then
   print(failures .. " failure(s)")
   os.exit(1)
