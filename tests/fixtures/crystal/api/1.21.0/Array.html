@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link href="css/style.css" rel="stylesheet" type="text/css">
+  <script type="text/javascript" src="js/doc.js"></script>
+  <title>Array - Crystal 1.21.0</title>
+</head>
+<body>
+<svg class="hidden"><symbol id="octicon-link" viewBox="0 0 16 16"><path d="M4 9h1"></path></symbol></svg>
+<input type="checkbox" id="sidebar-btn">
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="search-box"><input type="search" class="search-input" placeholder="Search..."></div>
+    <div class="project-summary"><h1 class="project-name"><a href="index.html">Crystal</a></h1></div>
+  </div>
+  <div class="types-list"><ul><li><a href="Array.html">Array</a></li><li><a href="Signal.html">Signal</a></li></ul></div>
+</div>
+
+<div class="main-content">
+<h2>
+    <a id="overview" class="anchor" href="#overview">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Overview
+  </h2>
+<p>An <code><a href="Array.html">Array</a></code> is an ordered collection. See <code><a href="Signal.html#INT">Signal::INT</a></code>, <a href="Atomic/Flag.html#test_and_set%3ABool-instance-method">Flag#test_and_set</a> and <a href="Hash.html">Hash</a>.</p>
+<h2>
+    <a id="constructor-detail" class="anchor" href="#constructor-detail">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Constructor Detail
+  </h2>
+    <div class="entry-detail" id="new(initial_capacity:Int)-class-method">
+      <div class="signature">
+        def self.<strong>new</strong>(initial_capacity : <a href="Int.html">Int</a>)
+        <a class="method-permalink" href="#new%28initial_capacity%3AInt%29-class-method">#</a>
+      </div>
+        <div class="doc"><p>Creates a new empty Array backed by a buffer.</p></div>
+      <br/>
+      <div>
+          [<a href="https://github.com/crystal-lang/crystal/blob/57cf7da50/src/array.cr#L103" target="_blank">View source</a>]
+      </div>
+    </div>
+    <div class="entry-detail" id="new-class-method">
+      <div class="signature">
+        def self.<strong>new</strong>
+        <a class="method-permalink" href="#new-class-method">#</a>
+      </div>
+        <div class="doc"><p>Creates a new empty Array.</p></div>
+    </div>
+<h2>
+    <a id="instance-method-detail" class="anchor" href="#instance-method-detail">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Instance Method Detail
+  </h2>
+    <div class="entry-detail" id="&amp;(other:Array(U)):Array(T)forallU-instance-method">
+      <div class="signature">
+        def <strong>&amp;</strong>(other : <a href="Array.html">Array</a>(U)) : <a href="Array.html">Array</a>(T) forall U
+        <a class="method-permalink" href="#%26%28other%3AArray%28U%29%29%3AArray%28T%29forallU-instance-method">#</a>
+      </div>
+        <div class="doc"><p>Set intersection. See also <a href="#-%28other%3AArray%28U%29%29%3AArray%28T%29forallU-instance-method">#-</a>.</p></div>
+    </div>
+    <div class="entry-detail" id="-(other:Array(U)):Array(T)forallU-instance-method">
+      <div class="signature">
+        def <strong>-</strong>(other : <a href="Array.html">Array</a>(U)) : <a href="Array.html">Array</a>(T) forall U
+      </div>
+        <div class="doc"><p>Difference.</p></div>
+    </div>
+    <div class="entry-detail" id="[]=(index:Int,value:T):T-instance-method">
+      <div class="signature">
+        def <strong>[]=</strong>(index : <a href="Int.html">Int</a>, value : T) : T
+      </div>
+        <div class="doc"><p>Sets the given value at the given index.</p></div>
+    </div>
+    <div class="entry-detail" id="clear:self-instance-method">
+      <div class="signature">
+        def <strong>clear</strong> : <span class="k">self</span>
+      </div>
+        <div class="doc"><p>Removes all elements.</p></div>
+    </div>
+</div>
+
+</body>
+</html>

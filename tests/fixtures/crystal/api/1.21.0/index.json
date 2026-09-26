@@ -1,0 +1,73 @@
+{
+  "repository_name": "Crystal",
+  "body": "",
+  "program": {
+    "html_id": "Crystal/toplevel",
+    "path": "toplevel.html",
+    "kind": "module",
+    "full_name": "Top Level Namespace",
+    "name": "Top Level Namespace",
+    "program": true,
+    "constants": [{ "id": "ARGV", "name": "ARGV", "value": "Array(String).new" }],
+    "class_methods": [
+      { "html_id": "puts(*objects):Nil-class-method", "name": "puts", "args_string": "(*objects) : Nil" }
+    ],
+    "macros": [{ "html_id": "record(__name,*properties,**kwargs,&block)-macro", "name": "record", "args_string": "(__name, *properties, **kwargs, &block)" }],
+    "types": [
+      {
+        "html_id": "Crystal/Array",
+        "path": "Array.html",
+        "kind": "class",
+        "full_name": "Array(T)",
+        "name": "Array",
+        "program": false,
+        "constructors": [
+          { "html_id": "new(initial_capacity:Int)-class-method", "name": "new", "args_string": "(initial_capacity : Int)" },
+          { "html_id": "new-class-method", "name": "new" }
+        ],
+        "instance_methods": [
+          { "html_id": "&(other:Array(U)):Array(T)forallU-instance-method", "name": "&", "args_string": "(other : Array(U)) : Array(T) forall U" },
+          { "html_id": "-(other:Array(U)):Array(T)forallU-instance-method", "name": "-", "args_string": "(other : Array(U)) : Array(T) forall U" },
+          { "html_id": "[]=(index:Int,value:T):T-instance-method", "name": "[]=", "args_string": "(index : Int, value : T) : T" },
+          { "html_id": "clear:self-instance-method", "name": "clear" }
+        ]
+      },
+      {
+        "html_id": "Crystal/Atomic",
+        "path": "Atomic.html",
+        "kind": "struct",
+        "full_name": "Atomic(T)",
+        "name": "Atomic",
+        "program": false,
+        "types": [
+          {
+            "html_id": "Crystal/Atomic/Flag",
+            "path": "Atomic/Flag.html",
+            "kind": "struct",
+            "full_name": "Atomic::Flag",
+            "name": "Flag",
+            "program": false,
+            "instance_methods": [{ "html_id": "test_and_set:Bool-instance-method", "name": "test_and_set" }]
+          }
+        ]
+      },
+      {
+        "html_id": "Crystal/Signal",
+        "path": "Signal.html",
+        "kind": "enum",
+        "full_name": "Signal",
+        "name": "Signal",
+        "program": false,
+        "constants": [{ "id": "INT", "name": "INT", "value": "2" }]
+      },
+      {
+        "html_id": "Crystal/Gone",
+        "path": "Gone.html",
+        "kind": "class",
+        "full_name": "Gone",
+        "name": "Gone",
+        "program": false
+      }
+    ]
+  }
+}
