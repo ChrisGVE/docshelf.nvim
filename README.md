@@ -15,7 +15,8 @@ ones, Elixir, Erlang and Gleam packages from hexdocs.pm, Odin's standard library
 vendor bindings from pkg.odin-lang.org, Perl distributions from MetaCPAN, Java,
 Kotlin and Scala libraries from Maven Central, Ruby gems from gemdocs.org, Crystal's
 standard library from crystal-lang.org, Julia packages from their Documenter.jl sites,
-OCaml packages from ocaml.org, and Clojure libraries from cljdoc.org. Every docset knows its language, so a Rust session and a Python session can each
+OCaml packages from ocaml.org, Clojure libraries from cljdoc.org, and Nim packages from their
+nimdoc sites. Every docset knows its language, so a Rust session and a Python session can each
 narrow the pickers to what they need.
 
 docshelf.nvim began as a fork of Emmanuel Touzery's
@@ -368,6 +369,33 @@ page the docset holds names that page; any other goes to cljdoc.org. malli 0.20.
 A docset installs as `<artifact>@<group>~<version>~~cljdoc.org`
 (`ring-core@ring~1.15.5~~cljdoc.org`), and `DocshelfUpdate` compares the version with the
 one cljdoc shows now.
+
+### nimdoc sites (Nim)
+
+Nim's package list names no documentation host: the documentation that exists is nearly
+always built with `nim doc` and published on the repository's GitHub Pages
+(`https://<owner>.github.io/<repo>/`), or at an address the package declares. Type part of a
+package's name in the install picker and the package list is searched; picking one reads the
+declared address first, then the GitHub Pages one. Most listed packages publish no
+documentation at all -- about 350 of 2,950 do, pixie, jsony, cligen, npeg and arraymancer
+among them -- and a pick that finds no site says so. A site anywhere else is reached the way
+a Sphinx site is: paste the address of any page of it into the install picker, and the row
+shows the package, the day the site was generated and how many pages the install will fetch.
+Nim's standard library is on devdocs.
+
+An install reads the site's index, `theindex.html`, then fetches a page per module. Every
+module is an entry (`pixie/paints`), and so is every symbol, named with its module and its
+parameter types (`paints.colorStop(Color, float32)`, `images.$(Image)`) and typed by the
+section the module page lists it in: type, var, let, const, proc, func, method, iterator,
+converter, macro or template. Each overload is its own entry. A generic's constraint is left
+out of its name (`seq[T]`, not `seq[T: int or float]`). A link to a page the docset holds
+names that page; any other goes back to the site. pixie is 452 entries, 2.1 MB and 15 seconds
+to install on an M-series Mac; arraymancer about 1,700 entries in under a minute.
+
+A nimdoc site names no version of its package, so a docset is named for the day its site was
+generated: `<package>~<day>~~nimdoc` (`pixie~2026-09-13~~nimdoc`). The site it came from is
+remembered in the data folder's `.nimdoc_sites.json`, and `DocshelfUpdate` asks that site
+whether it has been generated again since.
 
 ## Dependencies
 

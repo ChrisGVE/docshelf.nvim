@@ -570,6 +570,27 @@ cljdoc.org ~
 	on an M-series Mac.
 
 	Installs as `<artifact>@<group>~<version>~~cljdoc.org`.
+nimdoc sites ~
+	Nim packages, from the site `nim doc` builds for each one. Typing
+	part of a name searches Nim's package list; a pick reads the address
+	the package declares, then its GitHub Pages site
+	(`<owner>.github.io/<repo>/`). About 350 of the 2,950 listed packages
+	publish one; a pick that finds none says so. A site elsewhere is
+	installed by pasting the address of any page of it, as for a Sphinx
+	site. Nim's standard library is on devdocs.
+
+	An install reads the site's `theindex.html`, then fetches a page per
+	module. Every module is an entry, and so is every symbol, named with
+	its module and parameter types (`paints.colorStop(Color, float32)`)
+	and typed by its section: type, var, let, const, proc, func, method,
+	iterator, converter, macro or template. A generic's constraint is
+	left out of the name. A link to a page the docset holds names it;
+	any other goes back to the site. pixie is 2.1 MB and 15 seconds on
+	an M-series Mac.
+
+	The sites name no package version, so a docset is named for the day
+	its site was generated: `<package>~<day>~~nimdoc`. The site is
+	remembered in `.nimdoc_sites.json`, so an update asks it again.
 
 ==============================================================================
 6. KEEPING DOCS CURRENT					*docshelf-updating*
